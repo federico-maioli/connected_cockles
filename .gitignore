@@ -1,0 +1,47 @@
+# --- Data (kept local, not versioned) --------------------------------------
+data/
+
+# Data file formats, wherever they appear
+*.rds
+*.RData
+*.rda
+*.csv
+*.tif
+*.tiff
+*.nc
+
+# Shapefiles / GIS
+*.shp
+*.shx
+*.dbf
+*.prj
+*.sbn
+*.sbx
+*.cpg
+*.qpj
+*.shp.xml
+
+# --- Scratch ----------------------------------------------------------------
+to_remove/
+
+# --- R ----------------------------------------------------------------------
+.Rproj.user/
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+*.Rproj
+
+# --- LaTeX build artifacts --------------------------------------------------
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.toc
+
+# --- OS ---------------------------------------------------------------------
+.DS_Store
