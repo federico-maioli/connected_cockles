@@ -1,0 +1,387 @@
+%% ============================================================================
+%%  Fisheries ecology manuscript draft template
+%%  ---------------------------------------------------------------------------
+%%  Compile with XeLaTeX or LuaLaTeX (required: fontspec / Libertinus Serif).
+%%  Overleaf: Menu > Settings > Compiler = XeLaTeX.
+%%  Bibliography: BibTeX + fishfish.bst (place fishfish.bst and bib.bib in
+%%  the same folder as this file).
+%%
+%%  Quick start
+%%    1. Fill in the title / author block below.
+%%    2. Write in the sections; use \citep{} / \citet{} for references.
+%%    3. Toggle \linenumbers on/off for review vs. clean copies.
+%%    4. Toggle \doublespacing (in the \begin{spacing} call) as needed.
+%% ============================================================================
+
+\documentclass[11pt]{article}
+
+% ---- Encoding & page geometry ----------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1.25in]{geometry}
+
+% ---- Math ------------------------------------------------------------------
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{amsbsy}
+\usepackage{bm}
+
+% ---- Colour & links --------------------------------------------------------
+\usepackage[dvipsnames]{xcolor}
+\definecolor{niceblue}{HTML}{236899}
+\definecolor{darkgrey}{HTML}{A9A9A9}
+% \rev{} = highlight revised text (e.g. in response to reviewers)
+\newcommand{\rev}[1]{{\color{niceblue} #1}}
+% \ml{} = margin/track comment in red (rename per co-author as you like)
+\newcommand{\ml}[1]{{\color{red}#1}}
+
+\usepackage{hyperref}
+\usepackage{nameref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=black,
+    urlcolor=niceblue,
+    citecolor=niceblue,
+    linkbordercolor=white
+}
+
+% ---- Figures, floats, tables -----------------------------------------------
+\usepackage{epsfig}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage{placeins}     % \FloatBarrier
+\usepackage{booktabs}     % \toprule \midrule \bottomrule
+\usepackage{pdflscape}    % landscape pages for wide tables/figures
+\usepackage{array}
+
+% ---- Text layout helpers ---------------------------------------------------
+\usepackage{xspace}
+\usepackage{ragged2e}
+\usepackage{comment}
+\usepackage{hanging}      % hanging-indent reference list (SI)
+\usepackage{setspace}
+\usepackage{authblk}      % author / affiliation block
+
+% ---- Line numbers (for review) ---------------------------------------------
+\usepackage{lineno}
+% Make amsmath align/gather environments play nicely with line numbers:
+\makeatletter
+\let\LN@align\align
+\let\LN@endalign\endalign
+\renewcommand{\align}{\linenomath\LN@align}
+\renewcommand{\endalign}{\LN@endalign\endlinenomath}
+\let\LN@gather\gather
+\let\LN@endgather\endgather
+\renewcommand{\gather}{\linenomath\LN@gather}
+\renewcommand{\endgather}{\LN@endgather\endlinenomath}
+\makeatother
+\renewcommand\linenumberfont{\normalfont\bfseries\small\color{darkgrey}}
+\modulolinenumbers[2]     % show every 2nd line number
+
+% ---- Avoid orphan/widow lines ----------------------------------------------
+\widowpenalty10000
+\clubpenalty10000
+
+% ---- Bibliography ----------------------------------------------------------
+\usepackage[round]{natbib}
+\bibliographystyle{fishfish}
+\bibpunct{(}{)}{,}{a}{}{,}
+
+% ---- Fonts (requires XeLaTeX/LuaLaTeX) -------------------------------------
+\usepackage{fontspec}
+\setmainfont{Libertinus Serif}   % or: \setmainfont{Times New Roman}
+
+% ---- Custom column types for nicely wrapped table cells --------------------
+\newcolumntype{^}{>{\currentrowstyle}}
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcolumntype{C}[1]{>{\PreserveBackslash\centering}p{#1}}
+\newcolumntype{R}[1]{>{\PreserveBackslash\raggedleft}p{#1}}
+\newcolumntype{L}[1]{>{\PreserveBackslash\raggedright}p{#1}}
+
+% ---- A slightly bolder title font ------------------------------------------
+\newcommand*{\TitleFont}{%
+      \usefont{\encodingdefault}{\rmdefault}{b}{n}%
+      \fontsize{13}{15}%
+      \selectfont}
+
+% ---- Cross-reference helpers for reviewer line references ------------------
+\newcommand{\R}[1]{\label{#1}\linelabel{#1}}
+\newcommand{\lr}[1]{line~\lineref{#1}}
+
+\date{}
+
+% ============================================================================
+\begin{document}
+\begin{spacing}{2}   % double spacing; change to {1} or use \onehalfspacing
+
+% ---- TITLE / AUTHOR BLOCK --------------------------------------------------
+\noindent
+%\textbf{Journal Name}
+
+\noindent
+\textbf{Research Article}   % e.g. Research Article
+
+\noindent
+\textbf{Habitat, not connectivity, drives cockle distribution in a coastal fjord}
+
+\noindent
+\textbf{Authors}: Federico Maioli$^{1*}$, Ane Pastor Rollan$^{1}$, Flemming Thorbjørn Hansen$^{2}$, Isabelle Johansson$^{1}$, Camille Saurel$^{1}$, Pedro S. Freitas$^{1}$, Martin Lindegren$^{1}$
+
+% tentative order
+
+\noindent
+
+$^1$National Institute of Aquatic Resources (DTU Aqua), Technical University of Denmark, Kgs. Lyngby, Denmark
+
+\noindent
+
+$^2$DHI, Hørsholm, Denmark
+
+
+\noindent
+\textbf{*Corresponding author}: \href{mailto:fedma@aqua.dtu.dk}{fedma@aqua.dtu.dk}
+
+%\noindent
+%\textbf{ORCID:} First A. Author (0000-0000-0000-0000), Second B. Author (0000-0000-0000-0000).
+
+% Turn line numbers on for review copies; comment out for clean copies.
+\linenumbers
+\setcounter{secnumdepth}{0}   % remove section numbers
+\clearpage
+
+% ---- ABSTRACT --------------------------------------------------------------
+\section{Abstract}
+% ~150--300 words. State the question, the data/approach, the key findings,
+% and why they matter.
+Correlative species distribution models for sessile marine invertebrates generally assume unrestricted larval access to all suitable habitat, yet propagule supply is computable from biophysical transport models and is rarely tested as a predictor. We combined a X station survey of the common cockle \textit{Cerastoderma edule} biomass in the Limfjorden, Denmark, with a particle-tracking simulation of larval dispersal to ask whether connectivity metrics improve a habitat-based spatial GLMM of cockle standing stock. Environmental predictors — depth, salinity, temperature, oxygen — explained [X]\% of the deviance, while connectivity metrics added [Y] percentage points and had mostly negative coefficients. The modelled supply field was near-uniform across the basin (among-site SD of log supply = [S]) and correlated with the environmental gradient (r = [R]); simulation shows that under these conditions an effect of ecologically plausible size would be undetectable regardless of survey effort. Independent genetic and agent-based-modelling evidence that the Limfjorden is a single well-connected unit supports a species-sorting interpretation in which post-settlement processes, not larval delivery, set adult distribution. Rather than a case against connectivity in distribution models, we present two computable diagnostics — the among-site spread of modelled supply and its collinearity with environmental predictors — that indicate in advance whether a connectivity covariate can inform a distribution model in a given system
+
+\vspace*{\fill}
+\noindent
+Keywords:
+Keyword one,
+Keyword two,
+Keyword three,
+Keyword four,
+Keyword five\\
+\clearpage
+
+% ---- INTRODUCTION ----------------------------------------------------------
+\section{Introduction}
+
+% ---- METHODS ---------------------------------------------------------------
+\section{Methods}
+
+\subsection{Study system}
+@ Pedro
+@ Isabel
+@ Camille
+@ Ane
+
+\subsection{Cockle survey}
+@ Pedro
+
+\subsection{Environmental predictors}
+@ Flemming
+@ Pedro
+
+\subsection{Larval transport and connectivity metrics}
+@ Ane
+@ Flemming
+
+
+Larval dispersal was simulated with a biophysical individual-based model that
+couples a hydrodynamic ocean model with Lagrangian particle tracking and a
+larval pelagic-duration/behaviour module \citep{yourABMref}. The study area was
+discretized into 2x2 km grid cells. Virtual larvae were released from each cell and tracked until settlement; aggregating over all release events yielded a connectivity matrix $C$, where $C_{jk}$ is the number of larvae released in cell $j$ that settled in cell $k$, together with a release vector $R_j$.
+
+We converted these into a flow matrix $F$ of settlement probabilities,
+\begin{equation}
+F_{jk} = \frac{C_{jk}}{R_j}, \qquad 0 \le \sum_{k} F_{jk} \le 1,
+\end{equation}
+so that $F_{jk}$ is the probability that a larva released in source cell $j$
+settles in sink cell $k$ (rows index sources, columns sinks). We treated $F$ as
+the weighted adjacency matrix of a directed dispersal network.
+
+For each cell $k$ we computed the weighted in-strength, local retention, and
+eigenvector centrality,
+\begin{align}
+I_k &= \sum_{j} F_{jk}, \\
+L_k &= F_{kk}, \\
+v_k &: \; \mathbf{v}\ \text{the leading eigenvector of}\ F,\ \ \max_k v_k = 1,
+\end{align}
+...
+
+
+\subsection{Models}
+
+% Requires \usepackage{amsmath}. Citations use \citep{} (natbib/biblatex).
+
+\subsection{Species distribution models}
+
+We related cockle occurrence and biomass to environmental conditions, sampling gear, and larval connectivity using spatial generalized linear mixed models fitted with the \texttt{sdmTMB} package \citep{anderson2024} in \textsf{R}.For each survey location $i$ we modelled two responses: the presence--absence indicator $z_i\in\{0,1\}$ and the biomass density $y_i\ge 0$ (g\,m$^{-2}$).
+
+Presence was modelled with a Bernoulli distribution and a logit link,
+\begin{equation}
+z_i \sim \mathrm{Bernoulli}(\pi_i), \qquad \operatorname{logit}(\pi_i) = \eta_i ,
+\end{equation}
+and biomass with a Tweedie distribution (compound Poisson--gamma, power
+parameter $1<p<2$) and a log link,
+\begin{equation}
+y_i \sim \operatorname{Tweedie}(\mu_i,\phi,p), \qquad \log(\mu_i) = \eta_i .
+\end{equation}
+
+Both responses shared the same linear predictor,
+\begin{equation}
+\eta_i = \beta_0 + \gamma_{g(i)} + \sum_{k=1}^{5}\beta_k\,x_{ik} + \theta\,c_i + \omega_{s_i},
+\end{equation}
+where $\gamma_{g(i)}$ is the gear effect, $x_{ik}$ are the five (standardized)
+environmental covariates, $c_i$ is connectivity, and $\omega_{s_i}$ is a spatial
+random field.
+
+
+\subsection{Software}
+We fit models in \textsf{R} \citep{example2020} using the \texttt{package}
+package.
+
+% ---- RESULTS ---------------------------------------------------------------
+\section{Results}
+\subsection{Habitat explains what can be explained}
+
+Habitat alone accounted for [X]\% of the deviance in cockle biomass. Biomass rose with [predictor 1] ($\hat{\beta} = [\ ] \pm [\mathrm{SE}]$ per SD) and fell with [predictor 2] ($\hat{\beta} = [\ ] \pm [\mathrm{SE}]$), so the densest beds sat [e.g.\ in the more saline western basin, on finer sediment]. Cockles are known to track sediment and salinity in just this way \citep{Peteiro2018,Compton2013}.
+
+\subsection{Larval supply explains almost nothing}
+
+Adding the connectivity block moved deviance explained from [X]\% to [X+Y]\% and AIC by [ ] units. Every connectivity coefficient was small and every confidence interval spanned zero: incoming log supply ($\hat{\beta} = [\ ] \pm [\mathrm{SE}]$), self-recruitment ($\hat{\beta} = [\ ] \pm [\mathrm{SE}]$), and eigenvector centrality ($\hat{\beta} = [\ ] \pm [\mathrm{SE}]$). Connectivity alone accounted for [Z]\% of deviance---[note whether this is more than trivial, since a connectivity-only model can look informative purely by borrowing the habitat gradient, which Section~\ref{sec:variance_partitioning} unpicks].
+
+The result did not depend on how we ran the dispersal model. Across [K] larval parameterisations, the incoming-supply coefficient ranged from [ ] to [ ]. [If one parameterisation broke ranks, report it here rather than in the Supplementary Material, as it is biologically interesting.] Nor did it depend on where connectivity entered the model: building the spatial covariance from the connectivity matrix rather than from geography [changed the fit by [ ] AIC units / left the fit essentially unchanged]. Connectivity coefficients were [unmoved by / materially changed by] the spatial term ([both sets of estimates]).
+
+\subsection{The dispersal model delivers larvae almost everywhere}
+
+Modelled incoming supply spanned [ ] to [ ] on the log scale across [N] stations, with a standard deviation of [SD$_C$]. [If small, state it explicitly: larval supply was close to uniform across the basin.] Self-recruitment averaged [ ]\% of incoming supply, and [state whether any station fell below a plausible supply threshold]. This is the well-connected circulation regime that agent-based modelling and genetics had already inferred for the Limfjorden \citep{Pastor2020,Pastor2023}, now expressed quantitatively.
+
+\subsection{Supply and habitat share the same axis}
+\label{sec:variance_partitioning}
+
+Supply correlated with [predictor 1] at $r = [R]$, and log supply carried a variance inflation factor of [VIF] in the combined model. [If $R$ is high:] Circulation and the salinity and sediment gradients all run west--east in this fjord, so supply and habitat are not independent predictors, and their separate contributions are only partly identifiable. Variance partitioning assigned [ ]\% uniquely to habitat, [ ]\% uniquely to connectivity, and [ ]\% jointly to the two.
+
+% ---- DISCUSSION ------------------------------------------------------------
+\section{Discussion}
+
+
+% ---- BACK MATTER -----------------------------------------------------------
+\section{Acknowledgements}
+@ Pedro
+@ Flemming
+@ Martin
+
+\section{Author contributions}
+Describe contributions (e.g. CRediT roles).
+
+\section{Conflicts of interest}
+The authors declare that they have no conflict of interest.
+
+\section{Data Availability Statement}
+Code and data are available at \url{https://github.com/user/repo} and archived
+at \url{https://doi.org/xxxxx}.
+
+\section{Funding}
+Funding sources and grant numbers.
+
+\bibliography{bib}
+
+\end{spacing}
+\clearpage
+
+% ============================================================================
+%  TABLES
+% ============================================================================
+\section{Tables}
+
+\begin{table}[ht]
+\centering
+\caption{Model selection for cockle presence and biomass, ordered by biomass $\Delta$AIC. Values are $\Delta$AIC relative to the best model within each response (lower is better; the best model in each column is shown in bold). Every model includes a survey (gear) intercept; environment comprises depth, temperature, oxygen, salinity, and maximum shear stress; space is a spatial random field; the connectivity metric is given in parentheses.}
+\label{tab:model-selection}
+\begin{tabular}{lrr}
+\toprule
+Model & Presence $\Delta$AIC & Biomass $\Delta$AIC \\
+\midrule
+Space + Environment + Connectivity (in-strength) & 0.0 & 0.0 \\
+Space + Environment + Connectivity (biomass supply, log) & 0.9 & 2.0 \\
+Space + Environment + Connectivity (eigenvector centrality) & 9.5 & 4.7 \\
+Space + Environment & 8.7 & 16.1 \\
+Space + Connectivity (in-strength) & 96.1 & 107.9 \\
+Space + Connectivity (eigenvector centrality) & 104.3 & 110.1 \\
+Space + Connectivity (biomass supply, log) & 99.4 & 112.3 \\
+Space & 105.8 & 128.6 \\
+Environment + Connectivity (biomass supply, log) & 1451.9 & 1126.0 \\
+Environment + Connectivity (in-strength) & 1461.4 & 1130.8 \\
+Environment + Connectivity (eigenvector centrality) & 1500.4 & 1135.5 \\
+Environment & 1500.4 & 1147.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Variance partitioning of cockle biomass from the spatial Tweedie SDM (Nakagawa \& Schielzeth marginal / conditional $R^2$). The spatial field and the three fixed-effect blocks together give the conditional $R^2$ (84.4\%); the fixed blocks alone give the marginal $R^2$ (24.0\%). Shares are percentages of total variance and sum to 100\%.}
+\label{tab:variance-partitioning}
+\begin{tabular}{lr}
+\toprule
+Component & Variance explained (\%) \\
+\midrule
+Spatial field & 60.4 \\
+Environment & 17.1 \\
+Survey (gear) & 4.5 \\
+Connectivity & 2.5 \\
+\midrule
+Unexplained & 15.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\clearpage
+
+% ============================================================================
+%  FIGURES
+% ============================================================================
+\section{Figures}
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/example.pdf}
+    \caption{Example figure caption.}
+    \label{fig:example}
+\end{figure}
+\clearpage
+
+% ============================================================================
+%  SUPPORTING INFORMATION
+%  Figures/tables are relabelled S1, S2, ... and page/line counters reset.
+% ============================================================================
+\renewcommand{\thetable}{S\arabic{table}}
+\setcounter{table}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\setcounter{figure}{0}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+\renewcommand{\theHfigure}{S\arabic{figure}}
+\renewcommand{\theHtable}{S\arabic{table}}
+\onehalfspacing
+\resetlinenumber
+\setcounter{page}{1}
+\setcounter{equation}{0}
+\nolinenumbers
+
+\begin{Center}
+\section{Supporting Information}
+\end{Center}
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.65\textwidth]{figures/supp/example_supp.pdf}
+    \caption{Example supporting figure.}
+    \label{fig:example_supp}
+\end{figure}
+\FloatBarrier
+\clearpage
+
+\end{document}
