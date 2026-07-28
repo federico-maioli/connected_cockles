@@ -155,7 +155,10 @@ stopifnot(nrow(grid) == nrow(flow), !anyNA(grid$avg_biomass), !anyNA(grid$prob_p
 
 saveRDS(grid, here("data", "derived", "avg_biomass_grid.rds"))
 
-# 10 Plot predictions ----
+# 10 Visual check of the predictions ----
+# diagnostic only, not saved: a quick look at whether the predicted surfaces are
+# sensible before they are fed to 04. Publication figures are built by the
+# fig*/figS* scripts from the saved outputs, never here.
 # tiles for the wet cells, coastline drawn on top; two panels share the extent
 plot_dat <- grid |> filter(!is.na(depth))
 xlim <- range(grid$x_utm)

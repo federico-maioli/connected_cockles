@@ -8,8 +8,8 @@
 # link scale, so effects are comparable within a response.
 #
 # Writes two files from the same builder:
-#   fig2_coefficients.png            biomass (Tweedie)  - main text
-#   figS_coefficients_presence.png   presence (binomial) - supplementary
+#   fig2_coeff.png             biomass (Tweedie)   - main text
+#   figS3_coeff_presence.png   presence (binomial) - supplementary
 
 library(tidyverse)
 library(here)

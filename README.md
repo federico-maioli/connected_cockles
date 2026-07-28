@@ -9,7 +9,9 @@ scripts, figures, tables, and the manuscript only.
 ## Layout
 
 ```
-R/            analysis scripts (numbered = pipeline order)
+R/
+  00_..07_     analysis; write only to data/derived/
+  fig*/tab*    outputs; write only to output/
 data/         local only, never tracked
   raw/        read-only inputs; nothing in here is written by code
   derived/    everything the pipeline writes; safe to delete and rebuild
@@ -45,12 +47,21 @@ Written by the pipeline, in this order: `cockles_clean.rds`, `spatial_grid.rds`,
 `weighted_flow_matrix_*.rds`, `connectivity_weighted_*.rds`,
 `connectivity_by_year.rds`, `cockles_connectivity.rds`,
 `cockles_connectivity_sensitivity.rds`, `sdm_fits.rds`,
-`sdm_model_comparison.rds`.
+`sdm_model_comparison.rds`, `variance_partition.rds`.
 
-## Pipeline (`R/`)
+## How the scripts are split
 
-Run in numerical order; the figure and table scripts can be run once `06` has
-produced the fits.
+**Numbered scripts (`00`-`07`) do the analysis and write only to
+`data/derived/`. Unnumbered scripts read those artifacts and write only to
+`output/`.** Publication figures get adjusted far more often than the analysis
+behind them, and `06` fits 36 models, so changing an axis label must never
+require refitting. Each output script is named for the artifact it produces.
+
+The one exception is diagnostics: the residual QQ plot and mesh plot in `03`
+stay inline, because they exist to judge whether the fit is sound. They are
+never saved.
+
+### Analysis (`00`-`07`) - run in order
 
 | Script | Purpose |
 |--------|---------|
@@ -60,19 +71,26 @@ produced the fits.
 | `03_predict_avg_biomass.R` | Predict mean biomass / presence onto the grid |
 | `04_weight_flow_matrix.R` | Weighted supply and structural graph metrics, per flow matrix |
 | `05_extract_connectivity.R` | Attach metrics to survey observations (+ per-year sensitivity set) |
-| `05b_plot_connectivity.R` | Supplementary map of the connectivity metrics |
 | `06_fit_sdm.R` | Fit and compare the spatial SDMs (presence, biomass) |
-| `07_variance_partitioning.R` | Variance partition, with and without the spatial field |
-| `fig1_study_area.R` | `fig1_map` — study area and connectivity clusters |
-| `fig2_coefficients.R` | `fig2_coeff` (biomass) and `figS3_coeff_presence` |
-| `fig_covariates.R` | `figS1_covariates` — covariate maps |
-| `figS_space_confounding.R` | `figS5_space_confounding` — connectivity with vs without the spatial field |
-| `figS_connectivity_biomass_correlation.R` | `figS4_year_sensitivity` — sensitivity to the dispersal year |
-| `tab_model_selection.R` | `tab1_model_selection` (LaTeX) |
+| `07_variance_partitioning.R` | Variance shares per metric, with and without the spatial field |
 
-`07_variance_partitioning.R` also writes `fig3_variance`,
-`figS6_variance_nospace` and `tab2_variance_partitioning`;
-`05b_plot_connectivity.R` writes `figS2_connectivity_metrics`.
+### Outputs - run in any order once `06` and `07` have run
+
+| Script | Writes |
+|--------|--------|
+| `fig1_map.R` | `figs/fig1_map.png` |
+| `fig2_coeff.R` | `figs/fig2_coeff.png` and `figs/figS3_coeff_presence.png` |
+| `fig3_variance.R` | `figs/fig3_variance.png` and `figs/figS6_variance_nospace.png` |
+| `figS1_covariates.R` | `figs/figS1_covariates.png` |
+| `figS2_connectivity_metrics.R` | `figs/figS2_connectivity_metrics.png` |
+| `figS4_year_sensitivity.R` | `figs/figS4_year_sensitivity.png` |
+| `figS5_space_confounding.R` | `figs/figS5_space_confounding.png` |
+| `tab1_model_selection.R` | `tables/tab1_model_selection.tex` |
+| `tab2_variance.R` | `tables/tab2_variance_partitioning.tex` |
+
+Two scripts write a main-text figure and its supplementary counterpart, since
+each pair shares a builder: `fig2_coeff.R` (biomass / presence) and
+`fig3_variance.R` (with / without the spatial field).
 
 ## Connectivity metrics
 
