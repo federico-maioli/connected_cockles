@@ -135,11 +135,11 @@ partition_plot <- function(d) {
 p_space <- partition_plot(filter(parts, structure == "space_env_conn"))
 p_nospace <- partition_plot(filter(parts, structure == "env_conn"))
 
-dir.create(here("output"), showWarnings = FALSE)
-ggsave(here("output", "fig3_variance_partitioning.png"), p_space,
+dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "fig3_variance.png"), p_space,
   width = 9.5, height = 4.2, dpi = 600, bg = "white"
 )
-ggsave(here("output", "figS_variance_partitioning_nospace.png"), p_nospace,
+ggsave(here("output", "figs", "figS6_variance_nospace.png"), p_nospace,
   width = 9.5, height = 4.2, dpi = 600, bg = "white"
 )
 
@@ -181,4 +181,4 @@ latex <- c(
 )
 
 dir.create(here("output", "tables"), showWarnings = FALSE, recursive = TRUE)
-writeLines(latex, here("output", "tables", "variance_partitioning.tex"))
+writeLines(latex, here("output", "tables", "tab2_variance_partitioning.tex"))

@@ -96,8 +96,8 @@ p <- ggplot(coefs, aes(estimate, metric, colour = structure)) +
   )
 
 # 05 Save ----
-dir.create(here("output"), showWarnings = FALSE)
-ggsave(here("output", "figS_space_confounding.png"), p,
+dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "figS5_space_confounding.png"), p,
   width = 9, height = 4.5, dpi = 600, bg = "white"
 )
 

@@ -106,8 +106,8 @@ panels <- map(metrics, metric_panel)
 fig <- wrap_plots(panels, ncol = 3) +
   plot_annotation(tag_levels = "a")
 
-dir.create(here("output"), showWarnings = FALSE)
+dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
 ggsave(
-  here("output", "fig_connectivity_metrics.png"), fig,
+  here("output", "figs", "figS2_connectivity_metrics.png"), fig,
   width = 13, height = 5.6, dpi = 600, bg = "white"
 )

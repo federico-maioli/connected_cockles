@@ -79,7 +79,7 @@ p <- ggplot(yearly, aes(year, rho)) +
   )
 
 # 05 Save ----
-dir.create(here("output"), showWarnings = FALSE)
-ggsave(here("output", "figS_connectivity_biomass_correlation.png"), p,
+dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "figS4_year_sensitivity.png"), p,
   width = 11, height = 3.2, dpi = 600, bg = "white"
 )

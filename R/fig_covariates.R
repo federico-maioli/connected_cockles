@@ -71,5 +71,5 @@ panels <- map(covars, covar_panel)
 fig <- wrap_plots(panels, ncol = 3) +
   plot_annotation(tag_levels = "a")
 
-dir.create(here("output"), showWarnings = FALSE)
-ggsave(here("output", "fig_covariates.png"), fig, width = 13, height = 6.5, dpi = 600, bg = "white")
+dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "figS1_covariates.png"), fig, width = 13, height = 6.5, dpi = 600, bg = "white")

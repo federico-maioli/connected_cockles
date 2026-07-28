@@ -104,10 +104,10 @@ p_present <- prep("present") |>
   coef_plot("Standardized coefficient (logit link)")
 
 # 05 Save ----
-dir.create(here("output"), showWarnings = FALSE)
-ggsave(here("output", "fig2_coefficients.png"), p_biomass,
+dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "fig2_coeff.png"), p_biomass,
   width = 8, height = 5.4, dpi = 600, bg = "white"
 )
-ggsave(here("output", "figS_coefficients_presence.png"), p_present,
+ggsave(here("output", "figs", "figS3_coeff_presence.png"), p_present,
   width = 8, height = 5.4, dpi = 600, bg = "white"
 )

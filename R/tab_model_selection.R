@@ -78,4 +78,4 @@ latex <- c(
 
 # 04 Write ----
 dir.create(here("output", "tables"), showWarnings = FALSE, recursive = TRUE)
-writeLines(latex, here("output", "tables", "model_selection.tex"))
+writeLines(latex, here("output", "tables", "tab1_model_selection.tex"))

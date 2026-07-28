@@ -165,5 +165,5 @@ panel_b <- ggplot() +
 fig1 <- wrap_elements(panel_a) + panel_b +
   plot_annotation(tag_levels = "A")
 
-dir.create(here("output"), showWarnings = FALSE)
-ggsave(here("output", "fig1_study_area.png"), fig1, width = 16, height = 6.2, dpi = 600, bg = "white")
+dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "fig1_map.png"), fig1, width = 16, height = 6.2, dpi = 600, bg = "white")
