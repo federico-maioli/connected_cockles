@@ -21,7 +21,6 @@ library(tidyverse)
 library(here)
 library(sf)
 library(sdmTMB)
-library(rnaturalearth)
 
 # compatibility shim: sdmTMBextra 0.0.5 calls fmesher::fm_identical_CRS, renamed
 # to fm_crs_is_identical in fmesher >= 0.7; register the old name as an alias.
@@ -80,7 +79,7 @@ models <- model_specs |>
 predictor_sets <- set_names(models$rhs, models$id)
 
 # 01 Load data ----
-dat <- readRDS(here("data", "final", "cockles_connectivity.rds")) |>
+dat <- readRDS(here("data", "derived", "cockles_connectivity.rds")) |>
   mutate(survey = factor(survey))
 
 # 02 Standardise covariates ----
@@ -127,24 +126,46 @@ for (pname in names(predictor_sets)) {
 }
 
 # 05 Coastline barrier mesh ----
-land <- ne_download(scale = 10, type = "land", category = "physical", returnclass = "sf") |>
+# built exactly as in 03: the local coastline (already UTM 32N in metres),
+# cropped to the survey extent with a 30 km margin, an fmesher mesh with a capped
+# maximum edge, and a land barrier so correlation does not cross the headlands
+land_utm <- st_read(
+  here("data", "raw", "boundaries", "land_small_utm", "land_small_utm.shp"),
+  quiet = TRUE
+) |>
   st_make_valid()
-region <- st_bbox(st_transform(
-  st_as_sf(dat |> transmute(x = x_utm * 1000, y = y_utm * 1000), coords = c("x", "y"), crs = 32632),
-  4326
-))
-region["xmin"] <- region["xmin"] - 0.4
-region["ymin"] <- region["ymin"] - 0.4
-region["xmax"] <- region["xmax"] + 0.4
-region["ymax"] <- region["ymax"] + 0.4
-land_region <- suppressWarnings(st_crop(land, region)) |> st_transform(32632)
 
-mesh <- make_mesh(dat, c("x_utm", "y_utm"), cutoff = 1) # 1 km min edge
+margin <- 30000
+region <- st_bbox(
+  c(
+    xmin = min(dat$x_utm) * 1000 - margin,
+    ymin = min(dat$y_utm) * 1000 - margin,
+    xmax = max(dat$x_utm) * 1000 + margin,
+    ymax = max(dat$y_utm) * 1000 + margin
+  ),
+  crs = st_crs(32632)
+)
+land_region <- suppressWarnings(st_crop(land_utm, region))
+
+# spatial range is ~5 km, so a 2 km inner edge resolves the field; 20 km outer
+# offset keeps the boundary away from the data (dat coordinates are in km)
+inla_mesh <- fmesher::fm_mesh_2d_inla(
+  loc = cbind(dat$x_utm, dat$y_utm),
+  max.edge = c(2, 10),
+  offset = c(5, 20),
+  cutoff = 1
+)
+mesh <- make_mesh(dat, c("x_utm", "y_utm"), mesh = inla_mesh)
 barrier_mesh <- sdmTMBextra::add_barrier_mesh(
   mesh, land_region,
   range_fraction = 0.1,
   proj_scaling = 1000,
   plot = FALSE
+)
+cat(
+  "mesh vertices:", mesh$mesh$n,
+  "| water triangles:", length(barrier_mesh$normal_triangles),
+  "| land triangles:", length(barrier_mesh$barrier_triangles), "\n"
 )
 
 # 06 Fit all models ----
@@ -208,5 +229,5 @@ for (rname in names(responses)) {
 }
 
 # 08 Save ----
-saveRDS(fits, here("data", "intermediate", "sdm_fits.rds"))
-saveRDS(comparison, here("data", "final", "sdm_model_comparison.rds"))
+saveRDS(fits, here("data", "derived", "sdm_fits.rds"))
+saveRDS(comparison, here("data", "derived", "sdm_model_comparison.rds"))

@@ -7,9 +7,9 @@ library(sf)
 library(patchwork)
 
 # 01 Data ----
-dat <- readRDS(here("data", "final", "cockles_connectivity.rds")) |>
+dat <- readRDS(here("data", "derived", "cockles_connectivity.rds")) |>
   filter(!is.na(x_utm), !is.na(y_utm))
-water <- st_read(here("data", "extra", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
+water <- st_read(here("data", "raw", "boundaries", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
   st_make_valid() |>
   st_transform(32632)
 

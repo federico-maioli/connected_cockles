@@ -67,8 +67,8 @@ partition_fit <- function(fit, conn_term) {
 
 # 01 Load fits ----
 # only converged models are partitioned
-fits <- readRDS(here("data", "intermediate", "sdm_fits.rds"))
-ok_ids <- readRDS(here("data", "final", "sdm_model_comparison.rds")) |>
+fits <- readRDS(here("data", "derived", "sdm_fits.rds"))
+ok_ids <- readRDS(here("data", "derived", "sdm_model_comparison.rds")) |>
   filter(converged) |>
   transmute(id = paste(response, model, sep = "_")) |>
   pull(id)

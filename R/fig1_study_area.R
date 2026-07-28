@@ -19,14 +19,14 @@ land_fill <- "#e6e6e6"
 land_line <- "#bcbcbc"
 
 # 01 Shared data ----
-dat <- readRDS(here("data", "final", "cockles_connectivity.rds")) |>
+dat <- readRDS(here("data", "derived", "cockles_connectivity.rds")) |>
   filter(!is.na(biomass), !is.na(x_utm), !is.na(y_utm))
-coastline <- st_read(here("data", "extra", "land_small_utm", "land_small_utm.shp"), quiet = TRUE) |>
+coastline <- st_read(here("data", "raw", "boundaries", "land_small_utm", "land_small_utm.shp"), quiet = TRUE) |>
   st_make_valid()
-grid <- readRDS(here("data", "final", "connectivity_weighted.rds"))
-flow <- readRDS(here("data", "intermediate", "flow_matrix_all.rds"))
+grid <- readRDS(here("data", "derived", "connectivity_weighted_all.rds"))
+flow <- readRDS(here("data", "derived", "flow_matrix_all.rds"))
 # Limfjord water outline for the fjord shape (the main-map coastline)
-water <- st_read(here("data", "extra", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
+water <- st_read(here("data", "raw", "boundaries", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
   st_make_valid() |>
   st_transform(32632)
 

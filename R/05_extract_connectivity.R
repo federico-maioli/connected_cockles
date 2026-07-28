@@ -18,7 +18,7 @@ library(terra)
 
 # rasterise one run's connectivity grid and sample it at the survey points
 extract_conn <- function(run, pts, conn_vars) {
-  grid <- readRDS(here("data", "final", paste0("connectivity_weighted_", run, ".rds")))
+  grid <- readRDS(here("data", "derived", paste0("connectivity_weighted_", run, ".rds")))
   conn_rast <- rast(
     as.data.frame(grid[, c("x_utm", "y_utm", conn_vars)]),
     type = "xyz",
@@ -29,7 +29,7 @@ extract_conn <- function(run, pts, conn_vars) {
 }
 
 # 01 Load inputs ----
-dat <- readRDS(here("data", "final", "cockles_clean.rds"))
+dat <- readRDS(here("data", "derived", "cockles_clean.rds"))
 
 # connectivity metrics to attach to each observation
 # the cell id comes along too, so each observation can be traced back to its
@@ -55,7 +55,7 @@ dat_all <- bind_cols(dat, extract_conn("all", pts, conn_vars))
 cat("observations:", nrow(dat_all), "| outside the grid:", sum(is.na(dat_all$grid_id)), "\n")
 cat("grid cells hit:", n_distinct(dat_all$grid_id, na.rm = TRUE), "\n")
 
-saveRDS(dat_all, here("data", "final", "cockles_connectivity.rds"))
+saveRDS(dat_all, here("data", "derived", "cockles_connectivity.rds"))
 
 # 04 Sensitivity dataset: every run stacked ----
 # one block of observations per run, tagged by `run`, so a model can be refitted
@@ -67,7 +67,7 @@ sens <- runs |>
 
 cat("\nsensitivity rows:", nrow(sens), "=", n_distinct(sens$run), "runs x", nrow(dat), "observations\n")
 
-saveRDS(sens, here("data", "final", "cockles_connectivity_sensitivity.rds"))
+saveRDS(sens, here("data", "derived", "cockles_connectivity_sensitivity.rds"))
 
 # 05 Spread across runs ----
 # how much does each metric move at the survey points when the dispersal year changes?

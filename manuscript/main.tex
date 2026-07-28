@@ -156,7 +156,7 @@ $^2$DHI, Hørsholm, Denmark
 \section{Abstract}
 % ~150--300 words. State the question, the data/approach, the key findings,
 % and why they matter.
-Correlative species distribution models for sessile marine invertebrates generally assume unrestricted larval access to all suitable habitat, yet propagule supply is computable from biophysical transport models and is rarely tested as a predictor. We combined a 7{,}468-station survey of the common cockle \textit{Cerastoderma edule} in the Limfjorden, Denmark (2018--2025), with a particle-tracking simulation of larval dispersal to ask whether connectivity metrics improve a habitat-based spatial GLMM of cockle standing stock. A spatial random field accounted for 60.4\% of the total variance in biomass and the environmental predictors --- depth, salinity, temperature, oxygen and shear stress --- for 17.1\%, whereas five alternative connectivity metrics added only 1.5--4.5\%, the smallest explained component in every model. Connectivity did improve fit ($\Delta$AIC = 16.1), but entered with consistently negative coefficients (in-strength $\hat{\beta} = -0.47$, 95\% CI $-0.69$ to $-0.25$), opposite in sign to a larval-subsidy expectation, and had almost no marginal association with biomass ($|\rho| < 0.12$ for every metric). Modelled supply was strongly collinear with the fjord's habitat geography ($\rho = 0.59$ with depth, $-0.67$ with salinity), so the best-connected cells are the deep, brackish inner basins in which cockles were least abundant. The result was insensitive to which year of the dispersal simulation was used, but two purely topological metrics reversed sign when the spatial field was removed. \ml{[Optional, if the co-authors want the species-sorting argument: independent genetic and agent-based-modelling evidence that the Limfjorden is a single well-connected unit would support an interpretation in which post-settlement processes, not larval delivery, set adult distribution.]} Rather than a case against connectivity in distribution models, we present two computable diagnostics --- the collinearity of modelled supply with the environmental predictors, and the stability of connectivity coefficients to a spatial random field --- that indicate whether a connectivity covariate can inform a distribution model in a given system.
+Correlative species distribution models for sessile marine invertebrates generally assume unrestricted larval access to all suitable habitat, yet propagule supply is computable from biophysical transport models and is rarely tested as a predictor. We combined a 7{,}468-station survey of the common cockle \textit{Cerastoderma edule} in the Limfjorden, Denmark (2018--2025), with a particle-tracking simulation of larval dispersal to ask whether connectivity metrics improve a habitat-based spatial GLMM of cockle standing stock. A spatial random field accounted for 61\% of the total variance in biomass and the environmental predictors --- depth, salinity, temperature, oxygen and shear stress --- for 16\%, whereas five alternative connectivity metrics added only 1.0--2.9\%, the smallest explained component in every model. Connectivity did improve fit ($\Delta$AIC = 11.6), but entered with consistently negative coefficients (in-strength $\hat{\beta} = -0.41$, 95\% CI $-0.63$ to $-0.18$), opposite in sign to a larval-subsidy expectation, and had almost no marginal association with biomass ($|\rho| < 0.12$ for every metric). Modelled supply was strongly collinear with the fjord's habitat geography ($\rho = 0.59$ with depth, $-0.67$ with salinity), so the best-connected cells are the deep, brackish inner basins in which cockles were least abundant. The result was insensitive to which year of the dispersal simulation was used, but two purely topological metrics reversed sign when the spatial field was removed. \ml{[Optional, if the co-authors want the species-sorting argument: independent genetic and agent-based-modelling evidence that the Limfjorden is a single well-connected unit would support an interpretation in which post-settlement processes, not larval delivery, set adult distribution.]} Rather than a case against connectivity in distribution models, we present two computable diagnostics --- the collinearity of modelled supply with the environmental predictors, and the stability of connectivity coefficients to a spatial random field --- that indicate whether a connectivity covariate can inform a distribution model in a given system.
 
 \vspace*{\fill}
 \noindent
@@ -253,47 +253,48 @@ stations.
 
 Model selection was unambiguous about the ranking of the three blocks
 (Table~\ref{tab:model-selection}). Removing the spatial random field was by far
-the most costly simplification: the best non-spatial model was 1{,}123.5 AIC
+the most costly simplification: the best non-spatial model was 1{,}125.2 AIC
 units worse than the best spatial one. Removing the environmental block cost
-128.6 units, and removing connectivity cost 16.1 units. The best-supported
-biomass model was Space + Environment + Connectivity with in-strength as the
-connectivity term, and the same structure was best for presence.
+125.6 units, and removing connectivity cost 11.6 units. The best-supported
+biomass model was Space + Environment + Connectivity with closeness centrality
+as the connectivity term, with in-strength 1.2 units behind; for presence the
+in-strength model was best. All 36 fitted models converged.
 
-Within that model, biomass fell with depth
-($\hat{\beta} = -1.11 \pm 0.14$ per SD) and with maximum shear stress
-($\hat{\beta} = -1.41 \pm 0.17$), and rose with salinity
-($\hat{\beta} = 1.41 \pm 0.41$); the oxygen effect was weaker
-($\hat{\beta} = -0.45 \pm 0.23$) and temperature was indistinguishable from zero
-($\hat{\beta} = 0.21 \pm 0.30$). The densest beds therefore sat in the shallow,
+Within the best biomass model, biomass fell with depth
+($\hat{\beta} = -1.12 \pm 0.14$ per SD) and with maximum shear stress
+($\hat{\beta} = -1.52 \pm 0.18$), and rose with salinity
+($\hat{\beta} = 1.39 \pm 0.44$); the oxygen effect was weaker
+($\hat{\beta} = -0.54 \pm 0.24$) and temperature was indistinguishable from zero
+($\hat{\beta} = 0.15 \pm 0.36$). The densest beds therefore sat in the shallow,
 saline, low-energy parts of the fjord. The spatial field had a Mat\'ern range of
-4.8~km (95\% CI 3.6--6.3), i.e.\ residual spatial structure decayed over a
-distance of roughly two grid cells.
+5.4~km, i.e.\ residual spatial structure decayed over a distance of roughly two
+to three grid cells.
 
 Variance partitioning (Table~\ref{tab:variance-partitioning},
-Fig.~\ref{fig:variance}) put the conditional $R^2$ at 84.4\% and the marginal
-(fixed-effects) $R^2$ at 24.0\%. The spatial field accounted for 60.4\% of total
-variance, environment 17.1\%, survey gear 4.5\% and connectivity 2.5\%, with
-15.6\% unexplained. This ordering was stable across all five connectivity
-metrics (spatial field 59.4--64.7\%, environment 15.4--18.2\%, connectivity
-1.5--4.5\%).
+Fig.~\ref{fig:variance}) put the conditional $R^2$ at 84.5\% and the marginal
+(fixed-effects) $R^2$ at 22.5\% on average across metrics. For the in-strength
+model the spatial field accounted for 61.2\% of total variance, environment
+16.2\%, survey gear 4.7\% and connectivity 1.8\%, with 16.2\% unexplained. This
+ordering was stable across all five connectivity metrics (spatial field
+60.3--64.9\%, environment 15.1--17.0\%, connectivity 1.0--2.9\%).
 
 \subsection{Connectivity contributes little, and with the opposite sign}
 
 Connectivity improved the model, but modestly and in the direction opposite to a
 larval-subsidy expectation. All five metrics entered the biomass model with
 negative coefficients whose confidence intervals excluded zero
-(Fig.~\ref{fig:coefficients}): in-strength
-$\hat{\beta} = -0.47$ (95\% CI $-0.69$, $-0.25$), biomass in-strength (log)
-$-0.45$ ($-0.67$, $-0.23$), eigenvector centrality $-0.68$ ($-1.04$, $-0.31$),
-in-degree $-0.72$ ($-1.22$, $-0.22$), and closeness centrality $-0.90$
-($-1.32$, $-0.47$). Presence behaved the same way for the metrics that converged
-(in-strength $-0.33$; $-0.54$, $-0.13$). Higher modelled larval supply was thus
-associated with \emph{lower} adult cockle biomass, not higher.
+(Fig.~\ref{fig:coefficients}): closeness centrality
+$\hat{\beta} = -0.84$ (95\% CI $-1.30$, $-0.39$), in-degree $-0.63$ ($-1.15$,
+$-0.10$), eigenvector centrality $-0.53$ ($-0.90$, $-0.16$), in-strength $-0.41$
+($-0.63$, $-0.18$), and biomass in-strength (log) $-0.39$ ($-0.62$, $-0.16$).
+Presence behaved the same way (in-strength $-0.31$; $-0.51$, $-0.11$). Higher
+modelled larval supply was thus associated with \emph{lower} adult cockle
+biomass, not higher.
 
 The effect was also small relative to everything else in the model: at
-1.5--4.5\% of total variance, connectivity was the smallest explained component
+1.0--2.9\% of total variance, connectivity was the smallest explained component
 in every fitted model, below even the survey-gear intercept. The five metrics
-were near-tied on AIC (a spread of 9.8 units across all five), so the data do not
+were near-tied on AIC (a spread of 8.0 units across all five), so the data do not
 distinguish between them.
 
 \subsection{Supply and habitat share the same axis}
@@ -329,15 +330,15 @@ eigenvector centrality the least (0.68).
 
 Dependence on the spatial field was more consequential
 (Fig.~\ref{fig:space_confounding}). Refitting without the field left the sign of
-in-strength ($-0.47 \rightarrow -0.30$), biomass in-strength
-($-0.45 \rightarrow -0.34$) and eigenvector centrality
-($-0.68 \rightarrow -0.44$) unchanged, with magnitudes shrinking by 25--35\%. For
-in-degree ($-0.72 \rightarrow +0.30$) and closeness centrality
-($-0.90 \rightarrow +0.36$), however, the coefficient reversed sign. The two
+in-strength ($-0.41 \rightarrow -0.30$), biomass in-strength
+($-0.39 \rightarrow -0.34$) and eigenvector centrality
+($-0.53 \rightarrow -0.44$) unchanged, with magnitudes shrinking by 15--25\%. For
+in-degree ($-0.63 \rightarrow +0.30$) and closeness centrality
+($-0.84 \rightarrow +0.36$), however, the coefficient reversed sign. The two
 purely topological metrics are therefore not separable from broad spatial
 structure, whereas the supply-based metrics are. Dropping the field also
-redistributed variance dramatically, with the survey-gear share rising from 4.5\%
-to roughly 44\% and environment from 17\% to 26--30\%
+redistributed variance dramatically, with the survey-gear share rising from
+roughly 5\% to 44\% and environment from 16\% to 26--30\%
 (Fig.~\ref{fig:variance_nospace}), indicating that gear and location are partly
 aliased in this survey and that the spatial field is what separates them.
 
@@ -477,8 +478,7 @@ Funding sources and grant numbers.
     \includegraphics[width=0.85\textwidth]{figS_coefficients_presence.png}
     \caption{Standardized coefficients of the full Space + Environment +
     Connectivity presence model (Bernoulli, logit link), the counterpart of
-    Fig.~\ref{fig:coefficients}. The in-degree and closeness-centrality models
-    did not converge for this response and are omitted.}
+    Fig.~\ref{fig:coefficients}.}
     \label{fig:coefficients_presence}
 \end{figure}
 \FloatBarrier

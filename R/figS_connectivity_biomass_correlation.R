@@ -14,7 +14,7 @@ library(tidyverse)
 library(here)
 
 # 01 Load the per-run extraction ----
-sens <- readRDS(here("data", "final", "cockles_connectivity_sensitivity.rds")) |>
+sens <- readRDS(here("data", "derived", "cockles_connectivity_sensitivity.rds")) |>
   filter(!is.na(biomass))
 
 metrics <- c(

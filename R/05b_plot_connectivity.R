@@ -45,12 +45,12 @@ metric_panel <- function(col) {
 }
 
 # 01 Data ----
-water <- st_read(here("data", "extra", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
+water <- st_read(here("data", "raw", "boundaries", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
   st_make_valid() |>
   st_transform(32632)
 
 # pooled flow matrix run; only wet cells carry a prediction
-grid <- readRDS(here("data", "final", "connectivity_weighted_all.rds")) |>
+grid <- readRDS(here("data", "derived", "connectivity_weighted_all.rds")) |>
   filter(!is.na(depth))
 
 # keep only cells inside Limfjorden: the ABM domain extends past the fjord into

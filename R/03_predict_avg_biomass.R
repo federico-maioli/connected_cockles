@@ -26,15 +26,15 @@ local({
 
 # 01 Load data ----
 # cleaned survey points already carry raster depth and coordinates in km
-dat <- readRDS(here("data", "final", "cockles_clean.rds")) |>
+dat <- readRDS(here("data", "derived", "cockles_clean.rds")) |>
   filter(!is.na(biomass), !is.na(present), !is.na(depth), !is.na(x_utm), !is.na(y_utm)) |>
   mutate(survey = factor(survey))
 
-grid <- readRDS(here("data", "final", "spatial_grid.rds"))
+grid <- readRDS(here("data", "derived", "spatial_grid.rds"))
 
 # local coastline for the land mask and plots, already UTM 32N in metres
 land_utm <- st_read(
-  here("data", "extra", "land_small_utm", "land_small_utm.shp"),
+  here("data", "raw", "boundaries", "land_small_utm", "land_small_utm.shp"),
   quiet = TRUE
 ) |>
   st_make_valid()
@@ -150,10 +150,10 @@ grid$prob_present[on_land] <- 0
 # 09 Save ----
 # land / masked cells are 0 (not dropped), so the grid keeps all 2340 cells and
 # stays aligned cell-for-cell with the flow matrix
-flow <- readRDS(here("data", "intermediate", "flow_matrix_all.rds"))
+flow <- readRDS(here("data", "derived", "flow_matrix_all.rds"))
 stopifnot(nrow(grid) == nrow(flow), !anyNA(grid$avg_biomass), !anyNA(grid$prob_present))
 
-saveRDS(grid, here("data", "final", "avg_biomass_grid.rds"))
+saveRDS(grid, here("data", "derived", "avg_biomass_grid.rds"))
 
 # 10 Plot predictions ----
 # tiles for the wet cells, coastline drawn on top; two panels share the extent

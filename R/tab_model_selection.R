@@ -8,7 +8,7 @@ library(tidyverse)
 library(here)
 
 # 01 Load comparison ----
-comp <- readRDS(here("data", "final", "sdm_model_comparison.rds"))
+comp <- readRDS(here("data", "derived", "sdm_model_comparison.rds"))
 
 # 02 Build meaningful labels for every model ----
 # base structure name + connectivity type (in parentheses) where present

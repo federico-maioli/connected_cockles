@@ -15,7 +15,7 @@ library(here)
 
 # read a raw connectivity matrix (agent counts, no header)
 read_cmn <- function(label) {
-  path <- here("data", "raw", "connectivity", "cockles_matrices", paste0("ABM_cmn_", label, ".csv"))
+  path <- here("data", "raw", "connectivity", "matrices", paste0("ABM_cmn_", label, ".csv"))
   cmn <- as.matrix(read_csv(path, col_names = FALSE, show_col_types = FALSE))
   dimnames(cmn) <- NULL
   cmn[is.na(cmn)] <- 0
@@ -24,7 +24,7 @@ read_cmn <- function(label) {
 
 # read total release per source node (single column, no header)
 read_release <- function(label) {
-  path <- here("data", "raw", "connectivity", "cockles_release", paste0("ABM_rel_", label, ".csv"))
+  path <- here("data", "raw", "connectivity", "release", paste0("ABM_rel_", label, ".csv"))
   release <- read_csv(path, col_names = FALSE, show_col_types = FALSE)[[1]]
   as.numeric(release)
 }
@@ -41,7 +41,7 @@ compute_flow <- function(cmn, release) {
 
 # 01 Set up ----
 labels <- c(as.character(2010:2016), "all")
-out_dir <- here("data", "intermediate")
+out_dir <- here("data", "derived")
 
 # 02 Compute and save one flow matrix per label ----
 summaries <- map(labels, function(label) {

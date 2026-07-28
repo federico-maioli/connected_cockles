@@ -32,8 +32,8 @@ coef_data <- function(fits, resp, structure, ok_ids) {
 
 # 01 Load fits ----
 # non-converged fits are dropped: their coefficients are not trustworthy
-fits <- readRDS(here("data", "intermediate", "sdm_fits.rds"))
-ok_ids <- readRDS(here("data", "final", "sdm_model_comparison.rds")) |>
+fits <- readRDS(here("data", "derived", "sdm_fits.rds"))
+ok_ids <- readRDS(here("data", "derived", "sdm_model_comparison.rds")) |>
   filter(converged) |>
   transmute(id = paste(response, model, sep = "_")) |>
   pull(id)

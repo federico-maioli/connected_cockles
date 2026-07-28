@@ -1,4 +1,5 @@
 # --- Data (kept local, not versioned) --------------------------------------
+# data/raw is the only irreplaceable part; data/derived is rebuilt by the pipeline
 data/
 
 # Data file formats, wherever they appear
@@ -9,6 +10,8 @@ data/
 *.tif
 *.tiff
 *.nc
+*.gpkg
+*.gdb/
 
 # Shapefiles / GIS
 *.shp

@@ -6,11 +6,11 @@ library(janitor)
 
 # 01 Load data ----
 dat_raw <- st_read(
-  here("data", "raw", "cockles_raw", "DataFrame4spatstats_UTM_v03.shp"),
+  here("data", "raw", "cockles", "DataFrame4spatstats_UTM_v03.shp"),
   quiet = TRUE
 )
 
-depth_rast <- rast(here("data", "env", "ddm_50m.dybde.tiff"))
+depth_rast <- rast(here("data", "raw", "environment", "ddm_50m.dybde.tiff"))
 
 # 02 Extract depth from the depth model ----
 # depth raster (EPSG:3034, positive metres) is in a different CRS than the
@@ -56,5 +56,5 @@ dat <- dat |>
 glimpse(dat)
 
 # 06 Save ----
-out_path <- here("data", "final", "cockles_clean.rds")
+out_path <- here("data", "derived", "cockles_clean.rds")
 saveRDS(dat, out_path)

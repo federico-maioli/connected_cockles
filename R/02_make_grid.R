@@ -37,14 +37,14 @@ grid <- tibble(
 # 03 Sample depth from the depth model ----
 # same 50 m depth model used for the survey points (EPSG:3034, positive metres);
 # reproject the grid centres to the raster and sample depth at each cell
-depth_rast <- rast(here("data", "env", "ddm_50m.dybde.tiff"))
+depth_rast <- rast(here("data", "raw", "environment", "ddm_50m.dybde.tiff"))
 pts <- project(vect(grid, geom = c("x_utm", "y_utm"), crs = paste0("EPSG:", crs_utm)), depth_rast)
 grid$depth <- extract(depth_rast, pts, ID = FALSE)[, 1]
 
 # 04 Check grid matches flow matrix ----
 # one grid cell per flow-matrix row/column so predictions map 1:1 onto connectivity
-flow <- readRDS(here("data", "intermediate", "flow_matrix_all.rds"))
+flow <- readRDS(here("data", "derived", "flow_matrix_all.rds"))
 stopifnot(nrow(grid) == nrow(flow), nrow(grid) == ncol(flow))
 
 # 05 Save ----
-saveRDS(grid, here("data", "final", "spatial_grid.rds"))
+saveRDS(grid, here("data", "derived", "spatial_grid.rds"))

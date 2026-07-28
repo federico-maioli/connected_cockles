@@ -19,9 +19,7 @@
 
 library(tidyverse)
 library(here)
-library(sf)
 library(igraph)
-library(patchwork)
 
 # closeness on a cost-transformed graph: an export probability p becomes a
 # distance log(1 / p), so strong links are short (Costa et al. 2017,
@@ -63,14 +61,14 @@ weight_flow <- function(flow, grid) {
 }
 
 # 01 Load inputs ----
-grid <- readRDS(here("data", "final", "avg_biomass_grid.rds")) # id order, has predictions
+grid <- readRDS(here("data", "derived", "avg_biomass_grid.rds")) # id order, has predictions
 labels <- c(as.character(2010:2016), "all")
 
 # 02 Weight each flow matrix ----
 # saved per label inside the loop so the large weighted matrices are not all
 # held in memory at once
 conn <- map(set_names(labels), function(label) {
-  flow <- readRDS(here("data", "intermediate", paste0("flow_matrix_", label, ".rds")))
+  flow <- readRDS(here("data", "derived", paste0("flow_matrix_", label, ".rds")))
 
   stopifnot(
     nrow(flow) == ncol(flow),
@@ -79,8 +77,8 @@ conn <- map(set_names(labels), function(label) {
   )
 
   out <- weight_flow(flow, grid)
-  saveRDS(out$grid, here("data", "final", paste0("connectivity_weighted_", label, ".rds")))
-  saveRDS(out$wf, here("data", "intermediate", paste0("weighted_flow_matrix_", label, ".rds")))
+  saveRDS(out$grid, here("data", "derived", paste0("connectivity_weighted_", label, ".rds")))
+  saveRDS(out$wf, here("data", "derived", paste0("weighted_flow_matrix_", label, ".rds")))
   out$grid
 })
 
@@ -88,7 +86,7 @@ conn <- map(set_names(labels), function(label) {
 # one row per cell per run, so the year-to-year spread can be inspected directly
 conn_years <- conn |>
   list_rbind(names_to = "run")
-saveRDS(conn_years, here("data", "final", "connectivity_by_year.rds"))
+saveRDS(conn_years, here("data", "derived", "connectivity_by_year.rds"))
 
 # 04 Report spread across years ----
 # how stable is each metric across the year-specific dispersal runs?
