@@ -1,17 +1,17 @@
 \begin{table}[ht]
 \centering
-\caption{Variance partitioning of cockle biomass from the spatial Tweedie SDM (Nakagawa \& Schielzeth marginal / conditional $R^2$). The spatial field and the three fixed-effect blocks together give the conditional $R^2$ (84.4\%); the fixed blocks alone give the marginal $R^2$ (24.0\%). Shares are percentages of total variance and sum to 100\%.}
+\caption{Variance partitioning of cockle biomass from the spatial Tweedie SDM (Nakagawa \& Schielzeth marginal / conditional $R^2$), with the connectivity slot rotated over five metrics. The spatial field and the three fixed-effect blocks together give the conditional $R^2$ (mean 85.1\% across metrics); the fixed blocks alone give the marginal $R^2$ (mean 23.8\%). Shares are percentages of total variance and sum to 100\% within each column.}
 \label{tab:variance-partitioning}
-\begin{tabular}{lr}
+\begin{tabular}{lrrrrr}
 \toprule
-Component & Variance explained (\%) \\
+Component & Biomass in-strength (log) & In-degree & In-strength & Eigenvector centrality & Closeness centrality \\
 \midrule
-Spatial field & 60.4 \\
-Environment & 17.1 \\
-Survey (gear) & 4.5 \\
-Connectivity & 2.5 \\
+Spatial field & 60.5 & 61.6 & 60.4 & 59.4 & 64.7 \\
+Environment & 18.2 & 16.5 & 17.1 & 15.4 & 15.7 \\
+Survey (gear) & 4.4 & 3.8 & 4.5 & 4.7 & 2.9 \\
+Connectivity & 1.5 & 3.8 & 2.5 & 4.5 & 3.7 \\
 \midrule
-Unexplained & 15.6 \\
+Unexplained & 15.4 & 14.3 & 15.6 & 16.1 & 13.0 \\
 \bottomrule
 \end{tabular}
 \end{table}

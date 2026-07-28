@@ -1,8 +1,8 @@
 # Model average cockle biomass and probability of presence from depth, then
 # predict both onto the 2 km connectivity grid.
 #
-# Two spatial sdmTMB models with a coastline barrier mesh (spatial correlation
-# does not cross land) and survey gear as a factor:
+# Two spatial sdmTMB models on an fmesher mesh with a land barrier (spatial
+# correlation does not cross land) and survey gear as a factor:
 #   biomass ~ depth + survey   Tweedie (log link)  -> average biomass per cell
 #   present ~ depth + survey   binomial (logit)    -> probability of presence per cell
 # Predictions are made for the "Stock" survey and attached back onto the grid in
@@ -12,8 +12,17 @@ library(tidyverse)
 library(here)
 library(sf)
 library(sdmTMB)
-library(rnaturalearth)
 library(patchwork)
+
+# compatibility shim: sdmTMBextra 0.0.5 calls fmesher::fm_identical_CRS, renamed
+# to fm_crs_is_identical in fmesher >= 0.7; register the old name as an alias.
+# required for add_barrier_mesh() below - do not remove unless sdmTMBextra is updated
+local({
+  exps <- .getNamespaceInfo(asNamespace("fmesher"), "exports")
+  if (!exists("fm_identical_CRS", envir = exps, inherits = FALSE)) {
+    assign("fm_identical_CRS", "fm_crs_is_identical", envir = exps)
+  }
+})
 
 # 01 Load data ----
 # cleaned survey points already carry raster depth and coordinates in km
@@ -23,26 +32,53 @@ dat <- readRDS(here("data", "final", "cockles_clean.rds")) |>
 
 grid <- readRDS(here("data", "final", "spatial_grid.rds"))
 
-# 02 Coastline barrier mesh ----
-# Natural Earth land, cropped to the grid area and projected to UTM metres
-land <- ne_download(scale = 10, type = "land", category = "physical", returnclass = "sf") |>
+# local coastline for the land mask and plots, already UTM 32N in metres
+land_utm <- st_read(
+  here("data", "extra", "land_small_utm", "land_small_utm.shp"),
+  quiet = TRUE
+) |>
   st_make_valid()
 
-region <- st_bbox(st_transform(st_as_sf(grid, coords = c("x_utm", "y_utm"), crs = 32632), 4326))
-region["xmin"] <- region["xmin"] - 0.4
-region["ymin"] <- region["ymin"] - 0.4
-region["xmax"] <- region["xmax"] + 0.4
-region["ymax"] <- region["ymax"] + 0.4
-land_region <- suppressWarnings(st_crop(land, region)) |> st_transform(32632)
+# 02 Coastline and spatial mesh ----
+# crop the coastline to the survey and grid extent with a 30 km margin, used for
+# the land mask and the plots (dat is in km, grid in metres)
+margin <- 30000
+region <- st_bbox(
+  c(
+    xmin = min(min(dat$x_utm) * 1000, min(grid$x_utm)) - margin,
+    ymin = min(min(dat$y_utm) * 1000, min(grid$y_utm)) - margin,
+    xmax = max(max(dat$x_utm) * 1000, max(grid$x_utm)) + margin,
+    ymax = max(max(dat$y_utm) * 1000, max(grid$y_utm)) + margin
+  ),
+  crs = st_crs(32632)
+)
+land_region <- suppressWarnings(st_crop(land_utm, region))
 
-# barrier mesh: correlation is downweighted across land (proj_scaling 1000
-# because the mesh is built in km while the land polygon is in metres)
-mesh <- make_mesh(dat, c("x_utm", "y_utm"), cutoff = 1) # 1 km min edge
+# fmesher mesh with an explicit maximum edge length: the spatial range is ~5 km,
+# so a 2 km inner edge resolves the field, a 10 km outer edge keeps the extension
+# cheap, and the 20 km outer offset holds the boundary away from the data
+inla_mesh <- fmesher::fm_mesh_2d_inla(
+  loc = cbind(dat$x_utm, dat$y_utm), # coordinates in km
+  max.edge = c(2, 10), # max triangle edge; inner and outer meshes
+  offset = c(5, 20), # inner and outer border widths
+  cutoff = 1 # minimum triangle edge length
+)
+mesh <- make_mesh(dat, c("x_utm", "y_utm"), mesh = inla_mesh)
+
+# barrier mesh: correlation is downweighted across land, so it does not cross
+# the fjord's headlands (proj_scaling 1000 because the mesh is built in km while
+# the land polygon is in metres). fmesher supplies the mesh geometry; the barrier
+# FEM itself comes from INLAspacetime via sdmTMBextra
 barrier_mesh <- sdmTMBextra::add_barrier_mesh(
   mesh, land_region,
   range_fraction = 0.1,
   proj_scaling = 1000,
   plot = FALSE
+)
+cat(
+  "mesh vertices:", mesh$mesh$n,
+  "| water triangles:", length(barrier_mesh$normal_triangles),
+  "| land triangles:", length(barrier_mesh$barrier_triangles), "\n"
 )
 
 # 03 Biomass model ----
@@ -103,10 +139,10 @@ grid$avg_biomass[wet] <- avg_biomass
 grid$prob_present[wet] <- prob_present
 
 # 08 Zero out land cells ----
-# use the same Natural Earth land to set any on-land cell to 0
+# use the local land_small_utm coastline to set any on-land cell to 0
 on_land <- lengths(st_intersects(
   st_as_sf(grid, coords = c("x_utm", "y_utm"), crs = 32632),
-  land_region
+  land_utm
 )) > 0
 grid$avg_biomass[on_land] <- 0
 grid$prob_present[on_land] <- 0
@@ -114,7 +150,7 @@ grid$prob_present[on_land] <- 0
 # 09 Save ----
 # land / masked cells are 0 (not dropped), so the grid keeps all 2340 cells and
 # stays aligned cell-for-cell with the flow matrix
-flow <- readRDS(here("data", "intermediate", "flow_matrix.rds"))
+flow <- readRDS(here("data", "intermediate", "flow_matrix_all.rds"))
 stopifnot(nrow(grid) == nrow(flow), !anyNA(grid$avg_biomass), !anyNA(grid$prob_present))
 
 saveRDS(grid, here("data", "final", "avg_biomass_grid.rds"))

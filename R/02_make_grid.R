@@ -43,7 +43,7 @@ grid$depth <- extract(depth_rast, pts, ID = FALSE)[, 1]
 
 # 04 Check grid matches flow matrix ----
 # one grid cell per flow-matrix row/column so predictions map 1:1 onto connectivity
-flow <- readRDS(here("data", "intermediate", "flow_matrix.rds"))
+flow <- readRDS(here("data", "intermediate", "flow_matrix_all.rds"))
 stopifnot(nrow(grid) == nrow(flow), nrow(grid) == ncol(flow))
 
 # 05 Save ----

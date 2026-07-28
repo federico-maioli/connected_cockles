@@ -1,4 +1,4 @@
-# Compute the FLOW matrix (export probability, source -> sink) from ABM_cmn_all.
+# Compute the FLOW matrix (export probability, source -> sink) per year and pooled.
 #
 #   flow[i, j] = agents released at i that settle at j  /  total agents released at i
 #              = cmn[i, j] / release[i]
@@ -6,43 +6,70 @@
 # This is the "downstream / export probability relative to total release" matrix
 # (conmatprobrel in the collaborator's script, the default relsel = 1 case).
 # Rows = source node, columns = sink node, on the 65 x 36 = 2340 grid.
+#
+# Writes data/intermediate/flow_matrix_<year>.rds for 2010-2016 and
+# data/intermediate/flow_matrix_all.rds for the pooled run.
 
 library(tidyverse)
 library(here)
 
-# 01 Load inputs ----
-# raw connectivity matrix (agent counts), no header
-cmn_path <- here("data", "raw", "cockles_matrices", "ABM_cmn_all.csv")
-cmn <- as.matrix(read_csv(cmn_path, col_names = FALSE, show_col_types = FALSE))
-dimnames(cmn) <- NULL
-cmn[is.na(cmn)] <- 0
+# read a raw connectivity matrix (agent counts, no header)
+read_cmn <- function(label) {
+  path <- here("data", "raw", "connectivity", "cockles_matrices", paste0("ABM_cmn_", label, ".csv"))
+  cmn <- as.matrix(read_csv(path, col_names = FALSE, show_col_types = FALSE))
+  dimnames(cmn) <- NULL
+  cmn[is.na(cmn)] <- 0
+  cmn
+}
 
-# total release per source node (single column, no header)
-rel_path <- here("data", "extra", "cockles_release", "ABM_rel_all.csv")
-release <- read_csv(rel_path, col_names = FALSE, show_col_types = FALSE)[[1]]
-release <- as.numeric(release)
+# read total release per source node (single column, no header)
+read_release <- function(label) {
+  path <- here("data", "raw", "connectivity", "cockles_release", paste0("ABM_rel_", label, ".csv"))
+  release <- read_csv(path, col_names = FALSE, show_col_types = FALSE)[[1]]
+  as.numeric(release)
+}
 
-stopifnot(nrow(cmn) == ncol(cmn)) # square
-stopifnot(length(release) == nrow(cmn)) # aligns with sources (rows)
+# divide each row i by release[i]; rows with zero release stay 0
+compute_flow <- function(cmn, release) {
+  denom <- matrix(release, nrow = nrow(cmn), ncol = ncol(cmn), byrow = FALSE)
+  flow <- ifelse(denom > 0, cmn / denom, 0)
+  flow[is.nan(flow)] <- 0
+  flow <- round(flow, 7)
+  dimnames(flow) <- NULL
+  flow
+}
 
-# 02 Compute flow matrix ----
-# divide each row i by release[i]; leave rows with zero release as 0
-denom <- matrix(release, nrow = nrow(cmn), ncol = ncol(cmn), byrow = FALSE)
-flow <- ifelse(denom > 0, cmn / denom, 0)
-flow <- round(flow, 7)
-flow[is.nan(flow)] <- 0
-dimnames(flow) <- NULL
+# 01 Set up ----
+labels <- c(as.character(2010:2016), "all")
+out_dir <- here("data", "intermediate")
 
-# 03 Checks ----
-row_export <- rowSums(flow) # total export prob per source (should be in [0, 1])
-cat("Flow dimensions:", nrow(flow), "x", ncol(flow), "\n")
-cat("Value range:", range(flow), "\n")
-cat("Nodes with non-zero release:", sum(release > 0), "/", length(release), "\n")
-cat("Row export prob range:", round(range(row_export), 4), "\n")
-cat("Self-retention (mean of diagonal, non-zero release):",
-  round(mean(diag(flow)[release > 0]), 6), "\n")
+# 02 Compute and save one flow matrix per label ----
+summaries <- map(labels, function(label) {
+  cmn <- read_cmn(label)
+  release <- read_release(label)
 
-# 04 Save ----
-out_path <- here("data", "intermediate", "flow_matrix.rds")
-saveRDS(flow, out_path)
-cat("Saved flow matrix to:", out_path, "\n")
+  stopifnot(nrow(cmn) == ncol(cmn)) # square
+  stopifnot(length(release) == nrow(cmn)) # aligns with sources (rows)
+
+  flow <- compute_flow(cmn, release)
+
+  out_path <- file.path(out_dir, paste0("flow_matrix_", label, ".rds"))
+  saveRDS(flow, out_path)
+
+  row_export <- rowSums(flow) # total export prob per source
+  tibble(
+    label = label,
+    n_nodes = nrow(flow),
+    n_released = sum(release > 0),
+    max_flow = max(flow),
+    max_export = max(row_export),
+    mean_self_retention = mean(diag(flow)[release > 0])
+  )
+})
+
+# 03 Report ----
+summaries |>
+  list_rbind() |>
+  mutate(across(c(max_flow, max_export, mean_self_retention), \(x) round(x, 5))) |>
+  print(n = Inf)
+

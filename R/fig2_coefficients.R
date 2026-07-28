@@ -1,12 +1,15 @@
-# Figure 2: standardized coefficients of the best-supported model.
+# Figure 2: standardized coefficients of the best-supported model (biomass).
 #
 # The full Space + Environment + Connectivity model, with the connectivity slot
-# rotated over the three metrics, for both responses. Because the three metrics
-# give nearly-tied AICs, the point is that the effect sizes agree: each
-# predictor's estimates cluster and the connectivity coefficient is negative for
-# every metric. Intercept and survey (gear) terms are dropped as nuisance;
-# estimates are on the standardized link scale, so effects are comparable within
-# a response.
+# rotated over the five metrics. Because the metrics give nearly-tied AICs, the
+# point is that the effect sizes agree: each predictor's estimates cluster and
+# the connectivity coefficient keeps its sign across metrics. Intercept and
+# survey (gear) terms are dropped as nuisance; estimates are on the standardized
+# link scale, so effects are comparable within a response.
+#
+# Writes two files from the same builder:
+#   fig2_coefficients.png            biomass (Tweedie)  - main text
+#   figS_coefficients_presence.png   presence (binomial) - supplementary
 
 library(tidyverse)
 library(here)
@@ -14,71 +17,97 @@ library(sdmTMB)
 library(rcartocolor)
 library(ggstats)
 
+# tidy the fixed effects of every converged space_env_conn fit for one response
+coef_data <- function(fits, resp, ok_ids) {
+  ids <- names(fits)[startsWith(names(fits), paste0(resp, "_space_env_conn_"))]
+  ids <- intersect(ids, ok_ids)
+  map(ids, function(id) {
+    f <- fits[[id]]
+    if (is.null(f)) {
+      return(NULL)
+    }
+    tidy(f, effects = "fixed", conf.int = TRUE) |>
+      mutate(conn = str_remove(id, paste0("^", resp, "_space_env_conn_")))
+  }) |>
+    list_rbind()
+}
+
+coef_plot <- function(d, xlab) {
+  dodge <- position_dodge(width = 0.6)
+  ggplot(d, aes(estimate, term, colour = metric)) +
+    geom_stripped_rows(colour = NA) +
+    geom_vline(xintercept = 0, linetype = 2, colour = "grey55") +
+    geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
+      orientation = "y", width = 0, position = dodge, linewidth = 0.5
+    ) +
+    geom_point(position = dodge, size = 2.4) +
+    scale_colour_carto_d(palette = "Vivid", name = "Connectivity metric") +
+    guides(colour = guide_legend(nrow = 2, byrow = TRUE)) +
+    labs(x = xlab, y = NULL) +
+    theme_light(base_size = 11) +
+    theme(
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom"
+    )
+}
+
 # 01 Load fits ----
+# non-converged fits are dropped: their coefficients are not trustworthy
 fits <- readRDS(here("data", "intermediate", "sdm_fits.rds"))
-conn_ids <- names(fits)[grepl("space_env_conn", names(fits))]
+ok_ids <- readRDS(here("data", "final", "sdm_model_comparison.rds")) |>
+  filter(converged) |>
+  transmute(id = paste(response, model, sep = "_")) |>
+  pull(id)
 
-# 02 Tidy fixed effects ----
-coefs <- map_dfr(conn_ids, function(id) {
-  f <- fits[[id]]
-  if (is.null(f)) {
-    return(NULL)
-  }
-  tidy(f, effects = "fixed", conf.int = TRUE) |>
-    mutate(fit = id)
-}) |>
-  separate(fit, into = c("response", "model_id"), sep = "_", extra = "merge")
-
-# 03 Labels ----
+# 02 Labels ----
+# every connectivity metric shares one "Connectivity" row, so the metrics line
+# up against each other in the same slot
 term_labs <- c(
   depth_std = "Depth",
   temp_std = "Temperature",
   oxy_std = "Oxygen",
   sal_std = "Salinity",
   shear_max_std = "Shear stress",
-  eigen_centrality_std = "Connectivity",
+  log_biomass_in_strength_std = "Connectivity",
+  deg_in_std = "Connectivity",
   in_strength_std = "Connectivity",
-  biomass_supply_log_std = "Connectivity"
+  eigen_centrality_std = "Connectivity",
+  closeness_centrality_std = "Connectivity"
 )
 term_levels <- c("Connectivity", "Shear stress", "Salinity", "Oxygen", "Temperature", "Depth")
 
 conn_labs <- c(
+  log_biomass_in_strength = "Biomass in-strength (log)",
+  deg_in = "In-degree",
   in_strength = "In-strength",
-  biomass_supply_log = "Biomass supply (log)",
-  eigen = "Eigenvector centrality"
+  eigen_centrality = "Eigenvector centrality",
+  closeness_centrality = "Closeness centrality"
 )
-conn_levels <- c("In-strength", "Biomass supply (log)", "Eigenvector centrality")
+conn_levels <- unname(conn_labs)
 
-coefs <- coefs |>
-  filter(term %in% names(term_labs)) |>
-  mutate(
-    term = factor(term_labs[term], levels = term_levels),
-    conn = str_extract(model_id, "(eigen|in_strength|biomass_supply_log)$"),
-    metric = factor(conn_labs[conn], levels = conn_levels),
-    response = factor(response, levels = c("present", "biomass"), labels = c("Presence", "Biomass"))
-  )
+prep <- function(resp) {
+  coef_data(fits, resp, ok_ids) |>
+    filter(term %in% names(term_labs)) |>
+    mutate(
+      term = factor(term_labs[term], levels = term_levels),
+      metric = factor(conn_labs[conn], levels = conn_levels)
+    )
+}
 
-# 04 Plot ----
-dodge <- position_dodge(width = 0.55)
-p <- ggplot(coefs, aes(estimate, term, colour = metric)) +
-  geom_stripped_rows(colour = NA) +
-  geom_vline(xintercept = 0, linetype = 2, colour = "grey55") +
-  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high),
-    height = 0, position = dodge, linewidth = 0.5
-  ) +
-  geom_point(position = dodge, size = 2.4) +
-  facet_wrap(~response, scales = "free_x") +
-  scale_colour_carto_d(palette = "Vivid", name = "Connectivity metric") +
-  labs(x = "Standardized coefficient (link scale)", y = NULL) +
-  theme_light(base_size = 11) +
-  theme(
-    strip.background = element_blank(),
-    strip.text = element_text(colour = "grey20", face = "bold"),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor = element_blank(),
-    legend.position = "bottom"
-  )
+# 03 Biomass (main text) ----
+p_biomass <- prep("biomass") |>
+  coef_plot("Standardized coefficient (log link)")
+
+# 04 Presence (supplementary) ----
+p_present <- prep("present") |>
+  coef_plot("Standardized coefficient (logit link)")
 
 # 05 Save ----
 dir.create(here("output"), showWarnings = FALSE)
-ggsave(here("output", "fig2_coefficients.png"), p, width = 10, height = 6, dpi = 600, bg = "white")
+ggsave(here("output", "fig2_coefficients.png"), p_biomass,
+  width = 8, height = 5.4, dpi = 600, bg = "white"
+)
+ggsave(here("output", "figS_coefficients_presence.png"), p_present,
+  width = 8, height = 5.4, dpi = 600, bg = "white"
+)

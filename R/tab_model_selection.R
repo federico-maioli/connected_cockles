@@ -1,6 +1,6 @@
 # Model-selection table (LaTeX) for the paper.
 #
-# All twelve model structures (the connectivity slot rotated over three
+# All eighteen model structures (the connectivity slot rotated over five
 # predictors), ordered by biomass Delta AIC. Writes a booktabs table to
 # output/tables for \input into Overleaf.
 
@@ -21,9 +21,11 @@ structure_labels <- c(
   space_env_conn = "Space + Environment + Connectivity"
 )
 conn_labels <- c(
+  log_biomass_in_strength = "biomass in-strength, log",
+  deg_in = "in-degree",
   in_strength = "in-strength",
-  biomass_supply_log = "biomass supply, log",
-  eigen = "eigenvector centrality"
+  eigen_centrality = "eigenvector centrality",
+  closeness_centrality = "closeness centrality"
 )
 
 wide <- comp |>
@@ -44,16 +46,16 @@ tab <- wide |>
   select(label, present, biomass)
 
 # 03 Build LaTeX ----
-# bold the best model in each response (delta = 0); one decimal place
-fmt <- function(x, best) {
+# bold the best model in each response (delta = 0); one decimal place.
+# models that did not converge have no AIC and are shown as a dash
+fmt <- function(x) {
+  best <- !is.na(x) & x == min(x, na.rm = TRUE)
   s <- formatC(x, format = "f", digits = 1)
+  s <- if_else(is.na(x), "---", s)
   if_else(best, paste0("\\textbf{", s, "}"), s)
 }
 tab <- tab |>
-  mutate(
-    present_f = fmt(present, present == min(present)),
-    biomass_f = fmt(biomass, biomass == min(biomass))
-  )
+  mutate(present_f = fmt(present), biomass_f = fmt(biomass))
 
 rows <- tab |>
   transmute(line = paste0(label, " & ", present_f, " & ", biomass_f, " \\\\")) |>
@@ -62,7 +64,7 @@ rows <- tab |>
 latex <- c(
   "\\begin{table}[ht]",
   "\\centering",
-  "\\caption{Model selection for cockle presence and biomass, ordered by biomass $\\Delta$AIC. Values are $\\Delta$AIC relative to the best model within each response (lower is better; the best model in each column is shown in bold). Every model includes a survey (gear) intercept; environment comprises depth, temperature, oxygen, salinity, and maximum shear stress; space is a spatial random field; the connectivity metric is given in parentheses.}",
+  "\\caption{Model selection for cockle presence and biomass, ordered by biomass $\\Delta$AIC. Values are $\\Delta$AIC relative to the best model within each response (lower is better; the best model in each column is shown in bold). Every model includes a survey (gear) intercept; environment comprises depth, temperature, oxygen, salinity, and maximum shear stress; space is a spatial random field; the connectivity metric is given in parentheses. A dash marks a model that did not converge.}",
   "\\label{tab:model-selection}",
   "\\begin{tabular}{lrr}",
   "\\toprule",

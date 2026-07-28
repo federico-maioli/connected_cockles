@@ -9,9 +9,9 @@
 #   space_env_conn   survey + env + connectivity + spatial field
 #   env_conn         survey + env + connectivity      (no field)
 # Every model carries the survey (gear) intercept; env = depth + temp + oxy +
-# sal + shear_max. The connectivity slot is rotated over three predictors
-# (eigenvector centrality, in-strength, log biomass supply), so each
-# connectivity model is fitted three times.
+# sal + shear_max. The connectivity slot is rotated over five predictors
+# (log biomass in-strength, in-degree, in-strength, eigenvector centrality,
+# closeness centrality), so each connectivity model is fitted five times.
 #   present ~ ...   binomial (logit)   presence / absence
 #   biomass ~ ...   Tweedie (log)      biomass
 # Continuous covariates are z-scored here (model-input scaling); all models share
@@ -49,9 +49,11 @@ vif <- function(data, vars) {
 survey_term <- "survey"
 env_terms <- "depth_std + temp_std + oxy_std + sal_std + shear_max_std"
 conn_predictors <- c(
-  eigen = "eigen_centrality_std",
+  log_biomass_in_strength = "log_biomass_in_strength_std",
+  deg_in = "deg_in_std",
   in_strength = "in_strength_std",
-  biomass_supply_log = "biomass_supply_log_std"
+  eigen_centrality = "eigen_centrality_std",
+  closeness_centrality = "closeness_centrality_std"
 )
 
 # base structures: rhs is the non-connectivity part; conn = TRUE models get a
@@ -84,9 +86,8 @@ dat <- readRDS(here("data", "final", "cockles_connectivity.rds")) |>
 # 02 Standardise covariates ----
 std_vars <- c(
   "depth", "temp", "sal", "oxy", "chla", "shear_max", "shear_mean", "phyto",
-  "biomass_supply", "biomass_supply_log", "present_supply",
-  "biomass_export", "biomass_export_log", "present_export",
-  "in_strength", "local_retention", "eigen_centrality"
+  "biomass_in_strength", "log_biomass_in_strength", "presence_in_strength",
+  "deg_in", "in_strength", "local_retention", "eigen_centrality", "closeness_centrality"
 )
 dat <- dat |>
   mutate(across(all_of(std_vars), ~ as.numeric(scale(.x)), .names = "{.col}_std"))
@@ -106,7 +107,7 @@ dat <- dat |>
 # 04 Collinearity ----
 # correlation across all predictors (overview), then VIF WITHIN each model -
 # pooling all covariates would inflate VIF for redundant alternatives (e.g.
-# biomass_supply vs biomass_supply_log vs in_strength) that never share a model
+# biomass_in_strength vs log_biomass_in_strength vs in_strength) that never share a model
 coll_vars <- intersect(used_vars, paste0(std_vars, "_std"))
 cat("Predictor correlation matrix:\n")
 print(round(cor(dat[, coll_vars]), 2))
