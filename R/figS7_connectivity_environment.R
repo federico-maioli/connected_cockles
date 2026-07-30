@@ -1,17 +1,21 @@
-# Supplementary figure: how strongly does connectivity covary with the
-# environmental predictors?
+# Supplementary figure: what does connectivity covary with?
 #
-# This is the evidence behind the interpretation of the negative connectivity
-# coefficient - that well-connected cells are also the deep, brackish, low-energy
-# parts of the fjord, so connectivity and habitat are not independent predictors.
+# Two questions in one panel:
+#   - are the connectivity metrics collinear with the environmental predictors?
+#   - are they simply standing in for residual spatial structure?
+# The last column is the spatial random field estimated from the Space +
+# Environment model, i.e. the structure connectivity would have to explain if it
+# were acting as a spatial smoother. It is not an environmental covariate, hence
+# the separator.
 #
-# Computed at the survey stations, which is what the fitted models see and the
-# level at which the VIFs in 06 are computed. Note that survey effort is uneven
-# across grid cells (7468 stations in 324 cells) and connectivity is constant
-# within a cell, so these correlations are weighted towards heavily sampled cells.
+# Everything is computed at the survey stations, the level at which the models
+# are fitted and the VIFs in 06 are computed. Survey effort is uneven across grid
+# cells (7468 stations in 324 cells) and connectivity is constant within a cell,
+# so these correlations are weighted towards heavily sampled cells.
 
 library(tidyverse)
 library(here)
+library(sdmTMB)
 
 conn_labs <- c(
   log_biomass_in_strength = "Biomass (log) in-strength",
@@ -26,11 +30,16 @@ env_labs <- c(
   temp = "Temperature",
   oxy = "Oxygen",
   sal = "Salinity",
-  shear_max = "Shear stress"
+  shear_max = "Shear stress",
+  spatial_field = "Spatial field"
 )
 
 # 01 Load ----
-dat <- readRDS(here("data", "derived", "cockles_connectivity.rds"))
+# the fitted data carries both the covariates and the model rows, so the field
+# and the covariates are guaranteed to align
+fit <- readRDS(here("data", "derived", "sdm_fits.rds"))[["biomass_space_env"]]
+dat <- fit$data
+dat$spatial_field <- predict(fit)$est_rf
 
 # 02 Correlations ----
 # Spearman throughout: the metrics are strongly right-skewed
@@ -46,12 +55,19 @@ cors <- cor(
     covariate = factor(env_labs[covariate], levels = unname(env_labs))
   )
 
-print(cors |> arrange(desc(abs(rho))) |> mutate(rho = round(rho, 2)), n = 8)
+cat("correlation with the residual spatial field:\n")
+cors |>
+  filter(covariate == "Spatial field") |>
+  mutate(rho = round(rho, 2)) |>
+  arrange(rho) |>
+  print()
 
 # 03 Plot ----
 p <- ggplot(cors, aes(covariate, metric, fill = rho)) +
   geom_tile(colour = "white", linewidth = 0.6) +
   geom_text(aes(label = sprintf("%.2f", rho)), size = 3.1, colour = "black") +
+  # the spatial field is not an environmental covariate
+  geom_vline(xintercept = 5.5, colour = "grey30", linewidth = 0.5) +
   scale_fill_distiller(
     palette = "RdBu", limits = c(-1, 1), direction = 1,
     name = "Spearman correlation", guide = guide_colourbar(title.position = "top")
@@ -69,5 +85,5 @@ p <- ggplot(cors, aes(covariate, metric, fill = rho)) +
 # 04 Save ----
 dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
 ggsave(here("output", "figs", "figS7_connectivity_environment.png"), p,
-  width = 5.6, height = 5.2, dpi = 600, bg = "white"
+  width = 6.4, height = 5.2, dpi = 600, bg = "white"
 )

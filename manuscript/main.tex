@@ -372,24 +372,19 @@ $-0.38$ ($-0.61$, $-0.16$). The presence model behaved the same way (in-strength
 This negative association was not an artefact of how connectivity was defined: the environmental coefficients barely moved as the metric was rotated (Fig.~\ref{fig:coefficients}). It was, however, small. At 0.9--2.9\% of total variance, connectivity was the smallest explained component in every model, below even the survey-type intercept (Fig.~\ref{fig:variance}).
 
 
-\subsection{The connectivity effect is conditional, not marginal}
+\subsection{Connectivity partly substitutes for unexplained spatial structure}
 
 Connectivity had almost no marginal association with cockle biomass. Pooled Spearman correlations ranged from $-0.081$ (in-strength) to $0.024$ (in-degree), so $|\rho| \le 0.081$ for every metric. The negative coefficients reported above therefore appear only after conditioning on the environmental covariates and the spatial field, and describe a partial rather than an overall association.
 
-Connectivity was also not independent of the environmental predictors (Fig.~\ref{fig:conn_environment}). In-strength correlated with depth ($\rho = 0.59$), salinity ($\rho = -0.67$) and maximum shear stress
-($\rho = -0.57$), and the remaining metrics behaved similarly (depth $\rho = 0.51$ to $0.63$; salinity $-0.43$ to $-0.75$; shear stress $-0.49$ to $-0.57$). Stations receiving more modelled larval supply were deeper and fresher, conditions under which cockles were less abundant, but also less energetic, where they were more abundant; the gradients therefore do not align in a single direction.
+The metrics were only weakly related to the residual spatial field (Fig.~\ref{fig:conn_environment}). Correlations between the field estimated from the Space + Environment model and each connectivity metric ranged from $\rho = 0.10$ (in-strength) to $0.29$ (closeness centrality), so connectivity is not simply a smooth spatial surface under another name. Its explanatory contribution nevertheless depended strongly on whether that field was present: adding connectivity improved the spatial model by 11.6 AIC units but improved the non-spatial model by 24.9, roughly twice as much work in the absence of a random field. Connectivity therefore absorbs part of the spatial structure that the random field would otherwise capture.
 
-The resulting collinearity was moderate. Variance inflation factors for the connectivity term ranged from 1.72 to 2.32 across the six metrics, implying that
-42--57\% of each metric's variance is shared with the environmental block. This is well below conventional thresholds of concern and leaves the blocks
-separable, but it means the connectivity coefficient is estimated from a restricted portion of the covariate space and is sensitive to which environmental terms are included.
-
+Connectivity was also not independent of the environmental predictors (Fig.~\ref{fig:conn_environment}). In-strength correlated with depth ($\rho = 0.59$), salinity ($\rho = -0.67$) and maximum shear stress ($\rho = -0.57$), and the remaining metrics behaved similarly (depth $\rho = 0.51$ to $0.63$; salinity $-0.43$ to $-0.75$; shear stress $-0.49$ to $-0.57$). Stations receiving more modelled larval supply were deeper and fresher, conditions under which cockles were less abundant, but also less energetic, where they were more abundant; the gradients therefore do not align in a single direction. The resulting collinearity was moderate: variance inflation factors for the connectivity term ranged from 1.72 to 2.32 across the six metrics, implying that 42--57\% of each metric's variance is shared with the environmental block. This is well below conventional thresholds of concern and leaves the blocks separable, but it means the connectivity coefficient is sensitive to which environmental terms are included.
 
 \subsection{Sensitivity to the dispersal year and to the spatial field}
 
 The result did not depend on which year of the dispersal simulation was used. Recomputing every metric from each annual flow matrix (2010--2016) and correlating it with observed biomass gave correlations spanning only 0.087--0.137 across years, with the pooled matrix used in the fitted models lying inside that band for every metric (Fig.~\ref{fig:year_sensitivity}). Closeness centrality was the most stable metric across years and eigenvector centrality the least.
 
-Dependence on the spatial field was more consequential
-(Fig.~\ref{fig:space_confounding}). Refitting without the field left the sign of in-strength ($-0.41 \rightarrow -0.30$), biomass (log) in-strength ($-0.39 \rightarrow -0.34$), presence in-strength ($-0.38 \rightarrow -0.34$) and eigenvector centrality ($-0.53 \rightarrow -0.44$) unchanged, with magnitudes shrinking by 10--25\%. For in-degree ($-0.63 \rightarrow +0.30$) and closeness centrality ($-0.84 \rightarrow +0.36$), however, the coefficient reversed sign. The two purely topological metrics are therefore not separable from broad spatial structure, whereas the supply-weighted metrics are. Dropping the field also redistributed variance dramatically, with the survey-gear share rising from 3--5\% to 44--45\% and environment from 15--17\% to 26--30\% (Fig.~\ref{fig:variance_nospace}), indicating that gear and location are partly aliased in this survey and that the spatial field is what separates them.
+The two families of metric differed in how far this substitution went (Fig.~\ref{fig:space_confounding}). Refitting without the field left the sign of in-strength ($-0.41 \rightarrow -0.30$), biomass (log) in-strength ($-0.39 \rightarrow -0.34$), presence in-strength ($-0.38 \rightarrow -0.34$) and eigenvector centrality ($-0.53 \rightarrow -0.44$) unchanged, with magnitudes shrinking by 10--25\%. For in-degree ($-0.63 \rightarrow +0.30$) and closeness centrality ($-0.84 \rightarrow +0.36$), however, the coefficient reversed sign. The two purely topological metrics are therefore not separable from broad spatial structure, whereas the supply-weighted metrics are. Dropping the field also redistributed variance dramatically, with the survey-gear share rising from 3--5\% to 44--45\% and environment from 15--17\% to 26--30\% (Fig.~\ref{fig:variance_nospace}), indicating that gear and location are partly aliased in this survey and that the spatial field is what separates them.
 
 % ---- DISCUSSION ------------------------------------------------------------
 \section{Discussion}
@@ -535,12 +530,14 @@ at \url{https://doi.org/xxxxx}.
     \centering
     \includegraphics[width=0.7\textwidth]{figS7_connectivity_environment.png}
     \caption{Spearman correlation between each connectivity metric and each
-    environmental covariate, computed at the survey stations --- the level at
-    which the models are fitted. Well-connected cells are systematically deeper
-    and less saline, so connectivity and habitat are not independent predictors.
-    Survey effort is uneven across grid cells (7{,}468 stations in 324 cells) and
-    connectivity is constant within a cell, so these correlations are weighted
-    towards heavily sampled cells.}
+    environmental covariate (left of the divider), and with the residual spatial
+    random field estimated from the Space + Environment model (right), computed
+    at the survey stations --- the level at which the models are fitted.
+    Connectivity is moderately collinear with the environmental gradients but only
+    weakly related to the spatial field ($\rho = 0.10$--$0.29$), so it is not
+    simply a spatial surface under another name. Survey effort is uneven across
+    grid cells (7{,}468 stations in 324 cells) and connectivity is constant within
+    a cell, so these correlations are weighted towards heavily sampled cells.}
     \label{fig:conn_environment}
 \end{figure}
 \FloatBarrier
