@@ -215,6 +215,9 @@ Keyword five\\
 Larval dispersal was simulated with a biophysical individual-based model that
 couples a hydrodynamic ocean model with ...
 
+\subsection{Software}
+
+R version, packages etc.
 
 \subsection{Species distribution models}
 
@@ -255,9 +258,9 @@ C_i &= \theta c_i,
 \bm{\Sigma}_{\omega}\ \text{defined by a Mat\'ern covariance function with range }\rho\text{ and marginal SD }\sigma_{\omega}.
 \end{align}
 
-Here, $\beta_0$ is the intercept, $\gamma_{g(i)}$ accounts for differences between commercial and stock assessment surveys, $\mathbf{x}_i$ contains the five environmental predictors, $c_i$ is the connectivity value assigned to the grid cell containing station $i$, and $\omega_{s_i}$ is a Gaussian random field representing residual spatial autocorrelation not explained by the fixed effects. All continuous predictors, including environmental variables and connectivity metrics, were standardized to zero mean and unit variance before model fitting.
+Here, $\beta_0$ is the intercept, $\gamma_{g(i)}$ accounts for differences between commercial and stock assessment surveys, $\mathbf{x}_i$ contains the five environmental predictors (Fig~\ref{fig:covariates_supp}), $c_i$ is the connectivity value assigned to the grid cell containing station $i$, and $\omega_{s_i}$ is a Gaussian random field representing residual spatial autocorrelation not explained by the fixed effects. All continuous predictors, including environmental variables and connectivity metrics, were standardized to zero mean and unit variance before model fitting.
 
-Because no single connectivity metric was assumed to best represent larval connectivity, we fitted separate models for each of the six candidate connectivity metrics, replacing the connectivity term ($C_i$) in the linear predictor while keeping all other model components unchanged.
+Because no single connectivity metric was assumed to best represent larval connectivity, we fitted separate models for each of the six candidate connectivity metrics (Fig~\ref{fig:connectivity_maps}), replacing the connectivity term ($C_i$) in the linear predictor while keeping all other model components unchanged.
 
 To assess whether the effects differed between biomass and occurrence, we additionally fitted Bernoulli GLMMs to presence--absence data ($z_i\in\{0,1\}$) using a logit link,
 \[
@@ -293,8 +296,6 @@ Space + Environment + Connectivity & $\beta_0 + G + E + C + \omega$ \\
 
 Models containing the connectivity term ($C$; structures 4--6 in Table~\ref{tab:model_structures}) were fitted separately for each of the six candidate connectivity matrices, yielding $3 + (3 \times 6) = 21$ models per response variable (42 models in total for biomass and presence--absence). Competing models were compared using Akaike's Information Criterion (AIC; \citet{akaike1974}), with lower AIC values indicating better support after accounting for model complexity.
 
-Something about how variance partitioning was calculated
-
 \subsubsection*{Spatial field and mesh}
 
 The random field was approximated by the SPDE method on a finite-element mesh built with the R package \texttt{fmesher} \citep{lindgrenFmesherTriangleMeshes2025}, using a maximum inner triangle edge of 2~km (about half the estimated Mat\'ern range). Because the
@@ -314,7 +315,7 @@ the share explained by the fixed effects and the spatial field together.
 % To attribute the fixed-effect share to individual blocks, we split the fixed linear predictor into its gear, environment and connectivity components ($\eta^f_i = G_i + E_i + C_i$) and gave each block a share equal to its covariance with the whole fixed predictor, $\mathrm{cov}(B, \eta^f)$, divided by the total variance. Because $\mathrm{Var}(\eta^f) = \sum_B \mathrm{cov}(B,\eta^f)$, the three block shares sum exactly to the marginal $R^2$, and covariance between blocks is apportioned between them rather than left unassigned.
 
 
-\subsubsection*{Software}
+\subsubsection*{Model fitting}
 We fit the spatiotemporal models with the R package \texttt{sdmTMB} \citep{andersonSdmTMBPackageFast2025}, version 0.6.0.9034. sdmTMB uses automatic differentiation and the Laplace approximation from the R package TMB \citep{kristensenTMBAutomaticDifferentiation2016} and sparse matrix structures to set up the SPDE-based GMRFs from the R package fmesher \citep{lindgrenFmesherTriangleMeshes2025}. Estimation is done via maximum marginal likelihood. We confirmed that the nonlinear optimization was consistent with convergence by checking that the Hessian matrix was positive definite and the maximum absolute log-likelihood gradient with respect to fixed effects was <0.001 \citep{andersonSdmTMBPackageFast2025}. 
 
 % ---- RESULTS ---------------------------------------------------------------
@@ -367,7 +368,8 @@ variance (marginal $R^2$), and the fixed effects together with the spatial field
 
 All six connectivity metrics entered the biomass model with negative coefficients whose confidence intervals excluded zero (Fig.~\ref{fig:coefficients}): closeness centrality $\hat{\beta} = -0.84$ (95\% CI $-1.30$, $-0.39$), in-degree $-0.63$ ($-1.15$, $-0.10$), eigenvector
 centrality $-0.53$ ($-0.90$, $-0.16$), in-strength $-0.41$ ($-0.63$, $-0.18$), biomass (log) in-strength $-0.39$ ($-0.62$, $-0.16$), and presence in-strength
-$-0.38$ ($-0.61$, $-0.16$). The presence model behaved the same way (in-strength $-0.31$; $-0.52$, $-0.11$; Fig.~\ref{fig:coefficients_presence}). Higher modelled larval supply therefore predicted lower biomass, not higher.
+$-0.38$ ($-0.61$, $-0.16$). Higher modelled larval supply therefore predicted lower biomass, not higher.
+The presence model showed a similar pattern, although the confidence intervals for eigenvector centrality and in-degree overlapped zero (Fig.~\ref{fig:coefficients_presence}).
 
 This negative association was not an artefact of how connectivity was defined: the environmental coefficients barely moved as the metric was rotated (Fig.~\ref{fig:coefficients}). It was, however, small. At 0.9--2.9\% of total variance, connectivity was the smallest explained component in every model, below even the survey-type intercept (Fig.~\ref{fig:variance}).
 
