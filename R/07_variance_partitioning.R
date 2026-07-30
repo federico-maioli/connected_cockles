@@ -78,7 +78,7 @@ ok_ids <- readRDS(here("data", "derived", "sdm_model_comparison.rds")) |>
 
 # order the metrics as they should appear downstream
 metrics <- c(
-  "log_biomass_in_strength", "deg_in", "in_strength",
+  "log_biomass_in_strength", "presence_in_strength", "deg_in", "in_strength",
   "eigen_centrality", "closeness_centrality"
 )
 

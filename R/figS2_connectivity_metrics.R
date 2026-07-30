@@ -17,6 +17,7 @@ library(patchwork)
 metric_scale <- function(col, tr) {
   switch(col,
     log_biomass_in_strength = scale_fill_gradient(low = "#e5f5e0", high = "#005a32", name = NULL, transform = tr),
+    presence_in_strength = scale_fill_gradient(low = "#fde0dd", high = "#ae017e", name = NULL, transform = tr),
     deg_in = scale_fill_gradient(low = "#d0e1f2", high = "#08306b", name = NULL, transform = tr),
     in_strength = scale_fill_gradient(low = "#efedf5", high = "#3f007d", name = NULL, transform = tr),
     eigen_centrality = scale_fill_gradient(low = "#fee6ce", high = "#7f2704", name = NULL, transform = tr),
@@ -80,11 +81,12 @@ mask <- st_difference(frame, st_union(water))
 # skewed metrics get a square-root scale so the low end stays readable;
 # sqrt handles the zeros that log / pseudo-log would compress
 metrics <- c(
-  "log_biomass_in_strength", "deg_in", "in_strength",
+  "log_biomass_in_strength", "presence_in_strength", "deg_in", "in_strength",
   "eigen_centrality", "closeness_centrality"
 )
 titles <- list(
-  log_biomass_in_strength = "Biomass-weighted in-strength (log)",
+  log_biomass_in_strength = "Biomass (log) in-strength",
+  presence_in_strength = "Presence in-strength",
   deg_in = "In-degree",
   in_strength = "In-strength",
   eigen_centrality = "Eigenvector centrality",
@@ -92,6 +94,7 @@ titles <- list(
 )
 transforms <- c(
   log_biomass_in_strength = "sqrt",
+  presence_in_strength = "sqrt",
   deg_in = "identity",
   in_strength = "identity",
   eigen_centrality = "sqrt",

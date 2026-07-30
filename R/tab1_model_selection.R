@@ -22,6 +22,7 @@ structure_labels <- c(
 )
 conn_labels <- c(
   log_biomass_in_strength = "biomass in-strength, log",
+  presence_in_strength = "presence in-strength",
   deg_in = "in-degree",
   in_strength = "in-strength",
   eigen_centrality = "eigenvector centrality",

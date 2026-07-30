@@ -16,8 +16,8 @@ data/         local only, never tracked
   raw/        read-only inputs; nothing in here is written by code
   derived/    everything the pipeline writes; safe to delete and rebuild
 output/
-  figs/       fig1..fig3 (main text), figS1..figS6 (supplementary)
-  tables/     tab1, tab2 (LaTeX, \input directly by the manuscript)
+  figs/       fig1..fig3 (main text), figS1..figS7 (supplementary)
+  tables/     tab1 (LaTeX, \input directly by the manuscript)
 manuscript/   main.tex, bibliography, and style files
 ```
 
@@ -85,12 +85,14 @@ never saved.
 | `figS2_connectivity_metrics.R` | `figs/figS2_connectivity_metrics.png` |
 | `figS4_year_sensitivity.R` | `figs/figS4_year_sensitivity.png` |
 | `figS5_space_confounding.R` | `figs/figS5_space_confounding.png` |
+| `figS7_connectivity_environment.R` | `figs/figS7_connectivity_environment.png` |
 | `tab1_model_selection.R` | `tables/tab1_model_selection.tex` |
-| `tab2_variance.R` | `tables/tab2_variance_partitioning.tex` |
 
 Two scripts write a main-text figure and its supplementary counterpart, since
 each pair shares a builder: `fig2_coeff.R` (biomass / presence) and
-`fig3_variance.R` (with / without the spatial field).
+`fig3_variance.R` (with / without the spatial field). The variance partitioning
+is presented as a figure rather than a table, so `07` writes only
+`variance_partition.rds`.
 
 ## Connectivity metrics
 

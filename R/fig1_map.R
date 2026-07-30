@@ -1,11 +1,13 @@
-# Figure 1: (A) study area / survey biomass and (B) larval dispersal (flow matrix).
-# Panel A: survey biomass over the coastline with a location inset.
-# Panel B: strong source -> sink dispersal links drawn as arrows on the same fjord.
+# Figure 1: (a) study area / survey biomass and (b) larval settlement footprints.
+# Panel a: survey biomass over the coastline, with a location inset top-left.
+# Panel b: for four release cells spread over the basin, the full settlement
+#   probability field from the pooled flow matrix. Showing where larvae actually
+#   land makes the reach of dispersal visible directly, rather than asserting it
+#   through a community-detection label.
 
 library(tidyverse)
 library(here)
 library(sf)
-library(igraph)
 library(rcartocolor)
 library(ggspatial)
 library(cowplot)
@@ -55,26 +57,40 @@ p_main <- ggplot() +
   theme_void(base_size = 11) +
   theme(
     plot.background = element_rect(fill = "white", colour = NA),
-    legend.position = "inside", legend.position.inside = c(0.9, 0.78),
+    legend.position = "inside", legend.position.inside = c(0.9, 0.58),
     legend.title = element_text(size = 9, colour = "grey20"),
     legend.text = element_text(size = 8, colour = "grey30"),
     legend.key.height = unit(9, "mm"), legend.key.width = unit(4, "mm")
   ) +
   guides(colour = guide_colourbar(title.position = "top"))
 
-# location inset
+# location inset, top-left: where the basin sits in the North Sea transition
 inset_land <- st_transform(coastline, 4326)
+# label positions are resolved here rather than by geom_sf_text, which would
+# recompute them at render time and warn about lon/lat input on every run
 country_labs <- inset_land |>
   filter(NAME %in% c("Denmark", "Germany", "Sweden", "Norway")) |>
   group_by(NAME) |>
   summarise(.groups = "drop") |>
   st_crop(xmin = 4.6, ymin = 54, xmax = 12.4, ymax = 57.7) |>
+  st_point_on_surface() |>
   suppressWarnings()
-study_box <- st_as_sfc(st_bbox(st_transform(pts, 4326)))
+country_labs <- bind_cols(
+  st_drop_geometry(country_labs),
+  as_tibble(st_coordinates(country_labs))
+)
+# the red box marks the extent actually drawn in the panels (xlim/ylim), not just
+# the survey-point bounding box, so it matches what the other figures show
+study_box <- st_bbox(
+  c(xmin = xlim[1], ymin = ylim[1], xmax = xlim[2], ymax = ylim[2]),
+  crs = st_crs(32632)
+) |>
+  st_as_sfc() |>
+  st_transform(4326)
 
 p_inset <- ggplot() +
   geom_sf(data = inset_land, fill = land_fill, colour = land_line, linewidth = 0.2) +
-  geom_sf_text(data = country_labs, aes(label = NAME), size = 2.3, colour = "grey35") +
+  geom_text(data = country_labs, aes(X, Y, label = NAME), size = 2.3, colour = "grey35") +
   geom_sf(data = study_box, fill = NA, colour = "#c0392b", linewidth = 0.8) +
   coord_sf(xlim = c(4, 13), ylim = c(53.5, 58), expand = FALSE) +
   theme_void() +
@@ -85,85 +101,86 @@ p_inset <- ggplot() +
 
 panel_a <- ggdraw() +
   draw_plot(p_main) +
-  draw_plot(p_inset, x = 0.02, y = 0.66, width = 0.31, height = 0.31)
+  draw_plot(p_inset, x = 0.02, y = 0.70, width = 0.28, height = 0.28)
 
-# 03 Panel B: connectivity clusters and exchange ----
-# Louvain community detection on the (symmetrised) connectivity matrix delineates
-# dispersal-based sub-populations; arrows show inter-cluster larval exchange
-# (% of a cluster's export) and circled values the within-cluster self-recruitment (%)
-active <- which(rowSums(flow > 0) + colSums(flow > 0) > 0)
-fa <- flow[active, active]
-gu <- graph_from_adjacency_matrix((fa + t(fa)) / 2, mode = "undirected", weighted = TRUE)
-set.seed(1)
-cl <- rep(NA_integer_, nrow(flow))
-cl[active] <- as.integer(membership(cluster_louvain(gu, weights = E(gu)$weight)))
-keep <- as.integer(names(sort(table(cl), decreasing = TRUE)))[1:5]
-cl <- ifelse(cl %in% keep, match(cl, keep), NA_integer_)
-grid$clus <- factor(cl, levels = 1:5)
+# 03 Panel B: settlement footprints ----
+# Release cells are chosen systematically, not hand-picked: among cells whose
+# total export exceeds the median, three are taken at the 12th, 50th and 88th
+# percentile of along-fjord position, plus the westernmost cell of the northern
+# arm (top 20% by northing) - the main axis alone leaves the whole northern lobe
+# unrepresented. Panels are then ordered west to east.
+out_strength <- rowSums(flow)
+src_pool <- which(out_strength > quantile(out_strength[out_strength > 0], 0.5))
 
-# cluster centroids, inter-cluster exchange and self-recruitment
-cent <- grid |>
-  filter(!is.na(clus)) |>
-  group_by(clus) |>
-  summarise(x = mean(x_utm), y = mean(y_utm), .groups = "drop") |>
-  mutate(ci = as.integer(clus))
-idx <- which(flow > 0, arr.ind = TRUE)
-lk <- tibble(a = cl[idx[, 1]], b = cl[idx[, 2]], w = flow[idx]) |>
-  filter(!is.na(a), !is.na(b)) |>
-  group_by(a, b) |>
-  summarise(w = sum(w), .groups = "drop")
-tot <- lk |> group_by(a) |> summarise(tot = sum(w), .groups = "drop")
-sr <- lk |> filter(a == b) |> left_join(tot, by = "a") |> transmute(ci = a, sr = round(100 * w / tot))
-exch <- lk |> filter(a != b) |> left_join(tot, by = "a") |> mutate(pct = 100 * w / tot) |> filter(pct > 3) |>
-  left_join(select(cent, ci, x, y), by = c("a" = "ci")) |> rename(x0 = x, y0 = y) |>
-  left_join(select(cent, ci, x, y), by = c("b" = "ci")) |> rename(x1 = x, y1 = y)
-cent <- cent |> left_join(sr, by = "ci")
+src_axis <- quantile(grid$x_utm[src_pool], c(0.12, 0.5, 0.88)) |>
+  sapply(\(q) src_pool[which.min(abs(grid$x_utm[src_pool] - q))])
+north_arm <- src_pool[grid$y_utm[src_pool] > quantile(grid$y_utm[src_pool], 0.80)]
+src_north <- north_arm[which.min(grid$x_utm[north_arm])]
 
-# shorten exchange arrows so the heads sit in open space, clear of the circles
-gap <- 3200
-exch <- exch |> mutate(
-  ux = x1 - x0, uy = y1 - y0, len = sqrt(ux^2 + uy^2), ux = ux / len, uy = uy / len,
-  x0 = x0 + ux * gap, y0 = y0 + uy * gap, x1 = x1 - ux * gap, y1 = y1 - uy * gap
+srcs <- c(src_axis, src_north)
+srcs <- srcs[order(grid$x_utm[srcs])] # west -> east
+
+# panel titles, in west-to-east order; swap in the local basin names here
+src_labs <- c("Release 1", "Release 2", "Release 3", "Release 4")
+
+fields <- map2(srcs, src_labs, \(i, l) {
+  tibble(x = grid$x_utm, y = grid$y_utm, p = flow[i, ], basin = l)
+}) |>
+  bind_rows() |>
+  filter(p > 0) |>
+  mutate(basin = factor(basin, levels = src_labs))
+
+src_pts <- st_as_sf(
+  tibble(basin = factor(src_labs, levels = src_labs), x = grid$x_utm[srcs], y = grid$y_utm[srcs]),
+  coords = c("x", "y"), crs = 32632
 )
-# self-recruitment as a small loop above each cluster centroid
-loops <- cent |> mutate(lx0 = x - 800, ly0 = y + 2400, lx1 = x + 800, ly1 = y + 2400)
 
-# clip cluster cells to the fjord water (drop any that fall outside the outline)
-grid$in_water <- lengths(st_intersects(
-  st_as_sf(grid, coords = c("x_utm", "y_utm"), crs = 32632),
-  st_buffer(water, 1000)
-)) > 0
+# area holding 90% of each release's settlement, quoted in the caption
+walk2(srcs, src_labs, \(i, l) {
+  w <- flow[i, ]
+  n <- which(cumsum(sort(w, decreasing = TRUE)) / sum(w) >= 0.9)[1]
+  cat(sprintf("%-15s 90%% of larvae settle within %3d cells (%4.0f km2)\n", l, n, n * 4))
+})
 
+# white mask = the plot frame minus the fjord, drawn over the tiles so the 2 km
+# cells are clipped to the coastline instead of spilling onto land
+frame <- st_as_sfc(st_bbox(
+  c(xmin = xlim[1], ymin = ylim[1], xmax = xlim[2], ymax = ylim[2]),
+  crs = st_crs(32632)
+))
+land_mask <- st_difference(frame, st_union(water))
+
+# tiles first, then the mask, then the outline: the raster sits under the
+# coastline. A light-to-blue ramp keeps the top of the scale clear of the black
+# release marker, which is drawn white-filled so it reads over any cell value
 panel_b <- ggplot() +
-  geom_tile(data = filter(grid, !is.na(clus), in_water), aes(x_utm, y_utm, fill = clus), width = 2000, height = 2000) +
-  geom_sf(data = water, fill = NA, colour = "grey55", linewidth = 0.3) +
-  geom_curve(
-    data = exch, aes(x = x0, y = y0, xend = x1, yend = y1, linewidth = pct),
-    curvature = 0.16, colour = "grey15", lineend = "round",
-    arrow = arrow(length = unit(3, "mm"), type = "closed")
-  ) +
-  geom_curve(
-    data = loops, aes(x = lx0, y = ly0, xend = lx1, yend = ly1, linewidth = sr),
-    curvature = -2.4, colour = "grey15", lineend = "round",
-    arrow = arrow(length = unit(2.4, "mm"), type = "closed")
-  ) +
-  geom_point(data = cent, aes(x, y), size = 7, shape = 21, fill = "white", colour = "grey30", stroke = 0.6) +
-  geom_text(data = cent, aes(x, y, label = sr), size = 2.8, fontface = "bold") +
-  scale_fill_carto_d(palette = "Safe", guide = "none") +
-  scale_linewidth(range = c(0.3, 3.2), name = "Connectivity (%)") +
+  geom_tile(data = fields, aes(x, y, fill = p), width = 2000, height = 2000) +
+  geom_sf(data = land_mask, fill = "white", colour = NA) +
+  geom_sf(data = water, fill = NA, colour = "grey70", linewidth = 0.2) +
+  geom_sf(data = src_pts, fill = "white", colour = "grey10", size = 2.2, stroke = 0.7, shape = 23) +
+  scale_fill_distiller(palette = "Blues", direction = 1, trans = "sqrt", name = "Settlement probability") +
+  facet_wrap(~basin, nrow = 1) +
   coord_sf(xlim = xlim, ylim = ylim, crs = 32632, expand = FALSE) +
-  theme_void(base_size = 11) +
+  theme_void(base_size = 10) +
   theme(
     plot.background = element_rect(fill = "white", colour = NA),
-    legend.position = "inside", legend.position.inside = c(0.92, 0.3),
+    strip.text = element_text(size = 9.5, colour = "grey20"),
+    legend.position = "bottom",
     legend.title = element_text(size = 9, colour = "grey20"),
     legend.text = element_text(size = 8, colour = "grey30"),
-    legend.key.size = unit(4, "mm")
+    legend.key.height = unit(3, "mm"), legend.key.width = unit(12, "mm")
   )
 
 # 04 Combine and save ----
-fig1 <- wrap_elements(panel_a) + panel_b +
-  plot_annotation(tag_levels = "A")
+# heights match the map aspect (97 x 72 km, 1.33:1) so neither panel carries dead
+# space; stacking keeps the maps large once the figure is scaled to page width.
+# the tag theme is set per panel rather than through plot_annotation(), which
+# warns under patchwork 1.3.1 + ggplot2 4.0
+tag_theme <- theme(plot.tag = element_text(size = 12, face = "bold", colour = "grey20"))
+
+fig1 <- (wrap_elements(panel_a) + tag_theme) / (panel_b + tag_theme) +
+  plot_layout(heights = c(2.6, 1)) +
+  plot_annotation(tag_levels = "a")
 
 dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "fig1_map.png"), fig1, width = 16, height = 6.2, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "fig1_map.png"), fig1, width = 9, height = 9.4, dpi = 600, bg = "white")

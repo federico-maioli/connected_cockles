@@ -9,9 +9,9 @@
 #   space_env_conn   survey + env + connectivity + spatial field
 #   env_conn         survey + env + connectivity      (no field)
 # Every model carries the survey (gear) intercept; env = depth + temp + oxy +
-# sal + shear_max. The connectivity slot is rotated over five predictors
-# (log biomass in-strength, in-degree, in-strength, eigenvector centrality,
-# closeness centrality), so each connectivity model is fitted five times.
+# sal + shear_max. The connectivity slot is rotated over six predictors
+# (log biomass in-strength, presence in-strength, in-degree, in-strength,
+# eigenvector centrality, closeness centrality), so each is fitted six times.
 #   present ~ ...   binomial (logit)   presence / absence
 #   biomass ~ ...   Tweedie (log)      biomass
 # Continuous covariates are z-scored here (model-input scaling); all models share
@@ -49,6 +49,7 @@ survey_term <- "survey"
 env_terms <- "depth_std + temp_std + oxy_std + sal_std + shear_max_std"
 conn_predictors <- c(
   log_biomass_in_strength = "log_biomass_in_strength_std",
+  presence_in_strength = "presence_in_strength_std",
   deg_in = "deg_in_std",
   in_strength = "in_strength_std",
   eigen_centrality = "eigen_centrality_std",

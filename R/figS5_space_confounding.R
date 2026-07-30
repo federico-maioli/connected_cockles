@@ -40,7 +40,8 @@ ok_ids <- readRDS(here("data", "derived", "sdm_model_comparison.rds")) |>
 
 # 02 Labels ----
 conn_labs <- c(
-  log_biomass_in_strength = "Biomass in-strength (log)",
+  log_biomass_in_strength = "Biomass (log) in-strength",
+  presence_in_strength = "Presence in-strength",
   deg_in = "In-degree",
   in_strength = "In-strength",
   eigen_centrality = "Eigenvector centrality",
@@ -76,7 +77,7 @@ p <- ggplot(coefs, aes(estimate, metric, colour = structure)) +
   geom_stripped_rows(colour = NA) +
   geom_vline(xintercept = 0, linetype = 2, colour = "grey55") +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
-    orientation = "y", width = 0, position = dodge, linewidth = 0.5
+    orientation = "y", width = 0, position = dodge, linewidth = 0.9
   ) +
   geom_point(position = dodge, size = 2.4) +
   facet_wrap(~response, scales = "free_x") +

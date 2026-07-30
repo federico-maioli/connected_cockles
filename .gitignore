@@ -48,3 +48,6 @@ to_remove/
 
 # --- OS ---------------------------------------------------------------------
 .DS_Store
+
+# Rscript side-effect from base-graphics diagnostics (qqnorm, plot(mesh))
+Rplots.pdf

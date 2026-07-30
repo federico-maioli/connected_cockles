@@ -33,12 +33,12 @@ coef_data <- function(fits, resp, ok_ids) {
 }
 
 coef_plot <- function(d, xlab) {
-  dodge <- position_dodge(width = 0.6)
+  dodge <- position_dodge(width = 0.85)
   ggplot(d, aes(estimate, term, colour = metric)) +
     geom_stripped_rows(colour = NA) +
     geom_vline(xintercept = 0, linetype = 2, colour = "grey55") +
     geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
-      orientation = "y", width = 0, position = dodge, linewidth = 0.5
+      orientation = "y", width = 0, position = dodge, linewidth = 0.9
     ) +
     geom_point(position = dodge, size = 2.4) +
     scale_colour_carto_d(palette = "Vivid", name = "Connectivity metric") +
@@ -70,6 +70,7 @@ term_labs <- c(
   sal_std = "Salinity",
   shear_max_std = "Shear stress",
   log_biomass_in_strength_std = "Connectivity",
+  presence_in_strength_std = "Connectivity",
   deg_in_std = "Connectivity",
   in_strength_std = "Connectivity",
   eigen_centrality_std = "Connectivity",
@@ -78,7 +79,8 @@ term_labs <- c(
 term_levels <- c("Connectivity", "Shear stress", "Salinity", "Oxygen", "Temperature", "Depth")
 
 conn_labs <- c(
-  log_biomass_in_strength = "Biomass in-strength (log)",
+  log_biomass_in_strength = "Biomass (log) in-strength",
+  presence_in_strength = "Presence in-strength",
   deg_in = "In-degree",
   in_strength = "In-strength",
   eigen_centrality = "Eigenvector centrality",
