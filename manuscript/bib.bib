@@ -1,14 +1,89 @@
 % Bibliography database. Replace/append entries; keys are cited with
 % \citep{key} and \citet{key}. Example entry so the template compiles:
 
-@article{example2020,
-  author  = {Author, First A. and Author, Second B.},
-  title   = {An example journal article for the template},
-  journal = {Journal of Fisheries Ecology},
-  year    = {2020},
-  volume  = {12},
-  number  = {3},
-  pages   = {123--145},
-  doi     = {10.0000/example},
-  url     = {https://doi.org/10.0000/example}
+@article{akaike1974,
+  author  = {Akaike, Hirotugu},
+  title   = {A New Look at the Statistical Model Identification},
+  journal = {IEEE Transactions on Automatic Control},
+  year    = {1974},
+  volume  = {19},
+  number  = {6},
+  pages   = {716--723},
+  doi     = {10.1109/TAC.1974.1100705}
+}
+@techreport{lindgrenFmesherTriangleMeshes2025,
+    type = {manual},
+    title = {fmesher: {Triangle} meshes and related geometry tools},
+    url = {https://inlabru-org.github.io/fmesher/},
+    author = {Lindgren, Finn},
+    year = {2025},
+}
+@article{bakkaNonstationaryGaussianModels2019,
+    title = {Non-stationary {Gaussian} models with physical barriers},
+    volume = {29},
+    issn = {2211-6753},
+    url = {https://www.sciencedirect.com/science/article/pii/S221167531830099X},
+    doi = {10.1016/j.spasta.2019.01.002},
+    abstract = {The classical tools in spatial statistics are stationary models, like the Matérn field. However, in some applications there are boundaries, holes, or physical barriers in the study area, e.g. a coastline, and stationary models will inappropriately smooth over these features, requiring the use of a non-stationary model. We propose a new model, the Barrier model, which is different from the established methods as it is not based on the shortest distance around the physical barrier, nor on boundary conditions. The Barrier model is based on viewing the Matérn correlation, not as a correlation function on the shortest distance between two points, but as a collection of paths through a Simultaneous Autoregressive (SAR) model. We then manipulate these local dependencies to cut off paths that are crossing the physical barriers. To make the new SAR well behaved, we formulate it as a stochastic partial differential equation (SPDE) that can be discretised to represent the Gaussian field, with a sparse precision matrix that is automatically positive definite. The main advantage with the Barrier model is that the computational cost is the same as for the stationary model. The model is easy to use, and can deal with both sparse data and very complex barriers, as shown in an application in the Finnish Archipelago Sea. Additionally, the Barrier model is better at reconstructing the modified Horseshoe test function than the standard models used in R-INLA.},
+    urldate = {2026-07-30},
+    journal = {Spatial Statistics},
+    author = {Bakka, Haakon and Vanhatalo, Jarno and Illian, Janine B. and Simpson, Daniel and Rue, Håvard},
+    month = mar,
+    year = {2019},
+    keywords = {Archipelago, Barriers, Coastline problem, INLA, Spatial statistics, Stochastic partial differential equations},
+    pages = {268--288},
+}
+@article{andersonSdmTMBPackageFast2025,
+    title = {{sdmTMB}: {An} {R} {Package} for {Fast}, {Flexible}, and {User}-{Friendly} {Generalized} {Linear} {Mixed} {Effects} {Models} with {Spatial} and {Spatiotemporal} {Random} {Fields}},
+    volume = {115},
+    copyright = {Copyright (c) 2025 Sean C. Anderson, Eric J. Ward, Philina A. English, Lewis A. K. Barnett, James T. Thorson},
+    issn = {1548-7660},
+    shorttitle = {{sdmTMB}},
+    url = {https://doi.org/10.18637/jss.v115.i02},
+    doi = {10.18637/jss.v115.i02},
+    abstract = {Geostatistical spatial or spatiotemporal data are common across scientific fields. However, appropriate models to analyze these data, such as generalized linear mixed effects models (GLMMs) with Gaussian Markov random fields (GMRFs), are computationally intensive and challenging for many users to implement. Here, we introduce the R package sdmTMB, which extends the flexible interface familiar to users of lme4, glmmTMB, and mgcv to include spatial and spatiotemporal latent GMRFs using the stochastic partial differential equation (SPDE) approach. SPDE matrices are constructed with fmesher, and estimation is conducted via maximum marginal likelihood with TMB or via Bayesian inference with tmbstan and rstan. We describe the model and explore case studies that illustrate sdmTMB's flexibility in implementing penalized smoothers, non-stationary processes (time-varying and spatially varying coefficients), hurdle models, cross-validation, and anisotropy (directionally dependent spatial correlation). Finally, we compare the functionality, speed, and interfaces of related software, demonstrating that sdmTMB can be an order of magnitude faster than R-INLA. We hope sdmTMB will help open this useful class of models to more geostatistical analysts.},
+    language = {en},
+    urldate = {2026-02-03},
+    journal = {Journal of Statistical Software},
+    author = {Anderson, Sean C. and Ward, Eric J. and English, Philina A. and Barnett, Lewis A. K. and Thorson, James T.},
+    month = dec,
+    year = {2025},
+    pages = {1--46},
+}
+@article{kristensenTMBAutomaticDifferentiation2016,
+    title = {{TMB}: {Automatic} {Differentiation} and {Laplace} {Approximation}},
+    volume = {70},
+    issn = {1548-7660},
+    shorttitle = {\textbf{{TMB}}},
+    url = {http://www.jstatsoft.org/v70/i05/},
+    doi = {10.18637/jss.v070.i05},
+    language = {en},
+    number = {5},
+    urldate = {2023-06-09},
+    journal = {Journal of Statistical Software},
+    author = {Kristensen, Kasper and Nielsen, Anders and Berg, Casper W. and Skaug, Hans and Bell, Bradley M.},
+    year = {2016},
+}
+
+@article{nakagawa2013,
+  author  = {Nakagawa, Shinichi and Schielzeth, Holger},
+  title   = {A general and simple method for obtaining {$R^2$} from
+             generalized linear mixed-effects models},
+  journal = {Methods in Ecology and Evolution},
+  volume  = {4},
+  number  = {2},
+  pages   = {133--142},
+  year    = {2013}
+}
+
+@article{nakagawa2017,
+  author  = {Nakagawa, Shinichi and Johnson, Paul C. D. and Schielzeth, Holger},
+  title   = {The coefficient of determination {$R^2$} and intra-class
+             correlation coefficient from generalized linear mixed-effects
+             models revisited and expanded},
+  journal = {Journal of the Royal Society Interface},
+  volume  = {14},
+  number  = {134},
+  pages   = {20170213},
+  year    = {2017}
 }

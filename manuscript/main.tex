@@ -157,7 +157,7 @@ $^2$DHI, Hørsholm, Denmark
 \section{Abstract}
 % ~150--300 words. State the question, the data/approach, the key findings,
 % and why they matter.
-Correlative species distribution models for sessile marine invertebrates generally assume unrestricted larval access to all suitable habitat, yet propagule supply is computable from biophysical transport models and is rarely tested as a predictor. We combined a 7{,}468-station survey of the common cockle \textit{Cerastoderma edule} in the Limfjorden, Denmark (2018--2025), with a particle-tracking simulation of larval dispersal to ask whether connectivity metrics improve a habitat-based spatial GLMM of cockle standing stock. A spatial random field accounted for 61\% of the total variance in biomass and the environmental predictors --- depth, salinity, temperature, oxygen and shear stress --- for 16\%, whereas five alternative connectivity metrics added only 1.0--2.9\%, the smallest explained component in every model. Connectivity did improve fit ($\Delta$AIC = 11.6), but entered with consistently negative coefficients (in-strength $\hat{\beta} = -0.41$, 95\% CI $-0.63$ to $-0.18$), opposite in sign to a larval-subsidy expectation, and had almost no marginal association with biomass ($|\rho| < 0.12$ for every metric). Modelled supply was strongly collinear with the fjord's habitat geography ($\rho = 0.59$ with depth, $-0.67$ with salinity), so the best-connected cells are the deep, brackish inner basins in which cockles were least abundant. The result was insensitive to which year of the dispersal simulation was used, but two purely topological metrics reversed sign when the spatial field was removed. \ml{[Optional, if the co-authors want the species-sorting argument: independent genetic and agent-based-modelling evidence that the Limfjorden is a single well-connected unit would support an interpretation in which post-settlement processes, not larval delivery, set adult distribution.]} Rather than a case against connectivity in distribution models, we present two computable diagnostics --- the collinearity of modelled supply with the environmental predictors, and the stability of connectivity coefficients to a spatial random field --- that indicate whether a connectivity covariate can inform a distribution model in a given system.
+Correlative species distribution models for sessile marine invertebrates generally assume unrestricted larval access to all suitable habitat, yet propagule supply is computable from biophysical transport models and is rarely tested as a predictor. We combined a 7{,}468-station survey of the common cockle \textit{Cerastoderma spp} in the Limfjorden, Denmark (2018--2025), with a particle-tracking simulation of larval dispersal to ask whether connectivity metrics improve a habitat-based spatial GLMM of cockle standing stock. A spatial random field accounted for 61\% of the total variance in biomass and the environmental predictors --- depth, salinity, temperature, oxygen and shear stress --- for 16\%, whereas five alternative connectivity metrics added only 1.0--2.9\%, the smallest explained component in every model. Connectivity did improve fit ($\Delta$AIC = 11.6), but entered with consistently negative coefficients (in-strength $\hat{\beta} = -0.41$, 95\% CI $-0.63$ to $-0.18$), opposite in sign to a larval-subsidy expectation, and had almost no marginal association with biomass ($|\rho| < 0.12$ for every metric). Modelled supply was strongly collinear with the fjord's habitat geography ($\rho = 0.59$ with depth, $-0.67$ with salinity), so the best-connected cells are the deep, brackish inner basins in which cockles were least abundant. The result was insensitive to which year of the dispersal simulation was used, but two purely topological metrics reversed sign when the spatial field was removed. \ml{[Optional, if the co-authors want the species-sorting argument: independent genetic and agent-based-modelling evidence that the Limfjorden is a single well-connected unit would support an interpretation in which post-settlement processes, not larval delivery, set adult distribution.]} Rather than a case against connectivity in distribution models, we present two computable diagnostics --- the collinearity of modelled supply with the environmental predictors, and the stability of connectivity coefficients to a spatial random field --- that indicate whether a connectivity covariate can inform a distribution model in a given system.
 
 \vspace*{\fill}
 \noindent
@@ -171,6 +171,25 @@ Keyword five\\
 
 % ---- INTRODUCTION ----------------------------------------------------------
 \section{Introduction}
+@ all, feel free to add any point or develop what you are most comfortable with:
+
+{\color{red}
+
+\begin{itemize}
+
+    \item Correlative SDMs assume all environmentally suitable locations are reachable, implying that propagule supply does not limit species distributions. For sessile marine invertebrates with pelagic larvae, however, adult distributions depend on both habitat suitability and larval supply, an assumption that has rarely been tested because connectivity has historically been unobservable.
+
+    \item If dispersal limits occupancy, habitat-only SDMs will overpredict suitable but unoccupied locations, with implications for restoration, marine spatial planning, stock assessment, and forecasting climate-driven range shifts. Conversely, if larval supply is effectively ubiquitous, habitat-only models are sufficient and connectivity adds little predictive value.
+
+    \item Advances in biophysical dispersal modelling and network theory now make this assumption directly testable by deriving connectivity matrices and graph-based metrics (e.g. in-strength, in-degree, centrality) that can be incorporated as SDM covariates. Despite this, most studies use connectivity descriptively rather than testing whether it explains species distributions beyond habitat.
+
+    \item A key challenge is that connectivity is intrinsically linked to the same hydrodynamic processes that generate environmental gradients, making connectivity metrics potentially collinear with habitat predictors and spatially smooth enough to proxy residual spatial structure. Consequently, apparent connectivity effects may disappear once environmental covariates or spatial random effects are included.
+
+    \item Using an extensive survey of the common cockle \textit{Cerastoderma spp} in Limfjorden (7,468 stations; 2018--2025) together with a biophysical connectivity model, we ask: (i) does connectivity improve habitat-based SDMs of cockle biomass? (ii) are inferred effects robust across alternative connectivity metrics? and (iii) can connectivity be distinguished from environmental gradients and residual spatial structure?
+
+\end{itemize}
+
+}
 
 % ---- METHODS ---------------------------------------------------------------
 \section{Methods}
@@ -187,221 +206,190 @@ Keyword five\\
 \subsection{Environmental predictors}
 @ Flemming
 @ Pedro
+@ Camille
 
 \subsection{Larval transport and connectivity metrics}
 @ Ane
 @ Flemming
 
-
 Larval dispersal was simulated with a biophysical individual-based model that
-couples a hydrodynamic ocean model with Lagrangian particle tracking and a
-larval pelagic-duration/behaviour module \citep{yourABMref}. The study area was
-discretized into 2x2 km grid cells. Virtual larvae were released from each cell and tracked until settlement; aggregating over all release events yielded a connectivity matrix $C$, where $C_{jk}$ is the number of larvae released in cell $j$ that settled in cell $k$, together with a release vector $R_j$.
-
-We converted these into a flow matrix $F$ of settlement probabilities,
-\begin{equation}
-F_{jk} = \frac{C_{jk}}{R_j}, \qquad 0 \le \sum_{k} F_{jk} \le 1,
-\end{equation}
-so that $F_{jk}$ is the probability that a larva released in source cell $j$
-settles in sink cell $k$ (rows index sources, columns sinks). We treated $F$ as
-the weighted adjacency matrix of a directed dispersal network.
-
-For each cell $k$ we computed the weighted in-strength, local retention, and
-eigenvector centrality,
-\begin{align}
-I_k &= \sum_{j} F_{jk}, \\
-L_k &= F_{kk}, \\
-v_k &: \; \mathbf{v}\ \text{the leading eigenvector of}\ F,\ \ \max_k v_k = 1,
-\end{align}
-...
+couples a hydrodynamic ocean model with ...
 
 
 \subsection{Species distribution models}
 
-We related cockle biomass to environmental conditions, sampling gear, and larval
-connectivity using spatial generalized linear mixed models fitted with the
-\texttt{sdmTMB} package \citep{anderson2024} in \textsf{R}. The analysis reported
-in the main text takes biomass density $y_i \ge 0$ (g\,m$^{-2}$) at survey
-location $i$ as the response, modelled with a Tweedie distribution (compound
-Poisson--gamma, power parameter $1<p<2$) and a log link,
+We modelled cockle biomass density (g\,m$^{-2}$) as a function of environmental conditions, survey type, larval connectivity, and residual spatial autocorrelation using spatial generalized linear mixed models (GLMMs). Biomass density ($y_i$) at survey station $i$ ($n = 7{,}468$) was modelled using a Tweedie distribution (compound Poisson--gamma; $1<p<2$) with a log link,
 \begin{equation}
-y_i \sim \operatorname{Tweedie}(\mu_i,\phi,p), \qquad \log(\mu_i) = \eta_i ,
+y_i \sim \operatorname{Tweedie}(\mu_i,\phi,p), \qquad
+\log(\mu_i)=\eta_i ,
 \end{equation}
-with linear predictor
+where the Tweedie distribution accommodates zero-valued and continuous positive biomass observations within a single modelling framework.
+
+The linear predictor comprised additive effects of survey type, environmental conditions, larval connectivity, and a spatial random field,
 \begin{equation}
-\eta_i = \beta_0 + \gamma_{g(i)} + \sum_{k=1}^{5}\beta_k\,x_{ik} + \theta\,c_i + \omega_{s_i},
+\eta_i
+=
+\beta_0
++
+\underbrace{G_i}_{\text{survey}}
++
+\underbrace{E_i}_{\text{environment}}
++
+\underbrace{C_i}_{\text{connectivity}}
++
+\underbrace{\omega_{s_i}}_{\text{space}} ,
 \end{equation}
-where $\gamma_{g(i)}$ is the gear effect, $x_{ik}$ are the five (standardized)
-environmental covariates, $c_i$ is connectivity, and $\omega_{s_i}$ is a spatial
-random field. The Tweedie handles the zero-inflated, continuous biomass
-observations in a single model, so occurrence and abundance need not be
-separated.
+where
+\begin{align}
+G_i &= \gamma_{g(i)},
+&& g(i)\in\{\text{Commercial},\text{Stock}\},
+\quad \gamma_{\text{Commercial}}=0,\\
+E_i &= \sum_{k=1}^{5}\beta_k x_{ik},
+&& \mathbf{x}_i=(\text{depth},\,\text{temperature},\,\text{oxygen},\,\text{salinity},\,\text{shear stress})_i,\\
+C_i &= \theta c_i,
+&& c_i=\text{connectivity metric},\\
+\bm{\omega}
+&\sim
+\mathrm{MVN}\!\left(\mathbf{0},\bm{\Sigma}_{\omega}\right),
+&&
+\bm{\Sigma}_{\omega}\ \text{defined by a Mat\'ern covariance function with range }\rho\text{ and marginal SD }\sigma_{\omega}.
+\end{align}
 
-To confirm that the conclusions do not depend on this choice, every model was
-also fitted to the presence--absence indicator $z_i\in\{0,1\}$ with a Bernoulli
-distribution and a logit link, $\operatorname{logit}(\pi_i) = \eta_i$, using the
-same linear predictor. Those fits are reported in the Supporting Information
-(Fig.~\ref{fig:coefficients_presence}) and in the model-selection table
-(Table~\ref{tab:model-selection}).
+Here, $\beta_0$ is the intercept, $\gamma_{g(i)}$ accounts for differences between commercial and stock assessment surveys, $\mathbf{x}_i$ contains the five environmental predictors, $c_i$ is the connectivity value assigned to the grid cell containing station $i$, and $\omega_{s_i}$ is a Gaussian random field representing residual spatial autocorrelation not explained by the fixed effects. All continuous predictors, including environmental variables and connectivity metrics, were standardized to zero mean and unit variance before model fitting.
 
-Six model structures were compared, crossing the spatial random field, the
-environmental block and connectivity (Table~\ref{tab:model-selection}). Because
-no single connectivity metric is obviously preferred, the connectivity slot
-$c_i$ was rotated over all six metrics in turn, so each connectivity structure
-was fitted six times per response.
+Because no single connectivity metric was assumed to best represent larval connectivity, we fitted separate models for each of the six candidate connectivity metrics, replacing the connectivity term ($C_i$) in the linear predictor while keeping all other model components unchanged.
+
+To assess whether the effects differed between biomass and occurrence, we additionally fitted Bernoulli GLMMs to presence--absence data ($z_i\in\{0,1\}$) using a logit link,
+\[
+z_i \sim \operatorname{Bernoulli}(\pi_i), \qquad
+\operatorname{logit}(\pi_i)=\eta_i,
+\]
+with the same linear predictor. Results from these models are presented in the Supporting Information.
+
+\subsubsection*{Model structures comparison}
+
+To quantify the relative contribution of environmental conditions, larval connectivity, and residual spatial structure, we compared six model structures (Table~\ref{tab:model_structures}). The survey type effect ($G$) was included in all models, whereas the environment ($E$), connectivity ($C$), and spatial random field ($\omega$) were included in different combinations.
+
+\begin{table}[h]
+
+\centering
+
+\caption{Model structures compared. The connectivity term ($C$) was fitted separately using each of the six candidate connectivity matrices.}
+
+\label{tab:model_structures}
+\begin{tabular}{ll}
+\toprule
+Structure & Linear predictor \\
+\midrule
+Space                              & $\beta_0 + G + \omega$ \\
+Environment                        & $\beta_0 + G + E$ \\
+Space + Environment                & $\beta_0 + G + E + \omega$ \\
+Space + Connectivity               & $\beta_0 + G + C + \omega$ \\
+Environment + Connectivity         & $\beta_0 + G + E + C$ \\
+Space + Environment + Connectivity & $\beta_0 + G + E + C + \omega$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Models containing the connectivity term ($C$; structures 4--6 in Table~\ref{tab:model_structures}) were fitted separately for each of the six candidate connectivity matrices, yielding $3 + (3 \times 6) = 21$ models per response variable (42 models in total for biomass and presence--absence). Competing models were compared using Akaike's Information Criterion (AIC; \citet{akaike1974}), with lower AIC values indicating better support after accounting for model complexity.
+
+Something about how variance partitioning was calculated
+
+\subsubsection*{Spatial field and mesh}
+
+The random field was approximated by the SPDE method on a finite-element mesh built with the R package \texttt{fmesher} \citep{lindgrenFmesherTriangleMeshes2025}, using a maximum inner triangle edge of 2~km (about half the estimated Mat\'ern range). Because the
+Limfjorden is a narrow, branching system in which straight-line distance is a poor proxy for connection through water, we used a barrier mesh where mesh triangles
+falling on land had their correlation range reduced to 10\% of the water value, so spatial correlation does not cross land \citep{bakkaNonstationaryGaussianModels2019}.
+
+\subsubsection*{Variance partitioning}
+
+We decomposed the variance in cockle biomass following the marginal and conditional $R^2$ framework for generalized linear mixed models \citep{nakagawa2013, nakagawa2017}. Working on the link scale, we computed three components: the variance of the fixed-effects linear predictor $\sigma^2_f$, the
+variance of the spatial random field $\sigma^2_\omega$, and the observation-level (distribution) variance $\sigma^2_d$. For a Tweedie response with a log link the
+last was obtained by the lognormal approximation. Marginal
+$R^2 = \sigma^2_f / (\sigma^2_f + \sigma^2_\omega + \sigma^2_d)$ is the share of
+variance explained by the fixed effects alone, and conditional
+$R^2 = (\sigma^2_f + \sigma^2_\omega) / (\sigma^2_f + \sigma^2_\omega + \sigma^2_d)$
+the share explained by the fixed effects and the spatial field together.
+
+% To attribute the fixed-effect share to individual blocks, we split the fixed linear predictor into its gear, environment and connectivity components ($\eta^f_i = G_i + E_i + C_i$) and gave each block a share equal to its covariance with the whole fixed predictor, $\mathrm{cov}(B, \eta^f)$, divided by the total variance. Because $\mathrm{Var}(\eta^f) = \sum_B \mathrm{cov}(B,\eta^f)$, the three block shares sum exactly to the marginal $R^2$, and covariance between blocks is apportioned between them rather than left unassigned.
 
 
-\subsection{Software}
-We fit models in \textsf{R} \citep{example2020} using the \texttt{package}
-package.
+\subsubsection*{Software}
+We fit the spatiotemporal models with the R package \texttt{sdmTMB} \citep{andersonSdmTMBPackageFast2025}, version 0.6.0.9034. sdmTMB uses automatic differentiation and the Laplace approximation from the R package TMB \citep{kristensenTMBAutomaticDifferentiation2016} and sparse matrix structures to set up the SPDE-based GMRFs from the R package fmesher \citep{lindgrenFmesherTriangleMeshes2025}. Estimation is done via maximum marginal likelihood. We confirmed that the nonlinear optimization was consistent with convergence by checking that the Hessian matrix was positive definite and the maximum absolute log-likelihood gradient with respect to fixed effects was <0.001 \citep{andersonSdmTMBPackageFast2025}. 
 
 % ---- RESULTS ---------------------------------------------------------------
 \section{Results}
 
-The survey comprised 7{,}468 stations sampled between 2018 and 2025, falling
-within 324 of the 2$\times$2~km grid cells; cockles were present at 17.7\% of
-stations. Cockle biomass was concentrated in a few dense beds along the central
-channel and in the western basin (Fig.~\ref{fig:study_area}a), while modelled
-larval settlement from any single release cell spread over a substantial part of
-the fjord (Fig.~\ref{fig:study_area}b).
+The survey comprised 7{,}468 stations sampled between 2018 and 2025, cockles were present at 17.7\% of
+stations. Cockle biomass was concentrated in a few dense beds along the central channel and in the western basin (Fig.~\ref{fig:study_area}a). \textcolor{red}{Something about how the system is connected and reference to panel b.}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{fig1_map.png}
     \caption{(a) Study area. Cockle survey stations in the Limfjorden, Denmark,
     coloured by biomass density; grey points are stations where no cockles were
-    recorded. The inset marks the mapped extent within the North Sea--Baltic
-    transition. (b) Larval settlement footprints. For each of four release cells
-    (black diamonds), the settlement probability field from the pooled flow
-    matrix. Release cells were selected systematically: the 12th, 50th and 88th
-    percentile of along-fjord position among cells whose total larval export
-    exceeds the median, plus the westernmost cell of the northern arm. Ninety per
-    cent of larvae released at a given cell settle within 212--636~km$^2$, against
+    recorded. (b) Example of larval settlement footprints. For each of four release cells (white diamonds), the settlement probability field from the pooled flow matrix. 90\% of larvae released at a given cell settle within 212--636~km$^2$, against
     a connected basin of roughly 2{,}400~km$^2$.}
     \label{fig:study_area}
 \end{figure}
 
-\subsection{Space and habitat dominate}
+\subsection{Space and environment account for most of the explained variation}
 
-Model selection was unambiguous about the ranking of the three blocks
-(Table~\ref{tab:model-selection}). Removing the spatial random field was by far
-the most costly simplification: the best non-spatial model was 1{,}124.4 AIC
-units worse than the best spatial one. Removing the environmental block cost
-125.6 units, and removing connectivity cost 11.6 units. The best-supported
-biomass model was Space + Environment + Connectivity with closeness centrality
-as the connectivity term, with in-strength 1.2 units behind; for presence the
-in-strength model was best. All 42 fitted models converged.
+Space and environment explained cockle biomass; connectivity added almost nothing (Table~\ref{tab:model-selection}). Relative to the best-supported model,
+dropping the spatial random field cost $\approx$1{,}124 AIC units, dropping the environmental block cost $\approx$110, and dropping connectivity cost only
+$\approx$12. Closeness centrality gave the best-supported model, but which metric occupied the connectivity slot barely mattered: all six fell within 8.0 AIC units of one another, so the data cannot distinguish among them.
 
-Within the best biomass model, biomass fell with depth
-($\hat{\beta} = -1.12 \pm 0.14$ per SD) and with maximum shear stress
-($\hat{\beta} = -1.52 \pm 0.18$), and rose with salinity
-($\hat{\beta} = 1.39 \pm 0.44$); the oxygen effect was weaker
-($\hat{\beta} = -0.54 \pm 0.24$) and temperature was indistinguishable from zero
-($\hat{\beta} = 0.15 \pm 0.36$). The densest beds therefore sat in the shallow,
-saline, low-energy parts of the fjord. The spatial field had a Mat\'ern range of
-5.4~km, i.e.\ residual spatial structure decayed over a distance of roughly two
-to three grid cells.
+\input{../output/tables/tab1_model_selection.tex}
 
-Variance partitioning (Fig.~\ref{fig:variance}) put the conditional $R^2$ at
-84.4\% and the marginal (fixed-effects) $R^2$ at 22.5\% on average across
-metrics. For the in-strength model the spatial field accounted for 61.2\% of
-total variance, environment 16.2\%, survey gear 4.7\% and connectivity 1.8\%,
-with 16.2\% unexplained. This ordering was stable across all six connectivity
-metrics (spatial field 60.3--64.9\%, environment 15.1--17.0\%, survey gear
-3.2--4.9\%, connectivity 0.9--2.9\%).
-
-\subsection{Connectivity contributes little, and with the opposite sign}
-
-Connectivity improved the model, but modestly and in the direction opposite to a
-larval-subsidy expectation. All six metrics entered the biomass model with
-negative coefficients whose confidence intervals excluded zero
-(Fig.~\ref{fig:coefficients}): closeness centrality
-$\hat{\beta} = -0.84$ (95\% CI $-1.30$, $-0.39$), in-degree $-0.63$ ($-1.15$,
-$-0.10$), eigenvector centrality $-0.53$ ($-0.90$, $-0.16$), in-strength $-0.41$
-($-0.63$, $-0.18$), biomass (log) in-strength $-0.39$ ($-0.62$, $-0.16$) and
-presence in-strength $-0.38$ ($-0.61$, $-0.16$). Presence behaved the same way
-(in-strength $-0.31$; $-0.51$, $-0.11$; Fig.~\ref{fig:coefficients_presence}).
-Higher modelled larval supply was thus associated with \emph{lower} adult cockle
-biomass, not higher. The environmental coefficients were essentially unchanged by
-which connectivity metric was used, so the effect is not an artefact of one
-particular definition of connectivity.
+Cockles were most abundant in shallow, saline, low-energy water (Fig.~\ref{fig:coefficients}). Biomass declined with depth ($\hat{\beta} = -1.12 \pm 0.14$ per SD) and with maximum shear stress ($-1.52 \pm 0.18$), and rose with salinity ($1.39 \pm 0.44$). Oxygen had a weaker
+negative effect ($-0.54 \pm 0.24$), and temperature was indistinguishable from zero ($0.15 \pm 0.36$). Beyond these gradients, residual spatial structure decayed
+over a Mat\'ern range of 5.4~km, roughly two to three grid cells.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{fig2_coeff.png}
-    \caption{Standardized coefficients of the full Space + Environment +
-    Connectivity biomass model (Tweedie, log link), with the connectivity slot
-    rotated over the six metrics. Points are estimates and bars 95\% confidence
-    intervals; the intercept and survey (gear) terms are omitted as nuisance.
-    Every connectivity coefficient is negative with an interval excluding zero,
-    while the environmental effects barely move between metrics. The equivalent
-    figure for presence is Fig.~\ref{fig:coefficients_presence}.}
+    \includegraphics[width=0.95\textwidth]{fig2_coeff.png}
+    \caption{Standardized coefficients of the full Space + Environment + Connectivity biomass density
+models (Tweedie, log link).}
     \label{fig:coefficients}
 \end{figure}
 
-The effect was also small relative to everything else in the model: at
-0.9--2.9\% of total variance, connectivity was the smallest explained component
-in every fitted model, below even the survey-gear intercept. The six metrics
-were near-tied on AIC (a spread of 8.0 units across all six), so the data do not
-distinguish between them.
+Variance partitioning reinforced the same ranking (Fig.~\ref{fig:variance}). Averaged across connectivity metrics, the fixed effects explained 22.5\% of the
+variance (marginal $R^2$), and the fixed effects together with the spatial field explained 84.4\% (conditional $R^2$). In the closeness centrality model, the spatial field accounted for 64.9\% of total variance, environment for 15.1\%, gear type for 3.2\% and connectivity for 2.9\%, leaving 13.8\% unexplained. These shares were stable across all six metrics: spatial field 60.3--64.9\%, environment 15.1--17.0\%, gear type 3.2--4.9\%, and connectivity 0.9--2.9\%.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{fig3_variance.png}
-    \caption{Variance partitioning of cockle biomass (Nakagawa \& Schielzeth
-    marginal / conditional $R^2$) for the full spatial model, shown separately
-    for each connectivity metric. The spatial field accounts for roughly 60\% of
-    total variance and connectivity for 0.9--2.9\%, the smallest explained
-    component in every model. Shares sum to 100\% within each bar; the
-    counterpart without the spatial field is
-    Fig.~\ref{fig:variance_nospace}.}
+    \caption{Variance partitioning of cockle biomass for the full spatial models, shown separately for each connectivity metric. The spatial field accounts for roughly 60\% of total variance and connectivity for 0.9--2.9\%, the smallest explained component in every model.}
     \label{fig:variance}
 \end{figure}
 
-\subsection{Supply and habitat share the same axis}
-\label{sec:variance_partitioning}
+\subsection{Connectivity effects are small and negative}
 
-The negative sign is intelligible once the collinearity between connectivity and
-the fjord's habitat geography is made explicit
-(Fig.~\ref{fig:conn_environment}). In-strength correlated with depth
-($\rho = 0.59$), salinity ($\rho = -0.67$) and maximum shear stress
-($\rho = -0.57$), and the other metrics behaved similarly (depth $\rho = 0.51$ to
-$0.63$; salinity $\rho = -0.43$ to $-0.75$). The best-connected cells are the
-deeper, more brackish, lower-energy parts of the fjord --- close to the
-conditions under which cockles were least abundant. Connectivity terms carried
-variance inflation factors of 1.7--2.3 in the combined models, so the blocks
-remain separable, but their contributions are only partly identifiable.
+All six connectivity metrics entered the biomass model with negative coefficients whose confidence intervals excluded zero (Fig.~\ref{fig:coefficients}): closeness centrality $\hat{\beta} = -0.84$ (95\% CI $-1.30$, $-0.39$), in-degree $-0.63$ ($-1.15$, $-0.10$), eigenvector
+centrality $-0.53$ ($-0.90$, $-0.16$), in-strength $-0.41$ ($-0.63$, $-0.18$), biomass (log) in-strength $-0.39$ ($-0.62$, $-0.16$), and presence in-strength
+$-0.38$ ($-0.61$, $-0.16$). The presence model behaved the same way (in-strength $-0.31$; $-0.52$, $-0.11$; Fig.~\ref{fig:coefficients_presence}). Higher modelled larval supply therefore predicted lower biomass, not higher.
 
-Consistent with this, connectivity had essentially no marginal association with
-biomass: Spearman correlations at the survey stations ranged from $-0.081$
-(in-strength) to $0.024$ (in-degree), i.e.\ $|\rho| < 0.12$ for every metric. The
-negative effect reported above is therefore entirely conditional on the
-environmental and spatial terms, and is best read as residual habitat structure
-that the linear environmental terms do not fully absorb, rather than as evidence
-that larval delivery suppresses adult biomass.
+This negative association was not an artefact of how connectivity was defined: the environmental coefficients barely moved as the metric was rotated (Fig.~\ref{fig:coefficients}). It was, however, small. At 0.9--2.9\% of total variance, connectivity was the smallest explained component in every model, below even the survey-type intercept (Fig.~\ref{fig:variance}).
+
+
+\subsection{The connectivity effect is conditional, not marginal}
+
+Connectivity had almost no marginal association with cockle biomass. Pooled Spearman correlations ranged from $-0.081$ (in-strength) to $0.024$ (in-degree), so $|\rho| \le 0.081$ for every metric. The negative coefficients reported above therefore appear only after conditioning on the environmental covariates and the spatial field, and describe a partial rather than an overall association.
+
+Connectivity was also not independent of the environmental predictors (Fig.~\ref{fig:conn_environment}). In-strength correlated with depth ($\rho = 0.59$), salinity ($\rho = -0.67$) and maximum shear stress
+($\rho = -0.57$), and the remaining metrics behaved similarly (depth $\rho = 0.51$ to $0.63$; salinity $-0.43$ to $-0.75$; shear stress $-0.49$ to $-0.57$). Stations receiving more modelled larval supply were deeper and fresher, conditions under which cockles were less abundant, but also less energetic, where they were more abundant; the gradients therefore do not align in a single direction.
+
+The resulting collinearity was moderate. Variance inflation factors for the connectivity term ranged from 1.72 to 2.32 across the six metrics, implying that
+42--57\% of each metric's variance is shared with the environmental block. This is well below conventional thresholds of concern and leaves the blocks
+separable, but it means the connectivity coefficient is estimated from a restricted portion of the covariate space and is sensitive to which environmental terms are included.
+
 
 \subsection{Sensitivity to the dispersal year and to the spatial field}
 
-The result did not depend on which year of the dispersal simulation was used.
-Recomputing every metric from each annual flow matrix (2010--2016) and
-correlating it with observed biomass gave correlations spanning only 0.087--0.137
-across years, with the pooled matrix used in the fitted models lying inside that
-band for every metric (Fig.~\ref{fig:year_sensitivity}). Closeness centrality was
-the most stable metric across years and eigenvector centrality the least.
+The result did not depend on which year of the dispersal simulation was used. Recomputing every metric from each annual flow matrix (2010--2016) and correlating it with observed biomass gave correlations spanning only 0.087--0.137 across years, with the pooled matrix used in the fitted models lying inside that band for every metric (Fig.~\ref{fig:year_sensitivity}). Closeness centrality was the most stable metric across years and eigenvector centrality the least.
 
 Dependence on the spatial field was more consequential
-(Fig.~\ref{fig:space_confounding}). Refitting without the field left the sign of
-in-strength ($-0.41 \rightarrow -0.30$), biomass (log) in-strength
-($-0.39 \rightarrow -0.34$), presence in-strength ($-0.38 \rightarrow -0.34$) and
-eigenvector centrality ($-0.53 \rightarrow -0.44$) unchanged, with magnitudes
-shrinking by 10--25\%. For in-degree ($-0.63 \rightarrow +0.30$) and closeness
-centrality ($-0.84 \rightarrow +0.36$), however, the coefficient reversed sign.
-The two purely topological metrics are therefore not separable from broad spatial
-structure, whereas the supply-weighted metrics are. Dropping the field also
-redistributed variance dramatically, with the survey-gear share rising from
-3--5\% to 44--45\% and environment from 15--17\% to 26--30\%
-(Fig.~\ref{fig:variance_nospace}), indicating that gear and location are partly
-aliased in this survey and that the spatial field is what separates them.
+(Fig.~\ref{fig:space_confounding}). Refitting without the field left the sign of in-strength ($-0.41 \rightarrow -0.30$), biomass (log) in-strength ($-0.39 \rightarrow -0.34$), presence in-strength ($-0.38 \rightarrow -0.34$) and eigenvector centrality ($-0.53 \rightarrow -0.44$) unchanged, with magnitudes shrinking by 10--25\%. For in-degree ($-0.63 \rightarrow +0.30$) and closeness centrality ($-0.84 \rightarrow +0.36$), however, the coefficient reversed sign. The two purely topological metrics are therefore not separable from broad spatial structure, whereas the supply-weighted metrics are. Dropping the field also redistributed variance dramatically, with the survey-gear share rising from 3--5\% to 44--45\% and environment from 15--17\% to 26--30\% (Fig.~\ref{fig:variance_nospace}), indicating that gear and location are partly aliased in this survey and that the spatial field is what separates them.
 
 % ---- DISCUSSION ------------------------------------------------------------
 \section{Discussion}
@@ -414,9 +402,8 @@ aliased in this survey and that the spatial field is what separates them.
 @ Martin
 
 \section{Author contributions}
-Describe contributions (e.g. CRediT roles).
 
-  \section{Conflicts of interest}
+\section{Conflicts of interest}
 The authors declare that they have no conflict of interest.
 
 \section{Data Availability Statement}
@@ -424,7 +411,7 @@ Code and data are available at \url{https://github.com/user/repo} and archived
 at \url{https://doi.org/xxxxx}.
 
 \section{Funding}
-Funding sources and grant numbers.
+@ Pedro
 
 \bibliography{bib}
 
@@ -434,7 +421,7 @@ Funding sources and grant numbers.
 % ============================================================================
 %  TABLES
 % ============================================================================
-\section{Tables}
+%\section{Tables}
 
 % Both tables are generated by the R pipeline and \input verbatim, so they never
 % drift from the fitted models:
@@ -443,7 +430,7 @@ Funding sources and grant numbers.
 % The variance partitioning is shown as Fig.~\ref{fig:variance} rather than a
 % table, so tab2 is no longer input here.
 
-\input{../output/tables/tab1_model_selection.tex}
+
 
 
 \clearpage
