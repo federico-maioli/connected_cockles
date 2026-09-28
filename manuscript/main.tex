@@ -246,13 +246,11 @@ y_i \sim \operatorname{Tweedie}(\mu_i,\phi,p), \qquad
 \end{equation}
 where the Tweedie distribution accommodates zero-valued and continuous positive biomass observations within a single modelling framework.
 
-The linear predictor comprised additive effects of survey type, environmental conditions, larval connectivity, and a spatial random field,
+\rev{The Commercial survey's density values were structurally unreliable in three of its four years (2019--2021 had zero recorded density at every station despite non-zero biomass; see Supporting Information), so we restricted all models to the Stock survey ($n=5{,}588$), which uses a single, consistent protocol throughout. No survey/gear term is therefore included.} The linear predictor comprised additive effects of environmental conditions, larval connectivity, and a spatial random field,
 \begin{equation}
 \eta_i
 =
 \beta_0
-+
-\underbrace{G_i}_{\text{survey}}
 +
 \underbrace{E_i}_{\text{environment}}
 +
@@ -262,9 +260,6 @@ The linear predictor comprised additive effects of survey type, environmental co
 \end{equation}
 where
 \begin{align}
-G_i &= \gamma_{g(i)},
-&& g(i)\in\{\text{Commercial},\text{Stock}\},
-\quad \gamma_{\text{Commercial}}=0,\\
 E_i &= \sum_{k=1}^{5}\beta_k x_{ik},
 && \mathbf{x}_i=(\text{depth},\,\text{temperature},\,\text{oxygen},\,\text{salinity},\,\text{shear stress})_i,\\
 C_i &= \theta c_i,
@@ -276,9 +271,9 @@ C_i &= \theta c_i,
 \bm{\Sigma}_{\omega}\ \text{defined by a Mat\'ern covariance function with range }\rho\text{ and marginal SD }\sigma_{\omega}.
 \end{align}
 
-Here, $\beta_0$ is the intercept, $\gamma_{g(i)}$ accounts for differences between commercial and stock assessment surveys, $\mathbf{x}_i$ contains the five environmental predictors (Fig.~\ref{fig:covariates_supp}), $c_i$ is the connectivity value assigned to the grid cell containing station $i$, and $\omega_{s_i}$ is a Gaussian random field representing residual spatial autocorrelation not explained by the fixed effects. All continuous predictors, including environmental variables and connectivity metrics, were standardized to zero mean and unit variance before model fitting.
+Here, $\beta_0$ is the intercept, $\mathbf{x}_i$ contains the five environmental predictors (Fig.~\ref{fig:covariates_supp}), $c_i$ is the connectivity value assigned to the grid cell containing station $i$, and $\omega_{s_i}$ is a Gaussian random field representing residual spatial autocorrelation not explained by the fixed effects. All continuous predictors, including environmental variables and connectivity metrics, were standardized to zero mean and unit variance before model fitting.
 
-Because no single connectivity metric was assumed to best represent larval connectivity, we fitted separate models for each of the six candidate connectivity metrics (Fig.~\ref{fig:connectivity_maps}), replacing the connectivity term ($C_i$) in the linear predictor while keeping all other model components unchanged.
+\rev{Because no single connectivity metric was assumed to best represent larval connectivity, we fitted separate models for each of five candidate connectivity metrics (Fig.~\ref{fig:connectivity_maps}): in-degree, in-strength, in-closeness, eigenvector centrality, and transitivity \ml{@Ane: please confirm these definitions/citations against how ConMetrics\_PresAbs was built - carried over from the metric names in the underlying file, not independently re-derived here}, replacing the connectivity term ($C_i$) in the linear predictor while keeping all other model components unchanged. Based on the results below, in-strength was used as the primary connectivity metric; the other four are reported as a sensitivity check.}
 
 To assess whether the effects differed between biomass and occurrence, we additionally fitted Bernoulli GLMMs to presence--absence data ($z_i\in\{0,1\}$) using a logit link,
 \[
@@ -289,30 +284,30 @@ with the same linear predictor. Results from these models are presented in the S
 
 \subsubsection{Model structures comparison}
 
-To quantify the effect a    nd relative contribution of environmental conditions, larval connectivity, and residual spatial structure, we compared six model structures (Table~\ref{tab:model_structures}). The survey type effect ($G$) was included in all models, whereas the environment ($E$), connectivity ($C$), and spatial random field ($\omega$) were included in different combinations.
+To quantify the effect and relative contribution of environmental conditions, larval connectivity, and residual spatial structure, we compared six model structures (Table~\ref{tab:model_structures}), in which the environment ($E$), connectivity ($C$), and spatial random field ($\omega$) were included in different combinations.
 
 \begin{table}[h]
 
 \centering
 
-\caption{Model structures compared. The connectivity term ($C$) was fitted separately using each of the six candidate connectivity matrices.}
+\caption{\rev{Model structures compared. The connectivity term ($C$) was fitted separately using each of the five candidate connectivity metrics.}}
 
 \label{tab:model_structures}
 \begin{tabular}{ll}
 \toprule
 Structure & Linear predictor \\
 \midrule
-Space                              & $\beta_0 + G + \omega$ \\
-Environment                        & $\beta_0 + G + E$ \\
-Space + Environment                & $\beta_0 + G + E + \omega$ \\
-Space + Connectivity               & $\beta_0 + G + C + \omega$ \\
-Environment + Connectivity         & $\beta_0 + G + E + C$ \\
-Space + Environment + Connectivity & $\beta_0 + G + E + C + \omega$ \\
+Space                              & $\beta_0 + \omega$ \\
+Environment                        & $\beta_0 + E$ \\
+Space + Environment                & $\beta_0 + E + \omega$ \\
+Space + Connectivity               & $\beta_0 + C + \omega$ \\
+Environment + Connectivity         & $\beta_0 + E + C$ \\
+Space + Environment + Connectivity & $\beta_0 + E + C + \omega$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Models containing the connectivity term ($C$; structures 4--6 in Table~\ref{tab:model_structures}) were fitted separately for each of the six candidate connectivity matrices, yielding $3 + (3 \times 6) = 21$ models per response variable (42 models in total for biomass and presence--absence). Competing models were compared using Akaike's Information Criterion (AIC; \citet{akaike1974}), with lower AIC values indicating better support after accounting for model complexity.
+\rev{Models containing the connectivity term ($C$; structures 4--6 in Table~\ref{tab:model_structures}) were fitted separately for each of the five candidate connectivity metrics, yielding $3 + (3 \times 5) = 18$ models per response variable (36 models in total for biomass and presence--absence). As a further robustness check specific to the primary (in-strength) metric, the full Space + Environment + Connectivity structure was also refit with each of the five environmental predictors dropped in turn, with and without the spatial field (20 additional models; see \nameref{sec:connectivity_robustness}).} Competing models were compared using Akaike's Information Criterion (AIC; \citet{akaike1974}), with lower AIC values indicating better support after accounting for model complexity.
 
 \subsubsection{Spatial field and mesh}
 
@@ -330,7 +325,7 @@ variance explained by the fixed effects alone, and conditional
 $R^2 = (\sigma^2_f + \sigma^2_\omega) / (\sigma^2_f + \sigma^2_\omega + \sigma^2_d)$
 the share explained by the fixed effects and the spatial field together.
 
-% To attribute the fixed-effect share to individual blocks, we split the fixed linear predictor into its gear, environment and connectivity components ($\eta^f_i = G_i + E_i + C_i$) and gave each block a share equal to its covariance with the whole fixed predictor, $\mathrm{cov}(B, \eta^f)$, divided by the total variance. Because $\mathrm{Var}(\eta^f) = \sum_B \mathrm{cov}(B,\eta^f)$, the three block shares sum exactly to the marginal $R^2$, and covariance between blocks is apportioned between them rather than left unassigned.
+\rev{To attribute the fixed-effect share to the environment and connectivity blocks ($\eta^f_i = E_i + C_i$), each block was given a share proportional to its own variance, $\mathrm{Var}(B)$, computed from that block's columns alone (i.e. ignoring its covariance with the other block) and then rescaled so the two block shares summed exactly to the fixed-effect share $\sigma^2_f/(\sigma^2_f+\sigma^2_\omega+\sigma^2_d)$ reported above \citep[following the variance-partitioning approach in the \texttt{Hmsc} package,][]{tikhonovJointSpeciesDistribution2020}. This keeps every block's share non-negative even though environment and connectivity are correlated (Fig.~\ref{fig:conn_environment}); the alternative of splitting by each block's covariance with the whole fixed predictor is an exact decomposition of $\sigma^2_f$ but can assign a block a negative share under collinearity, which we found made it harder to report cleanly for the less stable connectivity metrics (\nameref{sec:connectivity_robustness}).}
 
 
 \subsubsection{Model fitting}
@@ -339,8 +334,9 @@ We fit the spatiotemporal models with the R package \texttt{sdmTMB} \citep{ander
 % ---- RESULTS ---------------------------------------------------------------
 \section{Results}
 
-Throughout the survey domain and time frame considered cockles were present at 17.7\% of stations. Biomass was concentrated in a few dense beds along the central channel and south-western basins (Fig.~\ref{fig:study_area}a). The biophysical model predicted extensive potential larval exchange throughout the entire area, although settlement remained spatially structured. Depending on release location, 90\% of larvae settled within 212–636 km$^2$ of the release cell, compared with a connected basin of approximately 2,400 km$^2$ (Fig.~\ref{fig:study_area}b). \textcolor{red}{Not sure about this need help with interpretation @Ane @Flemming}
+\rev{Throughout the survey domain and time frame considered (Stock survey only, $n=5{,}588$ stations), cockles were present at 23.0\% of stations.} Biomass was concentrated in a few dense beds along the central channel and south-western basins (Fig.~\ref{fig:study_area}a). The biophysical model predicted extensive potential larval exchange throughout the entire area, although settlement remained spatially structured. Depending on release location, 90\% of larvae settled within 212–636 km$^2$ of the release cell, compared with a connected basin of approximately 2,400 km$^2$ (Fig.~\ref{fig:study_area}b). \textcolor{red}{Not sure about this need help with interpretation @Ane @Flemming}
 
+\ml{Fig.~\ref{fig:study_area} needs rebuilding: it currently still reflects the full survey (Commercial + Stock) rather than the Stock-only dataset used in the fitted models.}
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{fig1_map.png}
@@ -353,44 +349,38 @@ Throughout the survey domain and time frame considered cockles were present at 1
 
 \subsection{Model selection}
 
-Model selection strongly supported the inclusion of the spatial random field and environmental predictors, whereas support for the connectivity term was comparatively weak (Table~\ref{tab:model-selection}). Relative to the best-supported model, removing the spatial random field increased AIC by $\approx$ 1,124 units, removing the environmental block increased AIC by $\approx$  110 units, whereas removing the connectivity term increased AIC by only $\approx$ 12 units. The same ranking of model structures was obtained for the presence--absence models. Among models including environmental predictors, the spatial random field, and connectivity, the model using closeness centrality yielded the lowest AIC. However, all six connectivity models were within 8 AIC units of one another, indicating little evidence that one connectivity metric outperformed the others (Table~\ref{tab:model-selection}).
+\rev{Model selection strongly supported the inclusion of the spatial random field and environmental predictors, whereas support for the connectivity term was comparatively weak (Table~\ref{tab:model-selection}). Relative to the best-supported model (Space + Environment + Connectivity, in-strength), removing the spatial random field increased AIC by $\approx$1,138 units, removing the environmental block increased AIC by $\approx$84 units, and removing the connectivity term increased AIC by only $\approx$9 units. The same ranking of model structures was obtained for the presence--absence models. Among models including environmental predictors, the spatial random field, and connectivity, the model using in-strength yielded the lowest AIC; the other four metrics were within 8.6 AIC units of it (eigenvector centrality +2.9, in-closeness +3.5, in-degree +4.5, transitivity +8.6), indicating little evidence that one connectivity metric outperformed the others on fit alone. In-strength was carried forward as the primary metric because, unlike the other four, its coefficient and variance share were stable to two further checks (\nameref{sec:connectivity_robustness}); the other four are reported there as a sensitivity comparison.}
 
 \input{../output/tables/tab1_model_selection.tex}
 
 
 \subsection{Effects of habitat, connectivity and space}
 
+\rev{Cockles were most abundant in shallow, low-energy water (Fig.~\ref{fig:coefficients}a). The fitted responses show that biomass declined with depth ($\hat{\beta}=-0.98\pm0.14$ per SD) and maximum shear stress ($-1.27\pm0.16$); salinity ($0.60\pm0.43$), oxygen ($-0.29\pm0.21$) and temperature ($0.25\pm0.50$) were not distinguishable from zero at the 95\% level. This is a change from an earlier version of this analysis that also included the Commercial survey, in which salinity and oxygen were significant -- dropping Commercial (see Methods) both removed $\approx$1,900 rows and removed the survey/gear term, and the wider confidence intervals here reflect that. Beyond these environmental gradients, residual spatial autocorrelation decayed over a Mat\'ern range of 3.9 km, corresponding to about two grid cells.}
 
-Cockles were most abundant in shallow, saline, low-energy water (Fig.~\ref{fig:coefficients}). More specifically, the fitted responses show that biomass declined with depth ($\hat{\beta} = -1.12 \pm 0.14$ per SD) and maximum shear stress ($-1.52 \pm 0.18$), and increased with salinity ($1.39 \pm 0.44$). Oxygen had a weaker negative effect ($-0.54 \pm 0.24$), whereas temperature was indistinguishable from zero ($0.15 \pm 0.36$). Beyond these environmental gradients, residual spatial autocorrelation decayed over a Mat\'ern range of 5.4 km, corresponding to approximately two to three grid cells.
-
-All six connectivity metrics demonstrate negative coefficients whose 95\% confidence intervals excluded zero (Fig.~\ref{fig:coefficients}): closeness centrality $\hat{\beta} = -0.84$ (95\% CI $-1.30$, $-0.39$), in-degree $-0.63$ ($-1.15$, $-0.10$), eigenvector centrality $-0.53$ ($-0.90$, $-0.16$), in-strength $-0.41$ ($-0.63$, $-0.18$), biomass (log) in-strength $-0.39$ ($-0.62$, $-0.16$), and presence in-strength $-0.38$ ($-0.61$, $-0.16$). Thus, higher modelled larval supply was consistently associated with lower cockle biomass. The presence--absence models showed a similar pattern, although the confidence intervals for eigenvector centrality and in-degree overlapped zero (Fig.~\ref{fig:coefficients_presence}). Environmental coefficients changed little across the six connectivity models (Fig.~\ref{fig:coefficients}).
+\rev{The in-strength coefficient was negative for both responses (biomass: $-0.37\pm0.11$; presence: $-0.32\pm0.11$; Fig.~\ref{fig:coefficients}a), so cells receiving more modelled larval supply held less cockle biomass and were less likely to have cockles present, all else equal. For biomass, in-degree, in-closeness and eigenvector centrality were also negative with 95\% CIs excluding zero, while transitivity was positive but not distinguishable from zero; for presence, in-strength was the only metric whose CI excluded zero (\nameref{sec:connectivity_robustness}).}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{fig2_coeff.png}
-    \caption{Standardized coefficients of the full Space + Environment + Connectivity biomass density
-models (Tweedie, log link).}
+    \caption{\rev{Full Space + Environment + Connectivity biomass density model (Tweedie, log link), in-strength as the connectivity metric, with and without the spatial random field. (a) Standardized coefficients. (b) Variance partitioning (Nakagawa marginal/conditional $R^2$; fixed-effect blocks split as described in Methods). The presence--absence counterpart is Fig.~\ref{fig:coefficients_presence}.}}
     \label{fig:coefficients}
 \end{figure}
 
-
-Variance partitioning was consistent with the AIC-based model selection (Fig.~\ref{fig:variance}). Using closeness centrality as the connectivity term, the spatial random field accounted for 64.9\% of the total variance, followed by the environment (15.1\%), survey type (3.2\%), and connectivity (2.9\%), leaving 13.8\% unexplained. Replacing closeness centrality with each of the other five connectivity metrics produced nearly identical variance partitions: the spatial random field explained 60.3--64.9\% of the variance, the environment 15.1--17.0\%, survey type 3.2--4.9\%, and connectivity 0.9--2.9\%.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.95\textwidth]{fig3_variance.png}
-    \caption{Variance partitioning of cockle biomass for the full spatial models, shown separately for each connectivity metric.}
-    \label{fig:variance}
-\end{figure}
+\rev{Variance partitioning was consistent with the AIC-based model selection (Fig.~\ref{fig:coefficients}b). With the spatial field included, it accounted for 87.1\% of the total variance in biomass, followed by the environment (7.1\%) and connectivity (0.8\%), leaving 5.0\% unexplained; for presence the corresponding shares were 59.1\% (space), 10.6\% (environment), 0.8\% (connectivity) and 29.5\% unexplained. Replacing in-strength with each of the other four connectivity metrics gave a similar picture: with the field included, connectivity's share ranged 0.8--1.9\% for biomass and 0.2--0.9\% for presence, while the spatial field's share stayed within 87.1--88.1\% (biomass) and 59.0--60.2\% (presence) regardless of which metric was used.}
 
 \subsection{Connectivity relative to habitat and spatial structure}
+\label{sec:connectivity_robustness}
 
-Connectivity metrics were weakly correlated with the spatial random field estimated from the Space + Environment model (Fig.~\ref{fig:conn_environment}), with correlations ranging from $\rho = 0.10$ (in-strength) to $\rho = 0.29$ (closeness centrality). Refitting the models without the spatial random field affected the connectivity metrics differently (Fig.~\ref{fig:space_confounding}). The coefficients for in-strength ($-0.41 \rightarrow -0.30$), biomass (log) in-strength ($-0.39 \rightarrow -0.34$), presence in-strength ($-0.38 \rightarrow -0.34$), and eigenvector centrality ($-0.53 \rightarrow -0.44$) remained negative, whereas those for in-degree ($-0.63 \rightarrow +0.30$) and closeness centrality ($-0.84 \rightarrow +0.36$) changed sign. Despite these changes, connectivity explained a similar proportion of the total variance with (0.9--2.9\%) and without (0.8--2.9\%) the spatial random field (Fig.~\ref{fig:variance_nospace}). In contrast, the variance attributed to survey type increased from 3--5\% to 44--45\%, and that attributed to the environmental predictors increased from 15--17\% to 26--30\%. Connectivity metrics were moderately correlated with the environmental predictors (Fig.~\ref{fig:conn_environment}), with correlations ranging from $\rho = 0.51$ to $0.63$ for depth, $-0.43$ to $-0.75$ for salinity, and $-0.49$ to $-0.57$ for maximum shear stress. 
+\rev{The five connectivity metrics correlated with the environmental predictors to varying degrees (Fig.~\ref{fig:conn_environment}). For in-degree, in-strength, in-closeness and eigenvector centrality, correlations ranged $\rho=0.37$ to $0.58$ with depth, $-0.61$ to $-0.77$ with salinity, and $-0.52$ to $-0.69$ with maximum shear stress; oxygen was essentially uncorrelated with every metric ($|\rho|\le0.08$). Transitivity correlated with the same variables at similar magnitude but with the \emph{opposite} sign throughout ($\rho=-0.34$ with depth, $+0.74$ with salinity, $+0.62$ with maximum shear stress), consistent with transitivity behaving as an inverse measure of network centrality: hub-like cells with many connections tend to have low clustering. In-degree and in-closeness were themselves almost collinear ($\rho=0.98$), so the five metrics represent closer to three or four independent pieces of information than five.}
 
+\rev{Refitting each connectivity model without the spatial field moved the five metrics very differently (Fig.~\ref{fig:space_confounding}). In-strength was the most stable: its coefficient barely moved (biomass $-0.37\rightarrow-0.32$; presence $-0.32\rightarrow-0.37$), and it was the only metric whose sign and significance were unchanged in both responses. In-degree and in-closeness flipped sign for biomass when the field was dropped (in-degree $-0.58\rightarrow+0.75$; in-closeness $-0.59\rightarrow+0.22$); eigenvector centrality and transitivity also shifted toward zero or changed sign. As a further check specific to in-strength, we refit the full model dropping one environmental predictor at a time, with and without the spatial field (20 models, all converged; Fig.~\ref{fig:loo_stability}). The in-strength coefficient stayed within $-0.20$ to $-0.50$ across every combination, and only 1 of the 20 specifications (presence, spatial field on, shear stress dropped) had a CI that crossed zero. Dropping depth consistently moved the estimate further from zero and dropping shear stress consistently moved it toward zero (including the one case that crossed); depth, salinity and shear stress are the three covariates most correlated with in-strength above, but the size of a predictor's raw correlation with in-strength did not cleanly predict the size of its leave-one-out shift. None of the 20 specifications reversed the sign.}
 
 % Connectivity had almost no marginal association with cockle biomass. Pooled Spearman correlations ranged from $-0.081$ (in-strength) to $0.024$ (in-degree), so $|\rho| \le 0.081$ for every connectivity metric. The negative coefficients reported above therefore appear only after conditioning on the environmental covariates and the spatial field, and describe a partial rather than an overall association.
+\ml{This Spearman-correlation paragraph needs recomputing against the current (Stock-only, five-metric) data before it can go back in -- the numbers above are from the old six-metric analysis.}
 
 %The result did not depend on which year of the dispersal simulation was used. Recomputing every metric from each annual flow matrix (2010--2016) and correlating it with observed biomass gave correlations spanning only 0.087--0.137 across years, with the pooled matrix used in the fitted models lying inside that band for every metric (Fig.~\ref{fig:year_sensitivity}). Closeness centrality was the most stable metric across years and eigenvector centrality the least.
+\ml{This year-sensitivity check no longer has an analogue in the current pipeline: the five connectivity metrics are now computed once from a single pooled network (ConMetrics\_PresAbs), not from year-specific flow matrices, so there is no "dispersal year" to test sensitivity to any more. Recommend dropping this rather than trying to recompute it, unless a year-resolved connectivity product becomes available again.}
 
 % ---- DISCUSSION ------------------------------------------------------------
 \section{Discussion}
@@ -460,6 +450,7 @@ at \url{https://doi.org/xxxxx}.
 \section*{Supporting Information}
 \end{Center}
 
+\ml{figS1\_covariates.png needs rebuilding for the Stock-only dataset ($n=5{,}588$); the current file (if regenerated as-is) still reflects the full Commercial + Stock survey.}
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.95\textwidth]{figS1_covariates.png}
@@ -469,10 +460,11 @@ at \url{https://doi.org/xxxxx}.
 \FloatBarrier
 \clearpage
 
+\ml{figS2\_connectivity\_metrics.png needs rebuilding: it still shows the old six-metric, flow-matrix-derived set. The current five metrics are in-degree, in-strength, in-closeness, eigenvector centrality and transitivity, computed once from the pooled ConMetrics\_PresAbs network (not year-specific).}
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.95\textwidth]{figS2_connectivity_metrics.png}
-    \caption{Connectivity metrics mapped on the 2$\times$2~km grid, computed from the pooled flow matrix: (a) biomass-weighted in-strength (log), (b) in-degree, (c) in-strength, (d) eigenvector centrality and (e) closeness centrality.}
+    \caption{\rev{Connectivity metrics mapped on the 2$\times$2~km grid: (a) in-degree, (b) in-strength, (c) in-closeness, (d) eigenvector centrality and (e) transitivity.}}
     \label{fig:connectivity_maps}
 \end{figure}
 \FloatBarrier
@@ -480,29 +472,27 @@ at \url{https://doi.org/xxxxx}.
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.85\textwidth]{figS3_coeff_presence.png}
-    \caption{Standardized coefficients of the full Space + Environment +
-    Connectivity presence model (Bernoulli, logit link).}
+    \includegraphics[width=0.95\textwidth]{figS3_coeff_presence.png}
+    \caption{\rev{Full Space + Environment + Connectivity presence model (Bernoulli, logit link), in-strength as the connectivity metric, with and without the spatial random field. (a) Standardized coefficients. (b) Variance partitioning. Counterpart to Fig.~\ref{fig:coefficients}.}}
     \label{fig:coefficients_presence}
 \end{figure}
 \FloatBarrier
 \clearpage
 
-
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.7\textwidth]{figS7_connectivity_environment.png}
-    \caption{Spearman correlation between each connectivity metric and each environmental covariate (left of the divider), and with the residual spatial
-    random field estimated from the Space + Environment model (right).}
+    \includegraphics[width=0.7\textwidth]{figS9_correlation.png}
+    \caption{\rev{Pearson correlation among the five environmental predictors and five connectivity metrics.}}
     \label{fig:conn_environment}
 \end{figure}
 \FloatBarrier
 \clearpage
 
+\ml{figS5\_space\_confounding.png needs rebuilding: the script (figS5\_space\_confounding.R) still reads the retired data/derived/sdm\_fits.rds file rather than the current per-model files under data/sdm/. Should show, for each of the five connectivity metrics and both responses, the coefficient with and without the spatial field (the numbers already reported in the text above come straight from the saved model fits, independent of this figure).}
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.95\textwidth]{figS5_space_confounding.png}
-    \caption{Connectivity coefficients estimated with and without the spatial random field.}
+    \caption{Connectivity coefficients estimated with and without the spatial random field, for each of the five connectivity metrics and both responses.}
     \label{fig:space_confounding}
 \end{figure}
 \FloatBarrier
@@ -510,9 +500,18 @@ at \url{https://doi.org/xxxxx}.
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.95\textwidth]{figS6_variance_nospace.png}
-    \caption{Variance partitioning without the spatial random field. Percentages indicate the proportion of total explained variance attributed to each model component.}
-    \label{fig:variance_nospace}
+    \includegraphics[width=0.95\textwidth]{figS6_variance_metrics.png}
+    \caption{\rev{Variance partitioning of the full model (spatial field included) using each of the five connectivity metrics in turn, both responses. Percentages indicate the share of total variance attributed to each model component.}}
+    \label{fig:variance_metrics}
+\end{figure}
+\FloatBarrier
+\clearpage
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS10_coeff_stability.png}
+    \caption{\rev{Stability of the in-strength coefficient (both responses) across the full model, the full model with one environmental predictor dropped at a time, and connectivity alone, with and without the spatial field. A dagger marks a cell whose 95\% CI crosses zero.}}
+    \label{fig:loo_stability}
 \end{figure}
 \FloatBarrier
 \clearpage
@@ -526,6 +525,7 @@ at \url{https://doi.org/xxxxx}.
 %\end{figure}
 %\FloatBarrier
 %\clearpage
+\ml{This figure has no analogue in the current pipeline: connectivity is now a single pooled network with no year-specific version to test sensitivity against. Recommend removing this commented block rather than reviving it.}
 
 
 

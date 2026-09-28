@@ -1,4 +1,4 @@
-# Validation for nakagawa_sdmtmb() (R/helpers.R): does it give the right
+x# Validation for nakagawa_sdmtmb() (R/helpers.R): does it give the right
 # variance components? Checked two ways:
 #   01 fit it on sdmTMB's own example data (pcod, yelloweye), covering a
 #      spatiotemporal Tweedie field, a Bernoulli model with a year intercept,
