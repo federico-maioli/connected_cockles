@@ -1,11 +1,20 @@
-# Figure 2: standardized coefficients of the best-supported model (biomass).
+# Figure 2: the full model (space + environment + in-strength connectivity),
+# with and without the spatial field, two panels stacked with patchwork.
 #
-# The full Space + Environment + Connectivity model, with the connectivity slot
-# rotated over the five metrics. Because the metrics give nearly-tied AICs, the
-# point is that the effect sizes agree: each predictor's estimates cluster and
-# the connectivity coefficient keeps its sign across metrics. Intercept and
-# survey (gear) terms are dropped as nuisance; estimates are on the standardized
-# link scale, so effects are comparable within a response.
+# Panel A: standardized coefficient of every predictor, with vs without the
+# field - shows how much each one moves when the field is dropped. In-strength
+# is the only connectivity metric whose coefficient survives this (the other
+# four are checked the same way in figS5_space_confounding.R, not repeated
+# here).
+# Panel B: variance partitioning of the same two models (Nakagawa R2, split
+# HMSC-style among Environment/Connectivity - see 02_fit_sdm.R and
+# nakagawa_sdmtmb() in R/helpers.R) - shows how much of panel A's stability
+# comes from the field soaking up variance that would otherwise land on the
+# fixed effects.
+#
+# Both panels read data/sdm/main/<response>_space_env_conn(.rds/_variance.rds)
+# and .../<response>_env_conn(.rds/_variance.rds) - the full in-strength model,
+# fitted in 02_fit_sdm.R.
 #
 # Writes two files from the same builder:
 #   fig2_coeff.png             biomass (Tweedie)   - main text
@@ -14,35 +23,51 @@
 library(tidyverse)
 library(here)
 library(sdmTMB)
-library(rcartocolor)
 library(ggstats)
+library(patchwork)
 
-# tidy the fixed effects of every converged space_env_conn fit for one response
-coef_data <- function(fits, resp, ok_ids) {
-  ids <- names(fits)[startsWith(names(fits), paste0(resp, "_space_env_conn_"))]
-  ids <- intersect(ids, ok_ids)
-  map(ids, function(id) {
-    f <- fits[[id]]
-    if (is.null(f)) {
-      return(NULL)
-    }
-    tidy(f, effects = "fixed", conf.int = TRUE) |>
-      mutate(conn = str_remove(id, paste0("^", resp, "_space_env_conn_")))
+# the two models behind both panels: full model, spatial field on vs off
+structure_labs <- c(space_env_conn = "Spatial field: on", env_conn = "Spatial field: off")
+field_cols <- c("Spatial field: on" = "#0072B2", "Spatial field: off" = "#D55E00")
+
+term_labs <- c(
+  depth_std = "Depth", temp_std = "Temperature", oxy_std = "Oxygen",
+  sal_std = "Salinity", shear_max_std = "Shear stress",
+  conn_in_strength_std = "In-strength"
+)
+term_levels <- c("In-strength", "Shear stress", "Salinity", "Oxygen", "Temperature", "Depth")
+
+# Okabe-Ito, colourblind-safe; unexplained variance stays neutral grey
+part_cols <- c(
+  "Spatial field" = "#0072B2", "Environment" = "#009E73",
+  "In-strength" = "#E69F00", "Unexplained" = "#E6E6E6"
+)
+label_cols <- c(
+  "Spatial field" = "white", "Environment" = "white",
+  "In-strength" = "grey15", "Unexplained" = "grey15"
+)
+
+# 01 Panel A: coefficients, with vs without the spatial field ----
+coeff_panel <- function(resp, xlab) {
+  d <- map(names(structure_labs), function(structure) {
+    fit <- readRDS(here("data", "sdm", "main", paste0(resp, "_", structure, ".rds")))
+    tidy(fit, effects = "fixed", conf.int = TRUE) |>
+      mutate(field = structure_labs[[structure]])
   }) |>
-    list_rbind()
-}
+    list_rbind() |>
+    filter(term %in% names(term_labs)) |>
+    mutate(
+      term = factor(term_labs[term], levels = term_levels),
+      field = factor(field, levels = unname(structure_labs))
+    )
 
-coef_plot <- function(d, xlab) {
-  dodge <- position_dodge(width = 0.85)
-  ggplot(d, aes(estimate, term, colour = metric)) +
+  dodge <- position_dodge(width = 0.55)
+  ggplot(d, aes(estimate, term, colour = field)) +
     geom_stripped_rows(colour = NA) +
     geom_vline(xintercept = 0, linetype = 2, colour = "grey55") +
-    geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
-      orientation = "y", width = 0, position = dodge, linewidth = 0.9
-    ) +
-    geom_point(position = dodge, size = 2.4) +
-    scale_colour_carto_d(palette = "Vivid", name = "Connectivity metric") +
-    guides(colour = guide_legend(nrow = 2, byrow = TRUE)) +
+    geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0, linewidth = 0.9, position = dodge) +
+    geom_point(size = 2.4, position = dodge) +
+    scale_colour_manual(values = field_cols, name = NULL) +
     labs(x = xlab, y = NULL) +
     theme_light(base_size = 11) +
     theme(
@@ -52,64 +77,93 @@ coef_plot <- function(d, xlab) {
     )
 }
 
-# 01 Load fits ----
-# non-converged fits are dropped: their coefficients are not trustworthy
-fits <- readRDS(here("data", "derived", "sdm_fits.rds"))
-ok_ids <- readRDS(here("data", "derived", "sdm_model_comparison.rds")) |>
-  filter(converged) |>
-  transmute(id = paste(response, model, sep = "_")) |>
-  pull(id)
+# 02 Panel B: variance partitioning, with vs without the spatial field ----
+# one stacked bar per level of `group`; segments >= 5% are labelled in place,
+# thinner ones (e.g. Connectivity) get their value placed just above the slice
+partition_plot <- function(d) {
+  d <- d |> filter(share > 0)
 
-# 02 Labels ----
-# every connectivity metric shares one "Connectivity" row, so the metrics line
-# up against each other in the same slot
-term_labs <- c(
-  depth_std = "Depth",
-  temp_std = "Temperature",
-  oxy_std = "Oxygen",
-  sal_std = "Salinity",
-  shear_max_std = "Shear stress",
-  log_biomass_in_strength_std = "Connectivity",
-  presence_in_strength_std = "Connectivity",
-  deg_in_std = "Connectivity",
-  in_strength_std = "Connectivity",
-  eigen_centrality_std = "Connectivity",
-  closeness_centrality_std = "Connectivity"
-)
-term_levels <- c("Connectivity", "Shear stress", "Salinity", "Oxygen", "Temperature", "Depth")
+  labs_d <- d |>
+    arrange(group, component) |>
+    mutate(x_mid = cumsum(share) - share / 2, .by = group)
 
-conn_labs <- c(
-  log_biomass_in_strength = "Biomass (log) in-strength",
-  presence_in_strength = "Presence in-strength",
-  deg_in = "In-degree",
-  in_strength = "In-strength",
-  eigen_centrality = "Eigenvector centrality",
-  closeness_centrality = "Closeness centrality"
-)
-conn_levels <- unname(conn_labs)
-
-prep <- function(resp) {
-  coef_data(fits, resp, ok_ids) |>
-    filter(term %in% names(term_labs)) |>
-    mutate(
-      term = factor(term_labs[term], levels = term_levels),
-      metric = factor(conn_labs[conn], levels = conn_levels)
+  wide_labs <- labs_d |> filter(share >= 0.05)
+  # just the value - the fill colour already says which component this is
+  narrow_labs <- labs_d |>
+    filter(share < 0.05) |>
+    summarise(
+      label = paste(scales::percent(share, accuracy = 0.1), collapse = "\n"),
+      x_mid = mean(x_mid),
+      .by = group
     )
+
+  ggplot(d, aes(x = share, y = group, fill = component)) +
+    geom_col(width = 0.55, colour = "white", linewidth = 0.4, position = position_stack(reverse = TRUE)) +
+    geom_text(
+      data = wide_labs,
+      aes(x = x_mid, y = group, label = scales::percent(share, accuracy = 0.1), colour = component),
+      inherit.aes = FALSE, size = 3, show.legend = FALSE
+    ) +
+    geom_text(
+      data = narrow_labs,
+      aes(x = x_mid, y = group, label = label),
+      inherit.aes = FALSE, size = 2.6, colour = "grey25", lineheight = 0.85,
+      position = position_nudge(y = 0.35)
+    ) +
+    scale_fill_manual(values = part_cols, name = NULL, drop = TRUE) +
+    scale_colour_manual(values = label_cols, guide = "none") +
+    scale_x_continuous(breaks = seq(0, 1, 0.25), labels = scales::percent, expand = c(0, 0)) +
+    scale_y_discrete(expand = expansion(add = c(0.6, 0.9))) +
+    labs(x = expression("Share of total variance (Nakagawa " * R^2 * ")"), y = NULL) +
+    theme_light(base_size = 11) +
+    theme(
+      panel.grid = element_blank(),
+      legend.position = "bottom"
+    ) +
+    guides(fill = guide_legend(nrow = 1))
 }
 
-# 03 Biomass (main text) ----
-p_biomass <- prep("biomass") |>
-  coef_plot("Standardized coefficient (log link)")
+variance_panel <- function(resp) {
+  d <- map(names(structure_labs), function(structure) {
+    readRDS(here("data", "sdm", "main", paste0(resp, "_", structure, "_variance.rds"))) |>
+      mutate(
+        # block name from 02_fit_sdm.R's blocks_env_conn_in_strength is
+        # "Connectivity" (shared across all 5 metrics there); this figure is
+        # in-strength only, so it gets the more specific label here
+        component = recode(component,
+          spatial = "Spatial field", distribution = "Unexplained", Connectivity = "In-strength"
+        ),
+        group = structure_labs[[structure]]
+      )
+  }) |>
+    list_rbind() |>
+    filter(share > 0) |>
+    mutate(
+      component = factor(component, levels = names(part_cols)),
+      # "on" first, at the top of the bar chart (ggplot draws the first
+      # discrete-axis level at the bottom, so the level order is reversed)
+      group = factor(group, levels = rev(unname(structure_labs)))
+    )
+  partition_plot(d)
+}
 
-# 04 Presence (supplementary) ----
-p_present <- prep("present") |>
-  coef_plot("Standardized coefficient (logit link)")
+# 03 Assemble both panels ----
+build_fig <- function(resp, xlab) {
+  coeff_panel(resp, xlab) / variance_panel(resp) +
+    plot_annotation(tag_levels = "a", tag_suffix = ")")
+}
 
-# 05 Save ----
+# 04 Biomass (main text) ----
+p_biomass <- build_fig("biomass", "Standardized coefficient (log link)")
+
+# 05 Presence (supplementary) ----
+p_present <- build_fig("present", "Standardized coefficient (logit link)")
+
+# 06 Save ----
 dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
 ggsave(here("output", "figs", "fig2_coeff.png"), p_biomass,
-  width = 8, height = 5.4, dpi = 600, bg = "white"
+  width = 7, height = 8, dpi = 600, bg = "white"
 )
 ggsave(here("output", "figs", "figS3_coeff_presence.png"), p_present,
-  width = 8, height = 5.4, dpi = 600, bg = "white"
+  width = 7, height = 8, dpi = 600, bg = "white"
 )

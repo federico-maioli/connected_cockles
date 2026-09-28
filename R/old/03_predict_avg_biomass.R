@@ -118,8 +118,25 @@ pred_grid <- grid |>
     survey = factor("Stock", levels = levels(dat$survey))
   )
 
-avg_biomass <- exp(predict(fit_biomass, newdata = pred_grid)$est) # response scale
+# the Tweedie link is log, so predict() returns biomass on the log scale and
+# exp() puts it back on the response scale; both are kept
+log_avg_biomass <- predict(fit_biomass, newdata = pred_grid)$est # log scale
+avg_biomass <- exp(log_avg_biomass) # response scale
 prob_present <- plogis(predict(fit_present, newdata = pred_grid)$est) # probability
+
+# uncertainty on the biomass prediction only: draws from the joint precision
+# matrix, so the fixed effects and the spatial field are sampled together and
+# their covariance is respected. nsim returns log-scale draws (cells x nsim).
+# The two SDs are summarised on their own scale and are NOT interconvertible:
+# exp() is non-linear, and with sigma_O ~ 4.6 the exponentiated draws are
+# lognormal with a heavy upper tail, so avg_biomass_sd is large and skewed while
+# log_avg_biomass_sd is a roughly multiplicative error
+n_sim <- 500
+set.seed(1)
+sim_link <- predict(fit_biomass, newdata = pred_grid, nsim = n_sim)
+avg_biomass_sd <- apply(exp(sim_link), 1, sd)
+log_avg_biomass_sd <- apply(sim_link, 1, sd)
+rm(sim_link)
 
 # 06 Mask cells far from any survey point ----
 # spatial field extrapolates; cells > max_dist_km from data are set to 0
@@ -131,12 +148,24 @@ nn_dist <- apply(cbind(pred_grid$x_utm, pred_grid$y_utm), 1, function(p) {
 far <- nn_dist > max_dist_km
 avg_biomass[far] <- 0
 prob_present[far] <- 0
+# the response-scale estimates are forced to 0 so the grid stays aligned with the
+# flow matrix, but a forced 0 is an assumption rather than a prediction, so it
+# carries no uncertainty. The log-scale columns are NA rather than 0 there too:
+# log(0) is undefined, and a literal 0 would wrongly read as a biomass of 1
+avg_biomass_sd[far] <- NA_real_
+log_avg_biomass[far] <- NA_real_
+log_avg_biomass_sd[far] <- NA_real_
 
 # 07 Attach to grid ----
 grid$avg_biomass <- 0
 grid$prob_present <- 0
 grid$avg_biomass[wet] <- avg_biomass
 grid$prob_present[wet] <- prob_present
+# NA everywhere by default, so dry cells (never predicted) are NA too
+for (nm in c("avg_biomass_sd", "log_avg_biomass", "log_avg_biomass_sd")) {
+  grid[[nm]] <- NA_real_
+  grid[[nm]][wet] <- get(nm)
+}
 
 # 08 Zero out land cells ----
 # use the local land_small_utm coastline to set any on-land cell to 0
@@ -146,12 +175,29 @@ on_land <- lengths(st_intersects(
 )) > 0
 grid$avg_biomass[on_land] <- 0
 grid$prob_present[on_land] <- 0
+grid[on_land, c("avg_biomass_sd", "log_avg_biomass", "log_avg_biomass_sd")] <- NA_real_
+
+kept <- grid$avg_biomass > 0
+cat(sprintf(
+  paste0(
+    "cells: %d | predicted: %d | masked (log columns and SDs = NA): %d\n",
+    "  median SD, response scale: %.0f | median SD, log scale: %.2f\n"
+  ),
+  nrow(grid), sum(kept), sum(!kept),
+  median(grid$avg_biomass_sd[kept]), median(grid$log_avg_biomass_sd[kept])
+))
 
 # 09 Save ----
 # land / masked cells are 0 (not dropped), so the grid keeps all 2340 cells and
 # stays aligned cell-for-cell with the flow matrix
 flow <- readRDS(here("data", "derived", "flow_matrix_all.rds"))
-stopifnot(nrow(grid) == nrow(flow), !anyNA(grid$avg_biomass), !anyNA(grid$prob_present))
+# the response-scale estimates must be complete; the log columns and the SDs are
+# NA on masked cells by design, and present on every predicted cell
+stopifnot(
+  nrow(grid) == nrow(flow),
+  !anyNA(grid$avg_biomass), !anyNA(grid$prob_present),
+  !anyNA(grid[kept, c("avg_biomass_sd", "log_avg_biomass", "log_avg_biomass_sd")])
+)
 
 saveRDS(grid, here("data", "derived", "avg_biomass_grid.rds"))
 
@@ -180,5 +226,34 @@ p_present <- ggplot() +
   labs(title = "Probability of presence", x = NULL, y = NULL, fill = "P(presence)") +
   theme_light()
 
-p_biomass + p_present
+# the log-scale panels: masked cells are NA and drop out of the tile layer, so
+# these show exactly the cells that carry a prediction
+p_log_biomass <- ggplot() +
+  geom_tile(
+    data = filter(plot_dat, !is.na(log_avg_biomass)),
+    aes(x_utm, y_utm, fill = log_avg_biomass)
+  ) +
+  geom_sf(data = land_region, fill = "grey85", colour = "grey60", linewidth = 0.2) +
+  coord_sf(xlim = xlim, ylim = ylim, crs = 32632, expand = FALSE) +
+  scale_fill_viridis_c() +
+  labs(title = "Average biomass (log)", x = NULL, y = NULL, fill = "log biomass") +
+  theme_light()
+
+p_log_biomass_sd <- ggplot() +
+  geom_tile(
+    data = filter(plot_dat, !is.na(log_avg_biomass_sd)),
+    aes(x_utm, y_utm, fill = log_avg_biomass_sd)
+  ) +
+  geom_sf(data = land_region, fill = "grey85", colour = "grey60", linewidth = 0.2) +
+  coord_sf(xlim = xlim, ylim = ylim, crs = 32632, expand = FALSE) +
+  scale_fill_viridis_c(option = "rocket") +
+  labs(title = "Biomass SD (log)", x = NULL, y = NULL, fill = "SD") +
+  theme_light()
+
+(p_biomass + p_present) / (p_log_biomass + p_log_biomass_sd)
+
+
+
+
+
 

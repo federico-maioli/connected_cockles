@@ -40,14 +40,13 @@ ok_ids <- readRDS(here("data", "derived", "sdm_model_comparison.rds")) |>
 
 # 02 Labels ----
 conn_labs <- c(
-  log_biomass_in_strength = "Biomass (log) in-strength",
-  presence_in_strength = "Presence in-strength",
-  deg_in = "In-degree",
+  in_degree = "In-degree",
   in_strength = "In-strength",
-  eigen_centrality = "Eigenvector centrality",
-  closeness_centrality = "Closeness centrality"
+  in_closeness = "In-closeness",
+  eigen = "Eigenvector centrality",
+  transitivity = "Transitivity"
 )
-conn_terms <- paste0(names(conn_labs), "_std")
+conn_terms <- paste0("conn_", names(conn_labs), "_std")
 structure_labs <- c(space_env_conn = "With spatial field", env_conn = "Without spatial field")
 
 # 03 Connectivity coefficient, with and without the field ----
