@@ -11,45 +11,6 @@ local({
   }
 })
 
-# coastline barrier mesh for the cockle survey extent: local coastline (UTM
-# 32N, metres) cropped to the data extent with a margin, an fmesher mesh with a
-# capped maximum edge, and a land barrier so correlation does not cross
-# headlands. dat needs x_utm/y_utm in km, as in cockles_clean.rds.
-build_barrier_mesh <- function(dat, margin = 30000) {
-  land_utm <- st_read(
-    here("data", "raw", "boundaries", "land_small_utm", "land_small_utm.shp"),
-    quiet = TRUE
-  ) |>
-    st_make_valid()
-
-  region <- st_bbox(
-    c(
-      xmin = min(dat$x_utm) * 1000 - margin,
-      ymin = min(dat$y_utm) * 1000 - margin,
-      xmax = max(dat$x_utm) * 1000 + margin,
-      ymax = max(dat$y_utm) * 1000 + margin
-    ),
-    crs = st_crs(32632)
-  )
-  land_region <- suppressWarnings(st_crop(land_utm, region))
-
-  # spatial range is ~5 km, so a 2 km inner edge resolves the field; 20 km
-  # outer offset keeps the boundary away from the data (dat coords are in km)
-  inla_mesh <- fmesher::fm_mesh_2d_inla(
-    loc = cbind(dat$x_utm, dat$y_utm),
-    max.edge = c(2, 10),
-    offset = c(5, 20),
-    cutoff = 1
-  )
-  mesh <- make_mesh(dat, c("x_utm", "y_utm"), mesh = inla_mesh)
-  sdmTMBextra::add_barrier_mesh(
-    mesh, land_region,
-    range_fraction = 0.1,
-    proj_scaling = 1000,
-    plot = FALSE
-  )
-}
-
 # Nakagawa & Schielzeth marginal/conditional R2 and a variance share per
 # component, for one fitted sdmTMB model (Bernoulli, nbinom2, or Tweedie).
 # See 03_variance_partitioning.R for the full derivation and a check against

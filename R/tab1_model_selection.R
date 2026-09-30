@@ -4,7 +4,7 @@
 # crossed) for the biomass (Tweedie) response only, ordered by delta AIC.
 # Writes a booktabs table to output/tables for \input into Overleaf.
 #
-# Reads data/sdm/main/model_comparison.rds, written by 02_fit_sdm.R.
+# Reads data/sdm/main/model_comparison.rds, written by 06_fit_sdm.R.
 
 library(tidyverse)
 library(here)
@@ -50,7 +50,7 @@ rows <- tab |>
 latex <- c(
   "\\begin{table}[ht]",
   "\\centering",
-  "\\caption{Model selection for cockle biomass (Tweedie), ordered by $\\Delta$AIC (lower is better; the best model is shown in bold). Connectivity is in-strength throughout; environment comprises depth, temperature, oxygen, salinity, and maximum shear stress; space is a spatial random field. A dash marks a model that did not converge.}",
+  "\\caption{Model selection for cockle biomass (Tweedie), ordered by $\\Delta$AIC (lower is better; the best model is shown in bold). Connectivity is presence-weighted in-strength throughout; environment comprises depth, temperature, oxygen, salinity, and maximum shear stress; space is a spatial random field. A dash marks a model that did not converge.}",
   "\\label{tab:model-selection}",
   "\\begin{tabular}{lrr}",
   "\\toprule",

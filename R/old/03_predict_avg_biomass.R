@@ -34,7 +34,7 @@ grid <- readRDS(here("data", "derived", "spatial_grid.rds"))
 
 # local coastline for the land mask and plots, already UTM 32N in metres
 land_utm <- st_read(
-  here("data", "raw", "boundaries", "land_small_utm", "land_small_utm.shp"),
+  here("data", "boundaries", "land_small_utm", "land_small_utm.shp"),
   quiet = TRUE
 ) |>
   st_make_valid()

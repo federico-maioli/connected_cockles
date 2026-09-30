@@ -9,7 +9,7 @@
 #   3. save it - the fitted model and its variance table go to their own
 #      files, so nothing needs re-fitting to look at either one later
 #
-# MAIN - in-strength is the connectivity metric (see figS5_space_confounding.R:
+# MAIN - in-strength is the connectivity metric (see fig_supp.R (Figure S5):
 # it is the only one of the five whose coefficient survives dropping the
 # spatial field). Six structures, crossing whether the spatial field is on and
 # whether environment/connectivity are included:
@@ -21,17 +21,19 @@
 #   env_conn         env + connectivity      (no field)
 # env = depth + temp + oxy + sal + shear_max.
 #
-# SENSITIVITY - two separate checks:
+# SENSITIVITY - three separate checks:
 #   - the three connectivity structures (space_conn, space_env_conn, env_conn)
 #     repeated for the other four metrics (in-degree, in-closeness,
 #     eigenvector centrality, transitivity)
 #   - the full model (space_env_conn / env_conn, in-strength), with one
 #     environment term dropped at a time, spatial field on and off
+#   - the full model with the spatial field (space_env_conn) using in-strength
+#     on the flipped (edges reversed) matrix - does direction matter?
 #
 # Every model is fitted for both responses:
 #   present ~ ...   binomial (logit)   presence / absence
 #   biomass ~ ...   Tweedie (log)      biomass
-# Only the Stock survey remains after 01_clean_cockles.R, so there is no
+# Only the Stock survey remains after 02_clean_cockles.R, so there is no
 # survey term. Continuous covariates are z-scored; all models share the same
 # complete-case dataset so their AIC values are comparable.
 #
@@ -48,11 +50,26 @@ library(sdmTMB)
 source(here("R", "helpers.R"))
 
 # 01 Load data ----
-dat <- readRDS(here("data", "derived", "cockles_clean.rds"))
+dat <- readRDS(here("data", "cockles", "derived", "cockles_env_conn.rds"))
+
+# connectivity metrics used throughout: presence-weighted (source rows of the
+# flow matrix weighted by the suitability model's presence probability, see
+# 04_weight_connectivity.R). Switching weighting only means changing these lines
+dat <- dat |>
+  mutate(
+    conn_in_degree = conn_in_degree_presence,
+    conn_in_strength = conn_in_strength_presence,
+    conn_in_closeness = conn_in_closeness_presence,
+    conn_eigen = conn_eigen_presence,
+    conn_transitivity = conn_transitivity_presence
+  )
 
 # 02 Standardise covariates ----
 env_vars <- c("depth", "temp", "sal", "oxy", "shear_max")
-conn_vars <- c("conn_in_degree", "conn_in_strength", "conn_in_closeness", "conn_eigen", "conn_transitivity")
+conn_vars <- c(
+  "conn_in_degree", "conn_in_strength", "conn_in_closeness", "conn_eigen", "conn_transitivity",
+  "conn_in_strength_flipped"
+)
 dat <- dat |>
   mutate(across(all_of(c(env_vars, conn_vars)), ~ as.numeric(scale(.x)), .names = "{.col}_std"))
 
@@ -83,6 +100,8 @@ blocks_env_conn_eigen <- list(Environment = env_cols, Connectivity = "conn_eigen
 blocks_conn_transitivity <- list(Connectivity = "conn_transitivity_std")
 blocks_env_conn_transitivity <- list(Environment = env_cols, Connectivity = "conn_transitivity_std")
 
+blocks_env_conn_in_strength_flipped <- list(Environment = env_cols, Connectivity = "conn_in_strength_flipped_std")
+
 # leave-one-out: the full in-strength block list, minus one environment term
 blocks_env_conn_drop_depth <- list(Environment = setdiff(env_cols, "depth_std"), Connectivity = "conn_in_strength_std")
 blocks_env_conn_drop_temp <- list(Environment = setdiff(env_cols, "temp_std"), Connectivity = "conn_in_strength_std")
@@ -101,7 +120,41 @@ dat <- dat |>
   )
 
 # 05 Coastline barrier mesh ----
-barrier_mesh <- build_barrier_mesh(dat)
+# local coastline (UTM 32N, metres) cropped to the data extent with a 30 km
+# margin, an fmesher mesh with a capped maximum edge, and a land barrier so
+# correlation does not cross headlands
+land_utm <- st_read(
+  here("data", "boundaries", "land_small_utm", "land_small_utm.shp"),
+  quiet = TRUE
+) |>
+  st_make_valid()
+
+region <- st_bbox(
+  c(
+    xmin = min(dat$x_utm) * 1000 - 30000,
+    ymin = min(dat$y_utm) * 1000 - 30000,
+    xmax = max(dat$x_utm) * 1000 + 30000,
+    ymax = max(dat$y_utm) * 1000 + 30000
+  ),
+  crs = st_crs(32632)
+)
+land_region <- suppressWarnings(st_crop(land_utm, region))
+
+# spatial range is ~5 km, so a 2 km inner edge resolves the field; 20 km
+# outer offset keeps the boundary away from the data (dat coords are in km)
+inla_mesh <- fmesher::fm_mesh_2d_inla(
+  loc = cbind(dat$x_utm, dat$y_utm),
+  max.edge = c(2, 10),
+  offset = c(5, 20),
+  cutoff = 1
+)
+mesh <- make_mesh(dat, c("x_utm", "y_utm"), mesh = inla_mesh)
+barrier_mesh <- sdmTMBextra::add_barrier_mesh(
+  mesh, land_region,
+  range_fraction = 0.1,
+  proj_scaling = 1000,
+  plot = FALSE
+)
 cat(
   "mesh vertices:", barrier_mesh$mesh$n,
   "| water triangles:", length(barrier_mesh$normal_triangles),
@@ -507,9 +560,24 @@ fit_present_env_conn_drop_shear_max <- sdmTMB(
 )
 comparison_sensitivity <- bind_rows(comparison_sensitivity, record(fit_present_env_conn_drop_shear_max, "present", "env_conn_drop_shear_max", "off", "sensitivity", blocks_env_conn_drop_shear_max))
 
-cat("\nSensitivity models (other metrics + environment leave-one-out):\n")
+# 13 Sensitivity: flipped in-strength ----
+# the full model with in-strength computed on the transposed (edges reversed)
+# presence-weighted matrix - does the direction of connectivity matter?
+fit_biomass_space_env_conn_in_strength_flipped <- sdmTMB(
+  biomass ~ depth_std + temp_std + sal_std + oxy_std + shear_max_std + conn_in_strength_flipped_std,
+  data = dat, mesh = barrier_mesh, spatial = "on", family = tweedie(link = "log")
+)
+comparison_sensitivity <- bind_rows(comparison_sensitivity, record(fit_biomass_space_env_conn_in_strength_flipped, "biomass", "space_env_conn_in_strength_flipped", "on", "sensitivity", blocks_env_conn_in_strength_flipped))
+
+fit_present_space_env_conn_in_strength_flipped <- sdmTMB(
+  present ~ depth_std + temp_std + sal_std + oxy_std + shear_max_std + conn_in_strength_flipped_std,
+  data = dat, mesh = barrier_mesh, spatial = "on", family = binomial(link = "logit")
+)
+comparison_sensitivity <- bind_rows(comparison_sensitivity, record(fit_present_space_env_conn_in_strength_flipped, "present", "space_env_conn_in_strength_flipped", "on", "sensitivity", blocks_env_conn_in_strength_flipped))
+
+cat("\nSensitivity models (other metrics, environment leave-one-out, flipped in-strength):\n")
 print(comparison_sensitivity, n = Inf)
 
-# 13 Save comparison tables ----
+# 14 Save comparison tables ----
 saveRDS(comparison_main, here("data", "sdm", "main", "model_comparison.rds"))
 saveRDS(comparison_sensitivity, here("data", "sdm", "sensitivity", "model_comparison.rds"))

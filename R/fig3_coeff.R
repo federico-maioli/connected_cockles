@@ -1,24 +1,24 @@
-# Figure 2: the full model (space + environment + in-strength connectivity),
+# Figure 3: the full model (space + environment + in-strength connectivity),
 # with and without the spatial field, two panels stacked with patchwork.
 #
 # Panel A: standardized coefficient of every predictor, with vs without the
 # field - shows how much each one moves when the field is dropped. In-strength
 # is the only connectivity metric whose coefficient survives this (the other
-# four are checked the same way in figS5_space_confounding.R, not repeated
+# four are checked the same way in fig_supp.R (Figure S5), not repeated
 # here).
 # Panel B: variance partitioning of the same two models (Nakagawa R2, split
-# HMSC-style among Environment/Connectivity - see 02_fit_sdm.R and
+# HMSC-style among Environment/Connectivity - see 06_fit_sdm.R and
 # nakagawa_sdmtmb() in R/helpers.R) - shows how much of panel A's stability
 # comes from the field soaking up variance that would otherwise land on the
 # fixed effects.
 #
 # Both panels read data/sdm/main/<response>_space_env_conn(.rds/_variance.rds)
 # and .../<response>_env_conn(.rds/_variance.rds) - the full in-strength model,
-# fitted in 02_fit_sdm.R.
+# fitted in 06_fit_sdm.R.
 #
 # Writes two files from the same builder:
-#   fig2_coeff.png             biomass (Tweedie)   - main text
-#   figS3_coeff_presence.png   presence (binomial) - supplementary
+#   fig3_coeff.png             biomass (Tweedie)   - main text
+#   figS2_coeff_presence.png   presence (binomial) - supplementary
 
 library(tidyverse)
 library(here)
@@ -37,14 +37,15 @@ term_labs <- c(
 )
 term_levels <- c("In-strength", "Shear stress", "Salinity", "Oxygen", "Temperature", "Depth")
 
-# Okabe-Ito, colourblind-safe; unexplained variance stays neutral grey
+# Okabe-Ito, colourblind-safe; unexplained (distribution) variance is not drawn -
+# it is the empty remainder of each bar up to 100%
 part_cols <- c(
   "Spatial field" = "#0072B2", "Environment" = "#009E73",
-  "In-strength" = "#E69F00", "Unexplained" = "#E6E6E6"
+  "In-strength" = "#E69F00"
 )
 label_cols <- c(
   "Spatial field" = "white", "Environment" = "white",
-  "In-strength" = "grey15", "Unexplained" = "grey15"
+  "In-strength" = "grey15"
 )
 
 # 01 Panel A: coefficients, with vs without the spatial field ----
@@ -98,7 +99,7 @@ partition_plot <- function(d) {
     )
 
   ggplot(d, aes(x = share, y = group, fill = component)) +
-    geom_col(width = 0.55, colour = "white", linewidth = 0.4, position = position_stack(reverse = TRUE)) +
+    geom_col(width = 0.7, colour = "white", linewidth = 0.4, position = position_stack(reverse = TRUE)) +
     geom_text(
       data = wide_labs,
       aes(x = x_mid, y = group, label = scales::percent(share, accuracy = 0.1), colour = component),
@@ -108,12 +109,12 @@ partition_plot <- function(d) {
       data = narrow_labs,
       aes(x = x_mid, y = group, label = label),
       inherit.aes = FALSE, size = 2.6, colour = "grey25", lineheight = 0.85,
-      position = position_nudge(y = 0.35)
+      position = position_nudge(y = 0.5)
     ) +
     scale_fill_manual(values = part_cols, name = NULL, drop = TRUE) +
     scale_colour_manual(values = label_cols, guide = "none") +
-    scale_x_continuous(breaks = seq(0, 1, 0.25), labels = scales::percent, expand = c(0, 0)) +
-    scale_y_discrete(expand = expansion(add = c(0.6, 0.9))) +
+    scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = scales::percent, expand = c(0, 0)) +
+    scale_y_discrete(expand = expansion(add = c(0.45, 0.75))) +
     labs(x = expression("Share of total variance (Nakagawa " * R^2 * ")"), y = NULL) +
     theme_light(base_size = 11) +
     theme(
@@ -127,17 +128,17 @@ variance_panel <- function(resp) {
   d <- map(names(structure_labs), function(structure) {
     readRDS(here("data", "sdm", "main", paste0(resp, "_", structure, "_variance.rds"))) |>
       mutate(
-        # block name from 02_fit_sdm.R's blocks_env_conn_in_strength is
+        # block name from 06_fit_sdm.R's blocks_env_conn_in_strength is
         # "Connectivity" (shared across all 5 metrics there); this figure is
         # in-strength only, so it gets the more specific label here
         component = recode(component,
-          spatial = "Spatial field", distribution = "Unexplained", Connectivity = "In-strength"
+          spatial = "Spatial field", Connectivity = "In-strength"
         ),
         group = structure_labs[[structure]]
       )
   }) |>
     list_rbind() |>
-    filter(share > 0) |>
+    filter(share > 0, component != "distribution") |>
     mutate(
       component = factor(component, levels = names(part_cols)),
       # "on" first, at the top of the bar chart (ggplot draws the first
@@ -150,6 +151,7 @@ variance_panel <- function(resp) {
 # 03 Assemble both panels ----
 build_fig <- function(resp, xlab) {
   coeff_panel(resp, xlab) / variance_panel(resp) +
+    plot_layout(heights = c(1.8, 1)) +
     plot_annotation(tag_levels = "a", tag_suffix = ")")
 }
 
@@ -161,9 +163,9 @@ p_present <- build_fig("present", "Standardized coefficient (logit link)")
 
 # 06 Save ----
 dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "fig2_coeff.png"), p_biomass,
-  width = 7, height = 8, dpi = 600, bg = "white"
+ggsave(here("output", "figs", "fig3_coeff.png"), p_biomass,
+  width = 7, height = 7, dpi = 600, bg = "white"
 )
-ggsave(here("output", "figs", "figS3_coeff_presence.png"), p_present,
-  width = 7, height = 8, dpi = 600, bg = "white"
+ggsave(here("output", "figs", "figS2_coeff_presence.png"), p_present,
+  width = 7, height = 7, dpi = 600, bg = "white"
 )

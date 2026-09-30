@@ -1,5 +1,6 @@
 # Figure 1: (a) study area / survey biomass and (b) larval settlement footprints.
-# Panel a: survey biomass over the coastline, with a location inset top-left.
+# Panel a: mean survey biomass per 2 x 2 km connectivity-grid cell, with a
+#   location inset top-left.
 # Panel b: for four release cells spread over the basin, the full settlement
 #   probability field from the pooled flow matrix. Showing where larvae actually
 #   land makes the reach of dispersal visible directly, rather than asserting it
@@ -10,59 +11,91 @@ library(here)
 library(sf)
 library(rcartocolor)
 library(ggspatial)
-library(cowplot)
 library(patchwork)
 
 biomass_lab <- expression(Biomass ~ (g / m^2))
-biomass_breaks <- c(0, 100, 1000, 10000)
-biomass_cols <- rev(carto_pal(7, "SunsetDark"))
+biomass_breaks <- c(1, 10, 100, 1000)
+# CARTO companion ramps (warm biomass, cool settlement), matched in lightness;
+# settlement starts from white so thin, low-probability spread fades out
+biomass_cols <- carto_pal(7, "BurgYl")
+settle_cols <- c("white", carto_pal(7, "TealGrn"))
 
 land_fill <- "#e6e6e6"
 land_line <- "#bcbcbc"
 
 # 01 Shared data ----
-dat <- readRDS(here("data", "derived", "cockles_connectivity.rds")) |>
+dat <- readRDS(here("data", "cockles", "derived", "cockles_env.rds")) |>
   filter(!is.na(biomass), !is.na(x_utm), !is.na(y_utm))
-coastline <- st_read(here("data", "raw", "boundaries", "land_small_utm", "land_small_utm.shp"), quiet = TRUE) |>
+coastline <- st_read(here("data", "boundaries", "land_small_utm", "land_small_utm.shp"), quiet = TRUE) |>
   st_make_valid()
-grid <- readRDS(here("data", "derived", "connectivity_weighted_all.rds"))
-flow <- readRDS(here("data", "derived", "flow_matrix_all.rds"))
+grid <- readRDS(here("data", "grid", "grid_env.rds"))
 # Limfjord water outline for the fjord shape (the main-map coastline)
-water <- st_read(here("data", "raw", "boundaries", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
+water <- st_read(here("data", "boundaries", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
   st_make_valid() |>
   st_transform(32632)
 
-pts <- dat |>
-  mutate(x_m = x_utm * 1000, y_m = y_utm * 1000) |>
-  arrange(biomass) |>
-  st_as_sf(coords = c("x_m", "y_m"), crs = 32632)
-pts_abs <- filter(pts, biomass == 0)
-pts_pres <- filter(pts, biomass > 0)
+# pooled flow matrix: agents settling at j / agents released at i, as in
+# 04_weight_connectivity.R
+n_cell <- nrow(grid)
+cmn <- read_csv(here("data", "connectivity", "raw", "ABM_cmn_all.csv"), col_names = FALSE, show_col_types = FALSE) |>
+  as.matrix()
+dimnames(cmn) <- NULL
+release <- read_csv(here("data", "connectivity", "raw", "ABM_rel_all.csv"), col_names = FALSE, show_col_types = FALSE)[[1]]
+flow <- ifelse(matrix(release, n_cell, n_cell) > 0, cmn / matrix(release, n_cell, n_cell), 0)
 
 xlim <- range(dat$x_utm * 1000) + c(-16000, 16000)
 ylim <- range(dat$y_utm * 1000) + c(-6000, 6000)
 
+# white mask = the plot frame minus the fjord, drawn over the tiles so the 2 km
+# cells are clipped to the coastline instead of spilling onto land
+frame <- st_as_sfc(st_bbox(
+  c(xmin = xlim[1], ymin = ylim[1], xmax = xlim[2], ymax = ylim[2]),
+  crs = st_crs(32632)
+))
+land_mask <- st_difference(frame, st_union(water))
+
 # 02 Panel A: survey biomass ----
+# each survey sample is assigned to its 2 km grid cell (same cell id formula as
+# 01_prepare_grid.R) and biomass is averaged over all samples and years in it
+cells <- dat |>
+  mutate(
+    col = floor((x_utm * 1000 - 450074) / 2000) + 1,
+    row = floor((y_utm * 1000 - 6258093) / 2000) + 1,
+    id = col + (row - 1) * 65
+  ) |>
+  summarise(biomass = mean(biomass), .by = id) |>
+  mutate(x = grid$x[id], y = grid$y[id])
+
 p_main <- ggplot() +
+  # zero cells get their own legend key through a dummy linetype mapping (the
+  # tile outline itself is not drawn, linewidth = 0)
+  geom_tile(data = filter(cells, biomass == 0), aes(x, y, linetype = "0"), fill = "grey85", linewidth = 0, width = 2000, height = 2000) +
+  geom_tile(data = filter(cells, biomass > 0), aes(x, y, fill = biomass), width = 2000, height = 2000) +
+  geom_sf(data = land_mask, fill = "white", colour = NA) +
   geom_sf(data = water, fill = NA, colour = "grey55", linewidth = 0.3) +
-  geom_sf(data = pts_abs, colour = "grey78", size = 0.3, alpha = 0.6) +
-  geom_sf(data = pts_pres, aes(colour = biomass), size = 1.1, alpha = 0.85) +
-  scale_colour_gradientn(
+  scale_fill_gradientn(
     colours = biomass_cols, trans = "pseudo_log", name = biomass_lab,
     breaks = biomass_breaks, labels = scales::comma(biomass_breaks)
   ) +
+  scale_linetype_manual(values = "solid", name = NULL) +
   annotation_scale(location = "bl", width_hint = 0.2, height = unit(0.15, "cm"), text_cex = 0.7, line_col = "grey40", text_col = "grey40") +
   annotation_north_arrow(location = "br", which_north = "true", height = unit(0.9, "cm"), width = unit(0.7, "cm"), style = north_arrow_minimal(line_col = "grey40", text_col = "grey40", fill = "grey40")) +
   coord_sf(xlim = xlim, ylim = ylim, crs = 32632, expand = FALSE) +
   theme_void(base_size = 11) +
-  theme(
-    plot.background = element_rect(fill = "white", colour = NA),
-    legend.position = "inside", legend.position.inside = c(0.9, 0.58),
-    legend.title = element_text(size = 9, colour = "grey20"),
-    legend.text = element_text(size = 8, colour = "grey30"),
-    legend.key.height = unit(9, "mm"), legend.key.width = unit(4, "mm")
-  ) +
-  guides(colour = guide_colourbar(title.position = "top"))
+  theme(plot.background = element_rect(fill = "white", colour = NA)) +
+  # the "0" key sits just left of the colour bar: same height as the bar, label
+  # underneath, so it reads as the bar's first step
+  guides(
+    linetype = guide_legend(
+      order = 1, label.position = "bottom",
+      override.aes = list(fill = "grey85", linewidth = 0),
+      theme = theme(legend.key.height = unit(3.5, "mm"), legend.key.width = unit(6, "mm"))
+    ),
+    fill = guide_colourbar(
+      title.position = "top", title.hjust = 0.5, order = 2,
+      theme = theme(legend.key.height = unit(3.5, "mm"), legend.key.width = unit(55, "mm"))
+    )
+  )
 
 # location inset, top-left: where the basin sits in the North Sea transition
 inset_land <- st_transform(coastline, 4326)
@@ -99,39 +132,41 @@ p_inset <- ggplot() +
     panel.border = element_rect(fill = NA, colour = "grey40", linewidth = 0.6)
   )
 
-panel_a <- ggdraw() +
-  draw_plot(p_main) +
-  draw_plot(p_inset, x = 0.02, y = 0.70, width = 0.28, height = 0.28)
+# inset added with patchwork (not cowplot) so panel a stays a regular plot
+# that patchwork can align with panel b and collect legends from
+panel_a <- p_main +
+  inset_element(p_inset, left = 0.01, bottom = 0.665, right = 0.37, top = 0.995, ignore_tag = TRUE)
 
 # 03 Panel B: settlement footprints ----
-# Release cells are chosen systematically, not hand-picked: among cells whose
-# total export exceeds the median, three are taken at the 12th, 50th and 88th
-# percentile of along-fjord position, plus the westernmost cell of the northern
-# arm (top 20% by northing) - the main axis alone leaves the whole northern lobe
+# Release cells are chosen systematically, not hand-picked: among cells where
+# cockles were found (mean survey biomass > 0, panel a) that also release
+# larvae in the model, three are taken at the 12th, 50th and 88th percentile of
+# along-fjord position, plus the westernmost cell of the northern arm (top 20%
+# by northing) - the main axis alone leaves the whole northern lobe
 # unrepresented. Panels are then ordered west to east.
 out_strength <- rowSums(flow)
-src_pool <- which(out_strength > quantile(out_strength[out_strength > 0], 0.5))
+src_pool <- intersect(cells$id[cells$biomass > 0], which(out_strength > 0))
 
-src_axis <- quantile(grid$x_utm[src_pool], c(0.12, 0.5, 0.88)) |>
-  sapply(\(q) src_pool[which.min(abs(grid$x_utm[src_pool] - q))])
-north_arm <- src_pool[grid$y_utm[src_pool] > quantile(grid$y_utm[src_pool], 0.80)]
-src_north <- north_arm[which.min(grid$x_utm[north_arm])]
+src_axis <- quantile(grid$x[src_pool], c(0.12, 0.5, 0.88)) |>
+  sapply(\(q) src_pool[which.min(abs(grid$x[src_pool] - q))])
+north_arm <- src_pool[grid$y[src_pool] > quantile(grid$y[src_pool], 0.80)]
+src_north <- north_arm[which.min(grid$x[north_arm])]
 
 srcs <- c(src_axis, src_north)
-srcs <- srcs[order(grid$x_utm[srcs])] # west -> east
+srcs <- srcs[order(grid$x[srcs])] # west -> east
 
 # panel titles, in west-to-east order; swap in the local basin names here
 src_labs <- c("Release 1", "Release 2", "Release 3", "Release 4")
 
 fields <- map2(srcs, src_labs, \(i, l) {
-  tibble(x = grid$x_utm, y = grid$y_utm, p = flow[i, ], basin = l)
+  tibble(x = grid$x, y = grid$y, p = flow[i, ], basin = l)
 }) |>
   bind_rows() |>
   filter(p > 0) |>
   mutate(basin = factor(basin, levels = src_labs))
 
 src_pts <- st_as_sf(
-  tibble(basin = factor(src_labs, levels = src_labs), x = grid$x_utm[srcs], y = grid$y_utm[srcs]),
+  tibble(basin = factor(src_labs, levels = src_labs), x = grid$x[srcs], y = grid$y[srcs]),
   coords = c("x", "y"), crs = 32632
 )
 
@@ -142,45 +177,43 @@ walk2(srcs, src_labs, \(i, l) {
   cat(sprintf("%-15s 90%% of larvae settle within %3d cells (%4.0f km2)\n", l, n, n * 4))
 })
 
-# white mask = the plot frame minus the fjord, drawn over the tiles so the 2 km
-# cells are clipped to the coastline instead of spilling onto land
-frame <- st_as_sfc(st_bbox(
-  c(xmin = xlim[1], ymin = ylim[1], xmax = xlim[2], ymax = ylim[2]),
-  crs = st_crs(32632)
-))
-land_mask <- st_difference(frame, st_union(water))
-
 # tiles first, then the mask, then the outline: the raster sits under the
-# coastline. A light-to-blue ramp keeps the top of the scale clear of the black
+# coastline. A white-to-teal ramp keeps the top of the scale clear of the black
 # release marker, which is drawn white-filled so it reads over any cell value
 panel_b <- ggplot() +
   geom_tile(data = fields, aes(x, y, fill = p), width = 2000, height = 2000) +
   geom_sf(data = land_mask, fill = "white", colour = NA) +
   geom_sf(data = water, fill = NA, colour = "grey70", linewidth = 0.2) +
   geom_sf(data = src_pts, fill = "white", colour = "grey10", size = 2.2, stroke = 0.7, shape = 23) +
-  scale_fill_distiller(palette = "Blues", direction = 1, trans = "sqrt", name = "Settlement probability") +
-  facet_wrap(~basin, nrow = 1) +
+  scale_fill_gradientn(colours = settle_cols, trans = "sqrt", breaks = c(0.01, 0.03, 0.06), name = "Settlement probability") +
+  facet_wrap(~basin, ncol = 1) +
   coord_sf(xlim = xlim, ylim = ylim, crs = 32632, expand = FALSE) +
   theme_void(base_size = 10) +
   theme(
     plot.background = element_rect(fill = "white", colour = NA),
-    strip.text = element_text(size = 9.5, colour = "grey20"),
-    legend.position = "bottom",
-    legend.title = element_text(size = 9, colour = "grey20"),
-    legend.text = element_text(size = 8, colour = "grey30"),
-    legend.key.height = unit(3, "mm"), legend.key.width = unit(12, "mm")
-  )
+    strip.text = element_text(size = 10, colour = "grey20", margin = margin(2, 0, 2, 0))
+  ) +
+  guides(fill = guide_colourbar(
+    title.position = "top", title.hjust = 0.5, order = 3,
+    theme = theme(legend.key.height = unit(3.5, "mm"), legend.key.width = unit(40, "mm"))
+  ))
 
 # 04 Combine and save ----
-# heights match the map aspect (97 x 72 km, 1.33:1) so neither panel carries dead
-# space; stacking keeps the maps large once the figure is scaled to page width.
-# the tag theme is set per panel rather than through plot_annotation(), which
-# warns under patchwork 1.3.1 + ggplot2 4.0
-tag_theme <- theme(plot.tag = element_text(size = 12, face = "bold", colour = "grey20"))
-
-fig1 <- (wrap_elements(panel_a) + tag_theme) / (panel_b + tag_theme) +
-  plot_layout(heights = c(2.6, 1)) +
-  plot_annotation(tag_levels = "a")
+# panel a on the left, the four footprints stacked in a column on the right,
+# aligned top and bottom; each legend sits under its own panel, on one row
+# (patchwork aligns the two panels). Widths are set so the column of four
+# small maps (1.33:1 each) is about as tall as the main map
+fig1 <- panel_a + panel_b +
+  plot_layout(widths = c(3.4, 1)) +
+  plot_annotation(tag_levels = "a", tag_suffix = ")") &
+  theme(
+    plot.tag = element_text(size = 12, face = "bold", colour = "grey20"),
+    legend.position = "bottom",
+    legend.box.just = "bottom",
+    legend.spacing.x = unit(2, "mm"),
+    legend.title = element_text(size = 11, colour = "grey15"),
+    legend.text = element_text(size = 10, colour = "grey30")
+  )
 
 dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "fig1_map.png"), fig1, width = 9, height = 9.4, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "fig1_map.png"), fig1, width = 11, height = 7.6, dpi = 600, bg = "white")
