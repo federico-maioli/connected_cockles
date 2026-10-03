@@ -12,8 +12,9 @@ local({
 })
 
 # Nakagawa & Schielzeth marginal/conditional R2 and a variance share per
-# component, for one fitted sdmTMB model (Bernoulli, nbinom2, or Tweedie).
-# See 03_variance_partitioning.R for the full derivation and a check against
+# component, for one fitted sdmTMB model (Bernoulli, nbinom2, Tweedie, or one
+# component of a delta model).
+# See test_nakagawa_sdmtmb.R for the check against
 # insight::get_variance(). blocks: named list of model-matrix columns to
 # report separately, e.g. list(env = c("depth_std", "temp_std")); columns not
 # named in any block are pooled into "other".
@@ -23,21 +24,30 @@ local({
 # from its own columns only, ignoring covariance with every other block, which
 # keeps every block's share >= 0 even under collinearity (unlike splitting by
 # each block's covariance with the total, which is exact but can go negative
-# - see 03_variance_partitioning.R). Unlike HMSC, which normalises the blocks
+# - see test_nakagawa_sdmtmb.R). Unlike HMSC, which normalises the blocks
 # to sum to its own total fixed-effect variance, they are rescaled here to sum
 # exactly to var_fixed - the same total this function reports elsewhere and
 # the one checked against insight::get_variance() in test_nakagawa_sdmtmb.R -
 # so the reported marginal R2 is unaffected by how it's split among blocks.
-nakagawa_sdmtmb <- function(fit, blocks = NULL) {
-  if (isTRUE(fit$family$delta)) stop("delta models are not supported")
-  fam <- fit$family$family
-  link <- fit$family$link
-  rp <- tidy(fit, effects = "ran_pars")
+#
+# Delta (hurdle) models are partitioned one component at a time: model = 1 is
+# the presence component (binomial), model = 2 the positive component (e.g.
+# Gamma), whose fixed-effect variance is taken over the positive observations
+# only - the ones that component describes. Each component has its own
+# coefficients, spatial field and distribution-specific variance.
+nakagawa_sdmtmb <- function(fit, blocks = NULL, model = 1) {
+  delta <- isTRUE(fit$family$delta)
+  fam <- fit$family$family[model]
+  link <- fit$family$link[model]
+  rp <- tidy(fit, effects = "ran_pars", model = model)
   ran_par <- function(term) rp$estimate[rp$term == term]
 
   # fixed-effects linear predictor, term by term
-  X <- fit$tmb_data$X_ij[[1]]
-  coefs <- tidy(fit, effects = "fixed") |>
+  X <- fit$tmb_data$X_ij[[model]]
+  if (delta && model == 2) {
+    X <- X[fit$data[[all.vars(fit$formula[[1]])[1]]] > 0, , drop = FALSE]
+  }
+  coefs <- tidy(fit, effects = "fixed", model = model) |>
     select(term, estimate) |>
     deframe()
   lp <- sweep(X, 2, coefs[colnames(X)], "*")
@@ -69,6 +79,9 @@ nakagawa_sdmtmb <- function(fit, blocks = NULL) {
     ),
     nbinom2 = log1p(1 / mu + 1 / ran_par("phi")),
     tweedie = log1p(ran_par("phi") * mu^(ran_par("tweedie_p") - 2)),
+    # sdmTMB's Gamma phi is the shape, so Var(y) = mu^2 / phi and the
+    # lognormal approximation ln(1 + Var / mu^2) does not depend on mu
+    Gamma = log1p(1 / ran_par("phi")),
     stop("unsupported family: ", fam)
   )
 

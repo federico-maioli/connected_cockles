@@ -54,3 +54,6 @@ to_remove/
 
 # Rscript side-effect from base-graphics diagnostics (qqnorm, plot(mesh))
 Rplots.pdf
+
+# --- Exploratory analyses (kept local, not versioned) ----------------------
+R/exploration/

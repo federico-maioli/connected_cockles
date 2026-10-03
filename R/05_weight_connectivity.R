@@ -1,5 +1,5 @@
 # Weight the raw MIKE connectivity matrix by modeled habitat suitability
-# (presence probability and log biomass, from 03_fit_suitability.R) and
+# (presence probability and log biomass, from 04_fit_suitability.R) and
 # compute graph metrics on the weighted and unweighted matrices: in-degree,
 # in-strength, in-closeness, eigenvector centrality, and local transitivity.
 # Also computes in-strength with the presence-weighted matrix's edges

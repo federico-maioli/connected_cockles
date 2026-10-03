@@ -1,4 +1,4 @@
-x# Validation for nakagawa_sdmtmb() (R/helpers.R): does it give the right
+# Validation for nakagawa_sdmtmb() (R/helpers.R): does it give the right
 # variance components? Checked two ways:
 #   01 fit it on sdmTMB's own example data (pcod, yelloweye), covering a
 #      spatiotemporal Tweedie field, a Bernoulli model with a year intercept,
@@ -6,7 +6,11 @@ x# Validation for nakagawa_sdmtmb() (R/helpers.R): does it give the right
 #      function computes gets exercised at least once.
 #   02 refit the same models without the spatial field, so they can also be
 #      fitted in lme4 / glmmTMB, and compare variances directly against
-#      insight::get_variance() (what performance::r2_nakagawa() itself calls).
+#      insight::get_variance() (what performance::r2_nakagawa() itself calls);
+#      includes a Gamma model, the positive component of a delta-gamma model.
+#   03 a delta-gamma model, partitioned one component at a time, against the
+#      equivalent standalone models (binomial on all rows, Gamma on the
+#      positive rows), which share its likelihood.
 # Not part of the pipeline - run this after changing nakagawa_sdmtmb() to
 # confirm it still agrees with the reference implementation.
 
@@ -84,6 +88,14 @@ checks <- list(
       data = yelloweye
     ))
   ),
+  gamma = compare_insight(
+    sdmTMB(density ~ depth_scaled + depth_scaled2 + (1 | fyear),
+      data = filter(pcod, density > 0), family = Gamma(link = "log"), spatial = "off"
+    ),
+    glmmTMB::glmmTMB(density ~ depth_scaled + depth_scaled2 + (1 | fyear),
+      data = filter(pcod, density > 0), family = Gamma(link = "log")
+    )
+  ),
   tweedie = compare_insight(
     sdmTMB(density ~ depth_scaled + depth_scaled2 + (1 | fyear),
       data = pcod, family = tweedie(), spatial = "off"
@@ -100,4 +112,36 @@ checks |>
   print(n = Inf)
 stopifnot(all(map_lgl(checks, \(x) all(x$rel_diff < 0.02))))
 
-cat("\nnakagawa_sdmtmb() matches insight::get_variance() within 2% on every component.\n")
+# 03 Delta-gamma components against the standalone models ----
+# no spatial field, so the delta model's two components and the standalone
+# binomial / Gamma models have exactly the same likelihood
+fit_delta <- sdmTMB(density ~ depth_scaled + depth_scaled2 + (1 | fyear),
+  data = pcod, family = delta_gamma(), spatial = "off"
+)
+fit_binomial <- sdmTMB(present ~ depth_scaled + depth_scaled2 + (1 | fyear),
+  data = pcod, family = binomial(), spatial = "off"
+)
+fit_gamma <- sdmTMB(density ~ depth_scaled + depth_scaled2 + (1 | fyear),
+  data = filter(pcod, density > 0), family = Gamma(link = "log"), spatial = "off"
+)
+
+delta_checks <- list(
+  presence = full_join(
+    nakagawa_sdmtmb(fit_delta, model = 1) |> select(component, delta = variance),
+    nakagawa_sdmtmb(fit_binomial) |> select(component, standalone = variance),
+    by = "component"
+  ),
+  positive = full_join(
+    nakagawa_sdmtmb(fit_delta, model = 2) |> select(component, delta = variance),
+    nakagawa_sdmtmb(fit_gamma) |> select(component, standalone = variance),
+    by = "component"
+  )
+) |>
+  list_rbind(names_to = "delta_component") |>
+  filter(standalone > 0) |>
+  mutate(rel_diff = abs(delta - standalone) / standalone)
+
+delta_checks |>
+  mutate(across(where(is.numeric), \(x) round(x, 4))) |>
+  print(n = Inf)
+stopifnot(all(delta_checks$rel_diff < 0.02))

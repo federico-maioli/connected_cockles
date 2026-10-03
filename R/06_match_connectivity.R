@@ -1,4 +1,4 @@
-# Match the connectivity metrics (04_weight_connectivity.R) onto the cleaned
+# Match the connectivity metrics (05_weight_connectivity.R) onto the cleaned
 # survey data and the connectivity grid, by extracting each metric's raster
 # at each point. The rasters share the grid's CRS and cell size, so
 # extracting at a grid cell's own centre just recovers that cell's own value.

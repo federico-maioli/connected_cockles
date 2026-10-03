@@ -1,8 +1,8 @@
-# Fit a "suitability" surface for biomass and presence: intercept + spatial
-# field only, no environmental covariates. Predict it onto the connectivity
+# Fit a "suitability" surface for biomass and presence: intercept, survey,
+# year and spatial field only, no environmental covariates. Predict it onto the connectivity
 # grid; the predicted values become the weights used to collapse the raw MIKE
 # connectivity matrix into weighted connectivity metrics in
-# 04_weight_connectivity.R.
+# 05_weight_connectivity.R.
 #
 # No covariates: checked directly, environmental terms were unstable once the
 # spatial field is on (temp/sal/oxy lose significance - classic spatial
@@ -24,46 +24,34 @@ grid <- readRDS(here("data", "grid", "grid_env.rds"))
 dat <- dat |>
   filter(!is.na(biomass), !is.na(present), !is.na(x_utm), !is.na(y_utm))
 
-# 02 Coastline barrier mesh ----
+# 02 Barrier mesh ----
+# variable-resolution mesh with the coastline built in, from 03_build_mesh.R
+mesh <- readRDS(here("data", "mesh", "mesh.rds"))
+barrier_mesh <- sdmTMBextra::add_barrier_mesh(
+  make_mesh(dat, c("x_utm", "y_utm"), mesh = mesh$mesh),
+  mesh$land_barrier,
+  range_fraction = 0.1,
+  proj_scaling = 1000,
+  plot = FALSE
+)
+
 land <- st_read(
   here("data", "boundaries", "land_small_utm", "land_small_utm.shp"),
   quiet = TRUE
 ) |>
   st_make_valid()
 
-region <- st_bbox(
-  c(
-    xmin = min(dat$x_utm) * 1000 - 30000,
-    ymin = min(dat$y_utm) * 1000 - 30000,
-    xmax = max(dat$x_utm) * 1000 + 30000,
-    ymax = max(dat$y_utm) * 1000 + 30000
-  ),
-  crs = st_crs(32632)
-)
-land_region <- suppressWarnings(st_crop(land, region))
-
-inla_mesh <- fmesher::fm_mesh_2d_inla(
-  loc = cbind(dat$x_utm, dat$y_utm),
-  max.edge = c(2, 10),
-  offset = c(5, 20),
-  cutoff = 1
-)
-barrier_mesh <- sdmTMBextra::add_barrier_mesh(
-  make_mesh(dat, c("x_utm", "y_utm"), mesh = inla_mesh),
-  land_region,
-  range_fraction = 0.1,
-  proj_scaling = 1000,
-  plot = FALSE
-)
-
 # 03 Fit suitability models ----
+# survey and year as factors: the surveys use different gear, so catchability
+# differs, and occurrence differs between years; predictions below are for
+# the Stock survey in the most recent year
 fit_biomass <- sdmTMB(
-  biomass ~ 1,
+  biomass ~ survey + year,
   data = dat, mesh = barrier_mesh, spatial = "on", family = tweedie(link = "log")
 )
 
 fit_presence <- sdmTMB(
-  present ~ 1,
+  present ~ survey + year,
   data = dat, mesh = barrier_mesh, spatial = "on", family = binomial(link = "logit")
 )
 
@@ -81,7 +69,11 @@ sampled_ids <- unique(sampled_col + (sampled_row - 1) * n_col)
 
 grid_complete <- grid |>
   filter(id %in% sampled_ids) |>
-  mutate(x_utm = x / 1000, y_utm = y / 1000)
+  mutate(
+    x_utm = x / 1000, y_utm = y / 1000,
+    survey = factor("Stock", levels = levels(dat$survey)),
+    year = factor(last(levels(dat$year)), levels = levels(dat$year))
+  )
 
 pred_biomass <- predict(fit_biomass, newdata = grid_complete, type = "response")
 pred_presence <- predict(fit_presence, newdata = grid_complete, type = "response")

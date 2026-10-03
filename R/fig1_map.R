@@ -1,6 +1,6 @@
 # Figure 1: (a) study area / survey biomass and (b) larval settlement footprints.
-# Panel a: mean survey biomass per 2 x 2 km connectivity-grid cell, with a
-#   location inset top-left.
+# Panel a: biomass predicted by the full model (Stock survey) on the 2 x 2 km
+#   grid cells with survey stations, with a location inset top-left.
 # Panel b: for four release cells spread over the basin, the full settlement
 #   probability field from the pooled flow matrix. Showing where larvae actually
 #   land makes the reach of dispersal visible directly, rather than asserting it
@@ -9,12 +9,15 @@
 library(tidyverse)
 library(here)
 library(sf)
+library(sdmTMB)
 library(rcartocolor)
 library(ggspatial)
 library(patchwork)
 
-biomass_lab <- expression(Biomass ~ (g / m^2))
+biomass_lab <- expression(Predicted ~ biomass ~ (g / m^2))
 biomass_breaks <- c(1, 10, 100, 1000)
+# predictions below this (g/m2) are shown as 0
+biomass_zero <- 1
 # CARTO companion ramps (warm biomass, cool settlement), matched in lightness;
 # settlement starts from white so thin, low-probability spread fades out
 biomass_cols <- carto_pal(7, "BurgYl")
@@ -35,7 +38,7 @@ water <- st_read(here("data", "boundaries", "limfjorden", "Limfjorden.shp"), qui
   st_transform(32632)
 
 # pooled flow matrix: agents settling at j / agents released at i, as in
-# 04_weight_connectivity.R
+# 05_weight_connectivity.R
 n_cell <- nrow(grid)
 cmn <- read_csv(here("data", "connectivity", "raw", "ABM_cmn_all.csv"), col_names = FALSE, show_col_types = FALSE) |>
   as.matrix()
@@ -54,28 +57,53 @@ frame <- st_as_sfc(st_bbox(
 ))
 land_mask <- st_difference(frame, st_union(water))
 
-# 02 Panel A: survey biomass ----
-# each survey sample is assigned to its 2 km grid cell (same cell id formula as
-# 01_prepare_grid.R) and biomass is averaged over all samples and years in it
+# 02 Panel A: predicted biomass ----
+# expected biomass (presence probability x biomass where present) from the
+# full delta-gamma model (Space + Environment + Connectivity), predicted at the
+# centre of every 2 km grid cell holding at least one survey station, for the
+# Stock survey in the most recent year (2025). Grid covariates are standardised with the model data's own
+# mean and SD, recovered from the raw and standardised columns of the fit
+fit <- readRDS(here("data", "sdm", "main", "space_env_conn.rds"))
+
 cells <- dat |>
   mutate(
     col = floor((x_utm * 1000 - 450074) / 2000) + 1,
     row = floor((y_utm * 1000 - 6258093) / 2000) + 1,
     id = col + (row - 1) * 65
   ) |>
-  summarise(biomass = mean(biomass), .by = id) |>
-  mutate(x = grid$x[id], y = grid$y[id])
+  summarise(biomass = mean(biomass), .by = id)
+
+std_vars <- c("depth", "temp", "sal", "oxy", "shear_max", "conn_in_strength")
+newdata <- readRDS(here("data", "grid", "grid_env_conn.rds")) |>
+  filter(id %in% cells$id) |>
+  mutate(
+    conn_in_strength = conn_in_strength_presence,
+    x_utm = x / 1000, y_utm = y / 1000,
+    survey = factor("Stock", levels = levels(fit$data$survey)),
+    year = factor(last(levels(fit$data$year)), levels = levels(fit$data$year))
+  )
+for (v in std_vars) {
+  s <- sd(fit$data[[v]]) / sd(fit$data[[paste0(v, "_std")]])
+  m <- mean(fit$data[[v]]) - s * mean(fit$data[[paste0(v, "_std")]])
+  newdata[[paste0(v, "_std")]] <- (newdata[[v]] - m) / s
+}
+newdata <- filter(newdata, if_all(all_of(paste0(std_vars, "_std")), \(x) !is.na(x)))
+
+pred <- predict(fit, newdata = newdata, type = "response") |>
+  mutate(est = if_else(est < biomass_zero, 0, est))
+summary(pred$est)
 
 p_main <- ggplot() +
   # zero cells get their own legend key through a dummy linetype mapping (the
   # tile outline itself is not drawn, linewidth = 0)
-  geom_tile(data = filter(cells, biomass == 0), aes(x, y, linetype = "0"), fill = "grey85", linewidth = 0, width = 2000, height = 2000) +
-  geom_tile(data = filter(cells, biomass > 0), aes(x, y, fill = biomass), width = 2000, height = 2000) +
+  geom_tile(data = filter(pred, est == 0), aes(x, y, linetype = "0"), fill = "grey85", linewidth = 0, width = 2000, height = 2000) +
+  geom_tile(data = filter(pred, est > 0), aes(x, y, fill = est), width = 2000, height = 2000) +
   geom_sf(data = land_mask, fill = "white", colour = NA) +
   geom_sf(data = water, fill = NA, colour = "grey55", linewidth = 0.3) +
   scale_fill_gradientn(
     colours = biomass_cols, trans = "pseudo_log", name = biomass_lab,
-    breaks = biomass_breaks, labels = scales::comma(biomass_breaks)
+    breaks = biomass_breaks, labels = scales::comma(biomass_breaks),
+    limits = c(biomass_zero, NA) # bar starts at the zero cut-off, so its first label is 1
   ) +
   scale_linetype_manual(values = "solid", name = NULL) +
   annotation_scale(location = "bl", width_hint = 0.2, height = unit(0.15, "cm"), text_cex = 0.7, line_col = "grey40", text_col = "grey40") +
@@ -139,7 +167,7 @@ panel_a <- p_main +
 
 # 03 Panel B: settlement footprints ----
 # Release cells are chosen systematically, not hand-picked: among cells where
-# cockles were found (mean survey biomass > 0, panel a) that also release
+# cockles were found (mean survey biomass > 0) that also release
 # larvae in the model, three are taken at the 12th, 50th and 88th percentile of
 # along-fjord position, plus the westernmost cell of the northern arm (top 20%
 # by northing) - the main axis alone leaves the whole northern lobe
