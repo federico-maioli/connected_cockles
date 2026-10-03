@@ -204,11 +204,10 @@ Previous biophysical modelling indicates substantial larval transport among area
 \textcolor{red}{Pedro, Camille, Isabelle}
 \textcolor{red}{Some info about the species, i think it is 2 species right?}
 
-\subsection{Cockle survey}
-\textcolor{red}{@ Pedro add survey details or point me to relevant documentation}
+\subsection{Cockle surveys}
+\textcolor{red}{@ Pedro check this is correct pls, maybe we can add some references?}
 
-\rev{We combined cockle data from three surveys that differ in gear and spatial coverage. The 2018 cockle stock survey used a suction dredge and covered the fjord with a sparse grid of stations ($n = 283$). The 2021--2025 stock surveys, including a high-resolution survey of selected beds in 2021--2022, used a grab and concentrated on a few beds ($n = 5{,}305$). We added cockle catches from the 2018--2023 blue mussel and oyster dredge surveys (Konsekvensvurdering, KSKV), keeping stations within 4~km of a cockle survey station so that the spatial domain stayed that of the cockle surveys; this excluded the south-eastern basins, which only KSKV covered ($n = 2{,}549$). For KSKV, cockle biomass and density were the dredge catch divided by the dredged area, and station positions were the midpoints of the dredge tracks. In total, the data comprised 8{,}137 stations, of which 1{,}527 (18.8\%) held cockles. Because the gears differ in catch efficiency and in the area sampled, survey (2018 suction dredge, 2021--2025 grab, KSKV dredge) was included as a factor in all models.}
-
+We combined cockle data from three surveys that differ in gear and spatial coverage. The 2018 cockle stock survey used a suction dredge and covered the fjord with a sparse grid of stations ($n = 283$). The 2021--2025 stock surveys, including a high-resolution survey of selected beds in 2021--2022, used a grab and targeted few beds ($n = 5{,}305$). We added cockle catches from the 2018--2023 blue mussel and oyster dredge surveys (Konsekvensvurdering, KSKV), keeping stations within 4~km of a cockle survey station so that the spatial domain stayed that of the cockle surveys; this excluded the south-eastern basins, which only KSKV covered. In total, the data comprised 8{,}137 stations, of which 1{,}527 (18.8\%) held cockles. Because the gears differ in catch efficiency and in the area sampled, survey (2018 suction dredge, 2021--2025 grab, KSKV dredge) was included as a factor in all models.
 
 \subsection{Environmental predictors}
 \textcolor{red}{Please check that the evironmental variables included are enough or whether some important are missing @ Flemming
@@ -254,46 +253,24 @@ All metrics were calculated in R using the \texttt{igraph} package \citep{csardi
 
 \subsection{Species distribution models}
 \label{sec:sdm}
-
-\rev{We modelled cockle biomass density (g\,m$^{-2}$) as a function of environmental conditions, predicted larval connectivity, and residual spatial autocorrelation using spatial delta-gamma (hurdle) generalized linear mixed models (GLMMs). Biomass density was zero at most stations and highly skewed where cockles occurred, so we modelled it in two parts: whether cockles were present and, where they were, how much biomass there was. Biomass density $y_i$ at survey station $i$ ($n = 8{,}137$) was modelled as}
-\begin{equation}
-\Pr(y_i > 0) = \pi_i, \qquad
-y_i \mid y_i > 0 \sim \operatorname{Gamma}(\mu_i,\phi), \qquad
-\operatorname{logit}(\pi_i) = \eta^{(1)}_i, \qquad
-\log(\mu_i) = \eta^{(2)}_i ,
-\end{equation}
-\rev{where $\pi_i$ is the probability that cockles are present (presence component, binomial with logit link) and $\mu_i$ is the expected biomass density where they are present (biomass component, gamma with log link and shape $\phi$). The two components were fitted jointly but each had its own coefficients and its own spatial random field, so presence and biomass where present could respond differently to the same predictors. The delta-gamma family fitted better than a Tweedie and a delta-lognormal model (lower AIC).}
-
-\rev{Each component $m \in \{1, 2\}$ had a linear predictor with additive effects of survey and year, environmental conditions, larval connectivity, and a spatial random field,}
-\begin{equation}
-\eta^{(m)}_i
-=
-\beta^{(m)}_0
-+
-\underbrace{\gamma^{(m)}_{g_i} + \delta^{(m)}_{t_i}}_{\text{survey, year}}
-+
-\underbrace{E^{(m)}_i}_{\text{environment}}
-+
-\underbrace{C^{(m)}_i}_{\text{connectivity}}
-+
-\underbrace{\omega^{(m)}_{s_i}}_{\text{space}} ,
-\end{equation}
-where
+We modelled cockle biomass density (g\,m$^{-2}$) using a spatial delta-gamma (hurdle) generalized linear mixed model (GLMM). Because cockles were absent from most sampling stations and biomass was strongly right-skewed when present, the model comprised two components: a binomial model for cockle occurrence and a Gamma model for positive biomass. For an observation $y_{\mathbf{s},t}$ at location $\mathbf{s}$ in year $t$ ($n = 8{,}137$),
 \begin{align}
-E^{(m)}_i &= \sum_{k=1}^{6}\beta^{(m)}_k x_{ik},
-&& \mathbf{x}_i=(\text{depth},\,\text{depth}^2,\,\text{temperature},\,\text{oxygen},\,\text{salinity},\,\text{shear stress})_i,\\
-C^{(m)}_i &= \theta^{(m)} c_i,
-&& c_i=\text{connectivity metric},\\
-\bm{\omega}^{(m)}
-&\sim
-\mathrm{MVN}\!\left(\mathbf{0},\bm{\Sigma}^{(m)}_{\omega}\right),
-&&
-\bm{\Sigma}^{(m)}_{\omega}\ \text{defined by a Mat\'ern covariance function with range }\rho^{(m)}\text{ and marginal SD }\sigma^{(m)}_{\omega}.
+\Pr(y_{\mathbf{s},t} > 0) &= p_{\mathbf{s},t}, &
+\operatorname{logit}(p_{\mathbf{s},t}) &= \eta_{1,\mathbf{s},t},\\
+y_{\mathbf{s},t} \mid y_{\mathbf{s},t} > 0 &\sim \operatorname{Gamma}\!\left(\phi,\ \mu_{\mathbf{s},t}/\phi\right), &
+\log(\mu_{\mathbf{s},t}) &= \eta_{2,\mathbf{s},t},
 \end{align}
+where $p_{\mathbf{s},t}$ is the probability of cockle occurrence, $\mu_{\mathbf{s},t}$ is the expected biomass conditional on occurrence, and $\phi$ is the Gamma shape parameter, such that $\operatorname{Var}(y_{\mathbf{s},t} \mid y_{\mathbf{s},t} > 0) = \mu_{\mathbf{s},t}^2/\phi$. Each component had its own linear predictor,
+\begin{equation}
+\eta_{m,\mathbf{s},t} = \mathbf{X}_{\mathbf{s},t}\,\boldsymbol{\beta}_m + \omega_{m,\mathbf{s}}, \qquad
+\boldsymbol{\omega}_m \sim \operatorname{MVN}\!\left(\mathbf{0}, \boldsymbol{\Sigma}_{\omega,m}\right),
+\end{equation}
+where $m \in \{1, 2\}$ denotes the occurrence and positive-biomass components, respectively, $\boldsymbol{\beta}_m$ is the vector of fixed-effect coefficients, and $\omega_{m,\mathbf{s}}$ is a spatially structured random field with Mat\'ern covariance, characterised by a range parameter and marginal variance $\sigma^2_{\omega,m}$. The two components were fitted jointly but had separate fixed effects and spatial random fields, allowing the environmental and connectivity effects on cockle occurrence to differ from those on biomass conditional on occurrence.
 
-\rev{Here, $\beta^{(m)}_0$ is the intercept, $\gamma^{(m)}_{g_i}$ is the effect of the survey $g_i$ that sampled station $i$ (2021--2025 grab survey as reference), $\delta^{(m)}_{t_i}$ is the effect of its year $t_i$ (2018 as reference), $\mathbf{x}_i$ contains the five environmental predictors (Fig.~\ref{fig:predictors}a--e), with depth entering as a quadratic because cockle presence peaked at intermediate depths, $c_i$ is the connectivity value assigned to the grid cell containing station $i$ (Fig.~\ref{fig:predictors}f), and $\omega^{(m)}_{s_i}$ is a Gaussian random field representing residual spatial autocorrelation not explained by the fixed effects. The survey term accounts for differences in catch efficiency and sampled area among gears, and the year term for annual differences in occurrence and biomass (for example, recruitment), which would otherwise be absorbed by the spatial field or the residual. Because each year was sampled by different surveys and mostly in different areas, the year effects partly reflect sampling design and were not interpreted. All continuous predictors, including the environmental variables and the connectivity metric, were standardized to zero mean and unit variance before model fitting.}
+The model matrix $\mathbf{X}_{\mathbf{s},t}$ included an intercept, survey and year as categorical effects, the five environmental predictors (depth and depth$^2$, temperature, oxygen, salinity, and maximum shear stress; Fig.~\ref{fig:predictors}a--e), and the connectivity value of the 2~$\times$~2~km grid cell containing the sampling station (Fig.~\ref{fig:predictors}f). Survey was included to account for differences in catch efficiency among the three gears, while year accounted for interannual differences in cockle occurrence and biomass. Continuous predictors were standardized to zero mean and unit variance before model fitting.
 
-\rev{As a sensitivity analysis, we refitted the model substituting each of the four alternative connectivity metrics for in-strength in $c_i$, leaving all other components unchanged.}
+As a sensitivity analysis, we refitted the model separately for each of four alternative connectivity metrics, replacing in-strength with the corresponding metric while keeping the remaining model specification unchanged.
+
 
 \subsubsection{Model structures comparison}
 
@@ -303,28 +280,28 @@ To quantify the effect and relative contribution of environmental conditions, la
 
 \centering
 
-\caption{Model structures compared. \rev{All structures also include the survey and year effects ($\gamma_g + \delta_t$).} The connectivity term ($C$) was fitted separately using each of the five candidate connectivity metrics.}
+\caption{Model structures compared. All structures also include the intercept, survey and year effects.} 
 
 \label{tab:model_structures}
 \begin{tabular}{ll}
 \toprule
 Structure & Linear predictor \\
 \midrule
-Space                              & $\beta_0 + \omega$ \\
-Environment                        & $\beta_0 + E$ \\
-Space + Environment                & $\beta_0 + E + \omega$ \\
-Space + Connectivity               & $\beta_0 + C + \omega$ \\
-Environment + Connectivity         & $\beta_0 + E + C$ \\
-Space + Environment + Connectivity & $\beta_0 + E + C + \omega$ \\
+Space                              & $\omega$ \\
+Environment                        & $E$ \\
+Space + Environment                & $E + \omega$ \\
+Space + Connectivity               & $ C + \omega$ \\
+Environment + Connectivity         & $E + C$ \\
+Space + Environment + Connectivity & $E + C + \omega$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\rev{The same structure was used for both components of a model: a term included in a model entered both the presence and the biomass component. Models containing the connectivity term ($C$; structures 4--6 in Table~\ref{tab:model_structures}) were fitted separately for each of the five candidate connectivity metrics, yielding $3 + (3 \times 5) = 18$ models. As a further robustness check specific to the primary (in-strength) metric, the Space + Environment + Connectivity and Environment + Connectivity structures were also refit with each of the five environmental predictors dropped in turn (depth together with depth$^2$; 10 additional models).} Competing models were compared using Akaike's Information Criterion (AIC; \citet{akaike1974}), with lower AIC values indicating better support after accounting for model complexity.
+The same set of predictors was included in both components (occurrence and positive-biomass). Competing models were compared using Akaike’s Information Criterion (AIC; \citet{akaike1974}), with lower AIC values indicating greater support after accounting for model complexity.
 
 \subsubsection{Spatial field and mesh}
 
-The random field was approximated by the SPDE method on a finite-element mesh built with the R package \texttt{fmesher} \citep{lindgrenFmesherTriangleMeshes2025}. \rev{Survey effort was very uneven: a few beds were surveyed densely by grab in most years, whereas the rest of the fjord was covered only by the sparser dredge surveys (2018 suction dredge and KSKV). We therefore let the mesh resolution vary in space with the local density of survey stations. At each station, the target triangle edge length was the distance to its 20th nearest distinct station location, bounded between 0.5 and 6~km; away from stations, the target increased by 1~km per km of distance from the nearest station, up to 10~km. The resulting mesh had 1{,}860 vertices, with triangles of about 0.5~km in the densely surveyed beds and several kilometres in sparsely surveyed areas and on land.} Because the Limfjorden is a narrow, branching system in which straight-line distance is a poor proxy for connection through water, we used a barrier mesh where mesh triangles falling on land had their correlation range reduced to 10\% of the water value, so spatial correlation does not cross land \citep{bakkaNonstationaryGaussianModels2019}. \rev{The coastline (simplified to $\sim$1~km) was built into the mesh as a constraint, so that every triangle lies entirely in water or entirely on land and the barrier follows the shore exactly; triangles containing a survey station were always treated as water.}
+Survey effort was uneven, with a few cockle beds sampled densely by grab in most years, while the rest of the fjord was covered more sparsely by dredge surveys (2018 suction dredge and KSKV). We therefore built a non-uniform mesh, with smaller triangles where sampling was dense and larger triangles where it was sparse. This keeps the SPDE approximation accurate where the data can resolve fine-scale variation, without wasting vertices elsewhere \citep{lindgren2018}. Because Limfjorden is a narrow, branching fjord we used a barrier model \citep{bakkaNonstationaryGaussianModels2019}, setting the correlation range in mesh triangles over land to 10\% of the range in water. This forces spatial correlation to follow the water and decay rapidly across land. Figure supp
 
 \subsubsection{Variance partitioning}
 
@@ -343,7 +320,7 @@ following the variance-partitioning approach of the \texttt{Hmsc} package \citep
 
 
 \subsubsection{Model fitting}
-We fit the \rev{spatial} models with the R package \texttt{sdmTMB} \citep{andersonSdmTMBPackageFast2025}, version \rev{1.1.0}. sdmTMB uses automatic differentiation and the Laplace approximation from the R package TMB \citep{kristensenTMBAutomaticDifferentiation2016} and sparse matrix structures to set up the SPDE-based GMRFs from the R package fmesher \citep{lindgrenFmesherTriangleMeshes2025}. Estimation is done via maximum marginal likelihood. We confirmed that the nonlinear optimization was consistent with convergence by checking that the Hessian matrix was positive definite and the maximum absolute log-likelihood gradient with respect to fixed effects was <0.001 \citep{andersonSdmTMBPackageFast2025}. 
+We fit the spatial models with the R package \texttt{sdmTMB} \citep{andersonSdmTMBPackageFast2025}, version 1.1.0. sdmTMB uses automatic differentiation and the Laplace approximation from the R package TMB \citep{kristensenTMBAutomaticDifferentiation2016} and sparse matrix structures to set up the SPDE-based GMRFs from the R package \texttt{fmesher} \citep{lindgrenFmesherTriangleMeshes2025}. Estimation is done via maximum marginal likelihood. We confirmed that the nonlinear optimization was consistent with convergence by checking that the Hessian matrix was positive definite and the maximum absolute log-likelihood gradient with respect to fixed effects was <0.001 \citep{andersonSdmTMBPackageFast2025}. Bla bla we also checked residual fig. S... R version..
 
 % ---- RESULTS ---------------------------------------------------------------
 \section{Results}
