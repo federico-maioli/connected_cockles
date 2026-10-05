@@ -1,70 +1,104 @@
-# Model-selection table (LaTeX) for the paper.
+# Model-selection tables (LaTeX) for the paper.
 #
-# The six main structures (space, environment, and connectivity in-strength,
-# crossed), all delta-gamma models, ordered by delta AIC, with the marginal
-# and conditional R2 of each component (presence; biomass where present).
-# Writes a booktabs table to output/tables for \input into Overleaf.
+# Table 1: the four main models (space, + environment, + in-strength, +
+# both), all delta-gamma with survey, year and a spatial field, ordered by
+# AIC, with the out-of-sample ELPD difference to the best model from the
+# spatially blocked cross-validation.
+# Table S1: the full model with each of the five connectivity metrics.
+# Written to output/tables for \input into Overleaf.
 #
-# Reads data/sdm/main/model_comparison.rds, written by 07_fit_sdm.R.
+# Reads data/sdm/main/model_comparison.rds and
+# data/sdm/sensitivity/model_comparison.rds (07_fit_sdm.R) and
+# data/sdm/cv/elpd_compare.rds (08_cross_validation.R).
 
 library(tidyverse)
 library(here)
 
-# 01 Load comparison ----
-comp <- readRDS(here("data", "sdm", "main", "model_comparison.rds"))
-
-# 02 Delta AIC, ordered best first ----
 structure_labels <- c(
   space = "Space",
-  env = "Environment",
   space_env = "Space + Environment",
   space_conn = "Space + Connectivity",
-  env_conn = "Environment + Connectivity",
   space_env_conn = "Space + Environment + Connectivity"
 )
+metric_labels <- c(
+  space_env_conn = "In-strength",
+  space_env_conn_in_degree = "In-degree",
+  space_env_conn_in_closeness = "In-closeness",
+  space_env_conn_eigen = "Eigenvector centrality",
+  space_env_conn_transitivity = "Transitivity"
+)
 
-tab <- comp |>
+# AIC to one decimal place, the best model (delta = 0) in bold; a model that
+# did not converge is shown as a dash
+fmt <- function(x, best = FALSE) {
+  s <- if_else(is.na(x), "---", formatC(x, format = "f", digits = 1))
+  if_else(rep_len(best, length(s)), paste0("\\textbf{", s, "}"), s)
+}
+
+dir.create(here("output", "tables"), showWarnings = FALSE, recursive = TRUE)
+
+# 01 Table 1: main models ----
+comp <- readRDS(here("data", "sdm", "main", "model_comparison.rds"))
+elpd <- readRDS(here("data", "sdm", "cv", "elpd_compare.rds"))
+
+tab1 <- comp |>
+  left_join(select(elpd, model, elpd_diff, se_diff), by = "model") |>
   mutate(
     label = structure_labels[model],
-    delta_aic = aic - min(aic, na.rm = TRUE)
+    delta_aic = aic - min(aic, na.rm = TRUE),
+    best = !is.na(delta_aic) & delta_aic == 0
   ) |>
   arrange(delta_aic)
 
-# 03 Build LaTeX ----
-# AIC to one decimal place, the best model (delta = 0) in bold; R2 to two
-# decimals; a model that did not converge is shown as a dash
-fmt_aic <- function(x) {
-  best <- !is.na(x) & x == min(x, na.rm = TRUE)
-  s <- if_else(is.na(x), "---", formatC(x, format = "f", digits = 1))
-  if_else(best, paste0("\\textbf{", s, "}"), s)
-}
-fmt_r2 <- function(x) if_else(is.na(x), "---", formatC(x, format = "f", digits = 2))
-
-rows <- tab |>
+rows1 <- tab1 |>
   transmute(line = paste0(
-    label, " & ", fmt_aic(aic), " & ", fmt_aic(delta_aic), " & ",
-    fmt_r2(r2_marginal_presence), " & ", fmt_r2(r2_conditional_presence), " & ",
-    fmt_r2(r2_marginal_biomass), " & ", fmt_r2(r2_conditional_biomass), " \\\\"
+    label, " & ", fmt(aic, best), " & ", fmt(delta_aic, best), " & ",
+    fmt(elpd_diff, elpd_diff == 0), " (", fmt(se_diff), ") \\\\"
   )) |>
   pull(line)
 
-latex <- c(
+writeLines(c(
   "\\begin{table}[ht]",
   "\\centering",
-  "\\caption{Model selection for cockle biomass (delta-gamma hurdle models), ordered by $\\Delta$AIC (lower is better; the best model is shown in bold). $R^2_m$ and $R^2_c$ are the marginal (fixed effects) and conditional (fixed effects and spatial field) $R^2$ of each component: presence (binomial) and biomass where present (gamma). All models include survey (gear) and year as factors. Connectivity is presence-weighted in-strength throughout; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress; space is a spatial random field. A dash marks a model that did not converge.}",
+  "\\caption{Model selection for cockle biomass (delta-gamma hurdle models), ordered by $\\Delta$AIC (lower is better; the best model is shown in bold). $\\Delta$ELPD is the difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (higher is better), with its standard error in parentheses. All models include survey (gear) and year as factors and a spatial random field. Connectivity is presence-weighted in-strength; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress. A dash marks a model that did not converge.}",
   "\\label{tab:model-selection}",
-  "\\begin{tabular}{lrrrrrr}",
+  "\\begin{tabular}{lrrr}",
   "\\toprule",
-  " & & & \\multicolumn{2}{c}{Presence} & \\multicolumn{2}{c}{Biomass where present} \\\\",
-  "\\cmidrule(lr){4-5} \\cmidrule(lr){6-7}",
-  "Model & AIC & $\\Delta$AIC & $R^2_m$ & $R^2_c$ & $R^2_m$ & $R^2_c$ \\\\",
+  "Model & AIC & $\\Delta$AIC & $\\Delta$ELPD (SE) \\\\",
   "\\midrule",
-  rows,
+  rows1,
   "\\bottomrule",
   "\\end{tabular}",
   "\\end{table}"
-)
+), here("output", "tables", "tab1_model_selection.tex"))
 
-# 04 Write ----
-dir.create(here("output", "tables"), showWarnings = FALSE, recursive = TRUE)
-writeLines(latex, here("output", "tables", "tab1_model_selection.tex"))
+# 02 Table S1: full model with each connectivity metric ----
+tab_s1 <- bind_rows(
+  filter(comp, model == "space_env_conn"),
+  readRDS(here("data", "sdm", "sensitivity", "model_comparison.rds"))
+) |>
+  mutate(
+    label = metric_labels[model],
+    delta_aic = aic - min(aic, na.rm = TRUE),
+    best = !is.na(delta_aic) & delta_aic == 0
+  ) |>
+  arrange(delta_aic)
+
+rows_s1 <- tab_s1 |>
+  transmute(line = paste0(label, " & ", fmt(aic, best), " & ", fmt(delta_aic, best), " \\\\")) |>
+  pull(line)
+
+writeLines(c(
+  "\\begin{table}[ht]",
+  "\\centering",
+  "\\caption{AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, ordered by $\\Delta$AIC (the best model is shown in bold). All metrics are presence-weighted; all models include survey, year, the environmental predictors and a spatial random field.}",
+  "\\label{tab:connectivity-metrics}",
+  "\\begin{tabular}{lrr}",
+  "\\toprule",
+  "Connectivity metric & AIC & $\\Delta$AIC \\\\",
+  "\\midrule",
+  rows_s1,
+  "\\bottomrule",
+  "\\end{tabular}",
+  "\\end{table}"
+), here("output", "tables", "tabS1_connectivity_metrics.tex"))

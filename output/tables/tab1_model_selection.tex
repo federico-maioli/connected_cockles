@@ -1,19 +1,15 @@
 \begin{table}[ht]
 \centering
-\caption{Model selection for cockle biomass (delta-gamma hurdle models), ordered by $\Delta$AIC (lower is better; the best model is shown in bold). $R^2_m$ and $R^2_c$ are the marginal (fixed effects) and conditional (fixed effects and spatial field) $R^2$ of each component: presence (binomial) and biomass where present (gamma). All models include survey (gear) and year as factors. Connectivity is presence-weighted in-strength throughout; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress; space is a spatial random field. A dash marks a model that did not converge.}
+\caption{Model selection for cockle biomass (delta-gamma hurdle models), ordered by $\Delta$AIC (lower is better; the best model is shown in bold). $\Delta$ELPD is the difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (higher is better), with its standard error in parentheses. All models include survey (gear) and year as factors and a spatial random field. Connectivity is presence-weighted in-strength; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress. A dash marks a model that did not converge.}
 \label{tab:model-selection}
-\begin{tabular}{lrrrrrr}
+\begin{tabular}{lrrr}
 \toprule
- & & & \multicolumn{2}{c}{Presence} & \multicolumn{2}{c}{Biomass where present} \\
-\cmidrule(lr){4-5} \cmidrule(lr){6-7}
-Model & AIC & $\Delta$AIC & $R^2_m$ & $R^2_c$ & $R^2_m$ & $R^2_c$ \\
+Model & AIC & $\Delta$AIC & $\Delta$ELPD (SE) \\
 \midrule
-Space + Environment & \textbf{29634.5} & \textbf{0.0} & 0.21 & 0.71 & 0.49 & 0.88 \\
-Space + Environment + Connectivity & 29634.6 & 0.1 & 0.22 & 0.72 & 0.49 & 0.88 \\
-Space & 29693.9 & 59.3 & 0.11 & 0.71 & 0.46 & 0.88 \\
-Space + Connectivity & 29696.8 & 62.2 & 0.12 & 0.72 & 0.46 & 0.88 \\
-Environment + Connectivity & 31544.4 & 1909.8 & 0.42 & 0.42 & 0.73 & 0.73 \\
-Environment & 31560.9 & 1926.4 & 0.41 & 0.41 & 0.73 & 0.73 \\
+Space + Environment & \textbf{29634.5} & \textbf{0.0} & \textbf{0.0} (0.0) \\
+Space + Environment + Connectivity & 29634.6 & 0.1 & -20.7 (12.6) \\
+Space & 29693.9 & 59.3 & -86.2 (16.4) \\
+Space + Connectivity & 29696.8 & 62.2 & -122.2 (15.9) \\
 \bottomrule
 \end{tabular}
 \end{table}

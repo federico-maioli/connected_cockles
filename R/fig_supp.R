@@ -1,12 +1,11 @@
 # All supplementary figures, one section each:
 #   S1   connectivity metrics on the 2 km grid
-#   S2   full model with vs without the spatial field, per component
-#   S3   correlation among all model predictors
-#   S4   connectivity coefficient with vs without the spatial field
-#   S5   variance partitioning across the 5 connectivity metrics
-#   S6   stability of the in-strength coefficient across specifications
-#   S7   connectivity vs environment and the residual spatial field
-#   S8   the barrier mesh
+#   S2   correlation among all model predictors
+#   S3   connectivity coefficient of each metric in the full model
+#   S4   connectivity vs environment and the residual spatial field
+#   S5   the barrier mesh
+#   S6   survey stations by year and survey
+#   S7   cross-validation folds (2 km grid cells)
 # (The covariate maps are in the main text, fig2_predictors.R.)
 #
 # Connectivity metrics are the presence-weighted ones used in 07_fit_sdm.R;
@@ -29,8 +28,8 @@ conn_labs <- c(
   conn_transitivity = "Transitivity"
 )
 
-# fitted model saved by 07_fit_sdm.R: in-strength models live in main/, the
-# other metrics and the leave-one-out specs in sensitivity/
+# fitted model saved by 07_fit_sdm.R: the in-strength models live in main/,
+# the full model with the other metrics in sensitivity/
 read_fit <- function(folder, model) {
   readRDS(here("data", "sdm", folder, paste0(model, ".rds")))
 }
@@ -63,12 +62,7 @@ water <- st_read(here("data", "boundaries", "limfjorden", "Limfjorden.shp"), qui
 # connectivity), taken from a saved fit so it matches the models exactly
 dat_model <- read_fit("main", "space_env")$data
 
-comparison <- bind_rows(
-  readRDS(here("data", "sdm", "main", "model_comparison.rds")),
-  readRDS(here("data", "sdm", "sensitivity", "model_comparison.rds"))
-)
-
-dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
+dir.create(here("output", "figs", "supp"), showWarnings = FALSE, recursive = TRUE)
 
 # the 2 km grid with connectivity (S1): only wet cells
 # inside Limfjorden - the grid extends past the fjord into the North Sea,
@@ -97,16 +91,14 @@ metric_titles <- c(
   conn_in_strength_presence = "In-strength",
   conn_in_closeness_presence = "In-closeness",
   conn_eigen_presence = "Eigenvector centrality",
-  conn_transitivity_presence = "Transitivity",
-  conn_in_strength_flipped = "In-strength, flipped"
+  conn_transitivity_presence = "Transitivity"
 )
 metric_scales <- list(
   conn_in_degree_presence = scale_fill_gradient(low = "#d0e1f2", high = "#08306b", name = NULL),
   conn_in_strength_presence = scale_fill_gradient(low = "#efedf5", high = "#3f007d", name = NULL, transform = "sqrt"),
   conn_in_closeness_presence = scale_fill_gradient(low = "#dbf1f0", high = "#01665e", name = NULL),
   conn_eigen_presence = scale_fill_gradient(low = "#fee6ce", high = "#7f2704", name = NULL, transform = "sqrt"),
-  conn_transitivity_presence = scale_fill_gradient(low = "#e5f5e0", high = "#005a32", name = NULL),
-  conn_in_strength_flipped = scale_fill_gradient(low = "#fde0dd", high = "#ae017e", name = NULL, transform = "sqrt")
+  conn_transitivity_presence = scale_fill_gradient(low = "#e5f5e0", high = "#005a32", name = NULL)
 )
 
 metric_panels <- map(names(metric_titles), function(col) {
@@ -121,111 +113,27 @@ metric_panels <- map(names(metric_titles), function(col) {
 })
 
 fig_s1 <- wrap_plots(metric_panels, ncol = 3) + plot_annotation(tag_levels = "a", tag_suffix = ")")
-ggsave(here("output", "figs", "figS1_connectivity_metrics.png"), fig_s1, width = 13, height = 5.6, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS1_connectivity_metrics.png"), fig_s1, width = 13, height = 5.6, dpi = 600, bg = "white")
 
-# 03 Figure S2: full model with vs without the spatial field ----
-# standardized coefficients (a) and variance partitioning (b) of the full
-# in-strength model, spatial field on vs off, per component - shows how much
-# each predictor moves when the field is dropped, and how much variance the
-# field takes over from the fixed effects
-s2_structure_labs <- c(space_env_conn = "Spatial field: on", env_conn = "Spatial field: off")
-s2_field_cols <- c("Spatial field: on" = "#0072B2", "Spatial field: off" = "#D55E00")
-s2_term_labs <- c(
-  depth_std = "Depth", `I(depth_std^2)` = "Depth\u00b2", temp_std = "Temperature", oxy_std = "Oxygen",
-  sal_std = "Salinity", shear_max_std = "Shear stress", conn_in_strength_std = "In-strength"
-)
-s2_part_cols <- c("Spatial field" = "#0072B2", "Environment" = "#009E73", "In-strength" = "#E69F00", "Survey" = "#999999", "Year" = "#CC79A7")
-s2_label_cols <- c("Spatial field" = "white", "Environment" = "white", "In-strength" = "grey15", "Survey" = "grey15", "Year" = "grey15")
-
-coefs_s2 <- expand_grid(structure = names(s2_structure_labs), component = 1:2) |>
-  mutate(coef = map2(structure, component, \(s, m) {
-    tidy(read_fit("main", s), effects = "fixed", model = m, conf.int = TRUE)
-  })) |>
-  unnest(coef) |>
-  filter(term %in% names(s2_term_labs)) |>
-  mutate(
-    term = factor(s2_term_labs[term], levels = rev(unname(s2_term_labs))),
-    field = factor(s2_structure_labs[structure], levels = unname(s2_structure_labs)),
-    part = factor(unname(part_labs)[component], levels = unname(part_labs))
-  )
-
-p_s2_coeff <- ggplot(coefs_s2, aes(estimate, term, colour = field)) +
-  geom_stripped_rows(colour = NA) +
-  geom_vline(xintercept = 0, linetype = 2, colour = "grey55") +
-  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0, linewidth = 0.9, position = position_dodge(width = 0.55)) +
-  geom_point(size = 2.4, position = position_dodge(width = 0.55)) +
-  facet_wrap(~part) +
-  scale_colour_manual(values = s2_field_cols, name = NULL) +
-  labs(x = "Standardized coefficient", y = NULL) +
-  theme_light(base_size = 11) +
-  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank(), legend.position = "bottom") +
-  facet_theme
-
-# unexplained (distribution) variance is not drawn - it is the empty remainder
-# of each bar; segments >= 5% are labelled in place, thinner ones just above
-variance_s2 <- map(names(s2_structure_labs), \(s) {
-  readRDS(here("data", "sdm", "main", paste0(s, "_variance.rds"))) |> mutate(structure = s)
-}) |>
-  list_rbind() |>
-  filter(share > 0, component != "distribution") |>
-  mutate(
-    component = factor(recode(component, spatial = "Spatial field", Connectivity = "In-strength"), levels = names(s2_part_cols)),
-    group = factor(s2_structure_labs[structure], levels = rev(unname(s2_structure_labs))),
-    part = factor(part_labs[part], levels = unname(part_labs))
-  )
-s2_labs <- variance_s2 |>
-  arrange(part, group, component) |>
-  mutate(x_mid = cumsum(share) - share / 2, .by = c(part, group))
-s2_narrow <- s2_labs |>
-  filter(share < 0.05) |>
-  summarise(label = paste(scales::percent(share, accuracy = 0.1), collapse = "\n"), x_mid = mean(x_mid), .by = c(part, group))
-
-p_s2_variance <- ggplot(variance_s2, aes(x = share, y = group, fill = component)) +
-  geom_col(width = 0.7, colour = "white", linewidth = 0.4, position = position_stack(reverse = TRUE)) +
-  geom_text(
-    data = filter(s2_labs, share >= 0.05),
-    aes(x = x_mid, y = group, label = scales::percent(share, accuracy = 0.1), colour = component),
-    inherit.aes = FALSE, size = 3, show.legend = FALSE
-  ) +
-  geom_text(
-    data = s2_narrow, aes(x = x_mid, y = group, label = label),
-    inherit.aes = FALSE, size = 2.6, colour = "grey25", lineheight = 0.85, position = position_nudge(y = 0.5)
-  ) +
-  facet_wrap(~part) +
-  scale_fill_manual(values = s2_part_cols, name = NULL, drop = TRUE) +
-  scale_colour_manual(values = s2_label_cols, guide = "none") +
-  scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = scales::percent, expand = c(0, 0)) +
-  scale_y_discrete(expand = expansion(add = c(0.45, 0.75))) +
-  labs(x = expression("Share of total variance (Nakagawa " * R^2 * ")"), y = NULL) +
-  theme_light(base_size = 11) +
-  theme(panel.grid = element_blank(), legend.position = "bottom", panel.spacing.x = unit(8, "mm")) +
-  guides(fill = guide_legend(nrow = 1)) +
-  facet_theme
-
-fig_s2 <- p_s2_coeff / p_s2_variance +
-  plot_layout(heights = c(1.8, 1)) +
-  plot_annotation(tag_levels = "a", tag_suffix = ")")
-ggsave(here("output", "figs", "figS2_spatial_field.png"), fig_s2, width = 11, height = 7.5, dpi = 600, bg = "white")
-
-# 04 Figure S3: correlation among all model predictors ----
+# 03 Figure S2: correlation among all model predictors ----
 # environment and connectivity together, so cross-block collinearity is visible
-s3_vars <- c(
+s2_vars <- c(
   Depth = "depth", Temperature = "temp", Salinity = "sal", Oxygen = "oxy", `Shear stress` = "shear_max",
   `In-degree` = "conn_in_degree", `In-strength` = "conn_in_strength", `In-closeness` = "conn_in_closeness",
   Eigenvector = "conn_eigen", Transitivity = "conn_transitivity"
 )
 
-cor_s3 <- dat_model |>
-  select(all_of(s3_vars)) |>
+cor_s2 <- dat_model |>
+  select(all_of(s2_vars)) |>
   cor(use = "complete.obs") |>
   as_tibble(rownames = "var1") |>
   pivot_longer(-var1, names_to = "var2", values_to = "r") |>
   mutate(
-    var1 = factor(var1, levels = names(s3_vars)),
-    var2 = factor(var2, levels = rev(names(s3_vars)))
+    var1 = factor(var1, levels = names(s2_vars)),
+    var2 = factor(var2, levels = rev(names(s2_vars)))
   )
 
-fig_s3 <- ggplot(cor_s3, aes(var1, var2, fill = r)) +
+fig_s2 <- ggplot(cor_s2, aes(var1, var2, fill = r)) +
   geom_tile(colour = "white") +
   geom_text(aes(label = sprintf("%.2f", r)), size = 2.8) +
   scale_fill_distiller(palette = "RdBu", limits = c(-1, 1), direction = 1, name = "Pearson r") +
@@ -233,182 +141,66 @@ fig_s3 <- ggplot(cor_s3, aes(var1, var2, fill = r)) +
   labs(x = NULL, y = NULL) +
   theme_light(base_size = 11) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.grid = element_blank())
-ggsave(here("output", "figs", "figS3_correlation.png"), fig_s3, width = 7, height = 6, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS2_correlation.png"), fig_s2, width = 7, height = 6, dpi = 600, bg = "white")
 
-# 05 Figure S4: connectivity coefficient with vs without the spatial field ----
-# the same Environment + Connectivity model with and without the field
-# (space_env_conn vs env_conn). If connectivity were standing in for broad
-# spatial structure, dropping the field would inflate its coefficient
-structure_labs <- c(space_env_conn = "With spatial field", env_conn = "Without spatial field")
-
-s4_models <- expand_grid(
-  component = 1:2,
-  structure = names(structure_labs),
-  metric = names(conn_labs)
-) |>
-  mutate(
-    folder = if_else(metric == "conn_in_strength", "main", "sensitivity"),
-    model = if_else(metric == "conn_in_strength", structure, paste0(structure, "_", str_remove(metric, "^conn_")))
-  ) |>
-  semi_join(filter(comparison, converged), by = "model")
-
-coefs_s4 <- s4_models |>
-  mutate(coef = pmap(list(folder, model, component, metric), \(folder, model, component, metric) {
-    tidy(read_fit(folder, model), effects = "fixed", model = component, conf.int = TRUE) |>
+# 04 Figure S3: connectivity coefficient of each metric ----
+# the full model (space + environment + connectivity) refitted with each of
+# the five connectivity metrics in turn, per component
+coefs_s3 <- expand_grid(metric = names(conn_labs), component = 1:2) |>
+  mutate(coef = map2(metric, component, \(metric, component) {
+    fit <- if (metric == "conn_in_strength") {
+      read_fit("main", "space_env_conn")
+    } else {
+      read_fit("sensitivity", paste0("space_env_conn_", str_remove(metric, "^conn_")))
+    }
+    tidy(fit, effects = "fixed", model = component, conf.int = TRUE) |>
       filter(term == paste0(metric, "_std"))
   })) |>
   unnest(coef) |>
   mutate(
     metric = factor(conn_labs[metric], levels = rev(unname(conn_labs))),
-    structure = factor(structure_labs[structure], levels = unname(structure_labs)),
     part = factor(unname(part_labs)[component], levels = unname(part_labs))
   )
 
-fig_s4 <- ggplot(coefs_s4, aes(estimate, metric, colour = structure)) +
+fig_s3 <- ggplot(coefs_s3, aes(estimate, metric)) +
   geom_stripped_rows(colour = NA) +
   geom_vline(xintercept = 0, linetype = 2, colour = "grey55") +
-  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), orientation = "y", width = 0, position = position_dodge(width = 0.55), linewidth = 0.9) +
-  geom_point(position = position_dodge(width = 0.55), size = 2.4) +
-  facet_wrap(~part, scales = "free_x") +
-  scale_colour_manual(values = c("#0072B2", "#D55E00"), name = NULL) +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), orientation = "y", width = 0, linewidth = 0.9, colour = "#E69F00") +
+  geom_point(size = 2.4, colour = "#E69F00") +
+  facet_wrap(~part) +
   labs(x = "Standardized connectivity coefficient", y = NULL) +
   theme_light(base_size = 11) +
-  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank(), legend.position = "bottom") +
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank()) +
   facet_theme
-ggsave(here("output", "figs", "figS4_space_confounding.png"), fig_s4, width = 9, height = 4.5, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS3_connectivity_coefficients.png"), fig_s3, width = 9, height = 4, dpi = 600, bg = "white")
 
-# how much each connectivity coefficient moves when the field is dropped
-coefs_s4 |>
-  select(part, metric, structure, estimate) |>
-  pivot_wider(names_from = structure, values_from = estimate) |>
-  rename(with_field = `With spatial field`, without_field = `Without spatial field`) |>
-  mutate(across(c(with_field, without_field), \(x) round(x, 3)), ratio = round(without_field / with_field, 2)) |>
-  arrange(part, metric) |>
-  print(n = Inf)
-
-# 06 Figure S5: variance partitioning across connectivity metrics ----
-# spatial field on, both components. Unexplained (distribution) variance is not
-# drawn, as in fig3 - it is the empty remainder of each bar. Segments >= 15%
-# are labelled in place; thinner ones are listed to the right of the bar
-part_cols <- c("Spatial field" = "#0072B2", "Environment" = "#009E73", "Connectivity" = "#E69F00", "Survey" = "#999999", "Year" = "#CC79A7")
-label_cols <- c("Spatial field" = "white", "Environment" = "white", "Connectivity" = "grey15", "Survey" = "grey15", "Year" = "grey15")
-
-s5 <- tibble(metric = names(conn_labs)) |>
-  mutate(variance = map(metric, \(m) {
-    if (m == "conn_in_strength") {
-      readRDS(here("data", "sdm", "main", "space_env_conn_variance.rds"))
-    } else {
-      readRDS(here("data", "sdm", "sensitivity", paste0("space_env_conn_", str_remove(m, "^conn_"), "_variance.rds")))
-    }
-  })) |>
-  unnest(variance) |>
-  filter(share > 0, component != "distribution") |>
-  mutate(
-    component = factor(recode(component, spatial = "Spatial field"), levels = names(part_cols)),
-    group = factor(conn_labs[metric], levels = rev(unname(conn_labs))),
-    part = factor(part_labs[part], levels = unname(part_labs))
-  )
-
-s5_labs <- s5 |>
-  arrange(part, group, component) |>
-  mutate(x_mid = cumsum(share) - share / 2, .by = c(part, group))
-s5_narrow <- s5_labs |>
-  filter(share < 0.15) |>
-  summarise(label = paste(component, scales::percent(share, accuracy = 0.1), collapse = "\n"), .by = c(part, group))
-
-fig_s5 <- ggplot(s5, aes(x = share, y = group, fill = component)) +
-  geom_col(width = 0.55, colour = "white", linewidth = 0.4, position = position_stack(reverse = TRUE)) +
-  geom_text(
-    data = filter(s5_labs, share >= 0.15),
-    aes(x = x_mid, y = group, label = scales::percent(share, accuracy = 0.1), colour = component),
-    inherit.aes = FALSE, size = 3, show.legend = FALSE
-  ) +
-  geom_text(
-    data = s5_narrow, aes(x = 1.02, y = group, label = label),
-    inherit.aes = FALSE, size = 2.6, colour = "grey25", hjust = 0, vjust = 0.5, lineheight = 0.85
-  ) +
-  scale_fill_manual(values = part_cols, name = NULL) +
-  scale_colour_manual(values = label_cols, guide = "none") +
-  scale_x_continuous(breaks = seq(0, 1, 0.25), labels = scales::percent, limits = c(0, 1.4), expand = c(0, 0)) +
-  scale_y_discrete(expand = expansion(add = c(0.6, 0.9))) +
-  facet_wrap(~part) +
-  labs(x = expression("Share of total variance (Nakagawa " * R^2 * ")"), y = NULL) +
-  theme_light(base_size = 11) +
-  theme(panel.grid = element_blank(), legend.position = "bottom") +
-  guides(fill = guide_legend(nrow = 1)) +
-  facet_theme
-ggsave(here("output", "figs", "figS5_variance_metrics.png"), fig_s5, width = 9.5, height = 4.4, dpi = 600, bg = "white")
-
-# 07 Figure S6: stability of the in-strength coefficient ----
-# rows: full model, full minus one environment term (x5), connectivity only;
-# columns: spatial field on / off. A dagger marks a 95% CI crossing zero.
-# Connectivity only is fitted in 06 with the spatial field only, so its
-# field-off cell is empty
-env_labs <- c(depth = "Depth", temp = "Temperature", sal = "Salinity", oxy = "Oxygen", shear_max = "Shear stress")
-
-s6_specs <- bind_rows(
-  tibble(label = "Full model", spatial = c("on", "off"), folder = "main", model = c("space_env_conn", "env_conn")),
-  map(names(env_labs), \(v) tibble(
-    label = paste("–", env_labs[[v]]), spatial = c("on", "off"), folder = "sensitivity",
-    model = paste0(c("space_env_conn_drop_", "env_conn_drop_"), v)
-  )) |> list_rbind(),
-  tibble(label = "Connectivity only (no environment)", spatial = "on", folder = "main", model = "space_conn")
-)
-
-coefs_s6 <- expand_grid(component = 1:2, s6_specs) |>
-  semi_join(filter(comparison, converged), by = "model") |>
-  mutate(coef = pmap(list(folder, model, component), \(folder, model, component) {
-    tidy(read_fit(folder, model), effects = "fixed", model = component, conf.int = TRUE) |>
-      filter(term == "conn_in_strength_std")
-  })) |>
-  unnest(coef) |>
-  mutate(
-    label = factor(label, levels = rev(unique(s6_specs$label))),
-    spatial_lab = factor(paste("Spatial field:", spatial), levels = c("Spatial field: on", "Spatial field: off")),
-    part = factor(unname(part_labs)[component], levels = unname(part_labs)),
-    cell_label = paste0(sprintf("%.2f", estimate), if_else(conf.low <= 0 & conf.high >= 0, "†", ""))
-  )
-
-fill_limit <- max(abs(coefs_s6$estimate))
-
-fig_s6 <- ggplot(coefs_s6, aes(spatial_lab, label, fill = estimate)) +
-  geom_tile(colour = "white", linewidth = 0.6) +
-  geom_text(aes(label = cell_label), size = 3.1) +
-  facet_wrap(~part) +
-  scale_fill_distiller(palette = "RdBu", limits = c(-fill_limit, fill_limit), name = "Estimate") +
-  labs(x = NULL, y = NULL, caption = "† 95% CI crosses zero") +
-  theme_light(base_size = 11) +
-  theme(panel.grid = element_blank(), plot.caption = element_text(colour = "grey30", hjust = 0)) +
-  facet_theme
-ggsave(here("output", "figs", "figS6_coeff_stability.png"), fig_s6, width = 9, height = 4.4, dpi = 600, bg = "white")
-
-# 08 Figure S7: connectivity vs environment and the spatial field ----
+# 05 Figure S4: connectivity vs environment and the spatial field ----
 # are the connectivity metrics collinear with the environment, or standing in
 # for residual spatial structure? The last two columns are the spatial random
 # fields of the Space + Environment model, one per component - not
 # environmental covariates, hence the separator. Computed at the survey stations (the model rows), so it
 # is weighted towards heavily sampled cells. Spearman: the metrics are skewed
-s7_conn <- c(conn_labs, conn_in_strength_flipped = "In-strength, flipped")
-s7_env <- c(
+s4_conn <- conn_labs
+s4_env <- c(
   depth = "Depth", temp = "Temperature", oxy = "Oxygen", sal = "Salinity", shear_max = "Shear stress",
   field_presence = "Spatial field (presence)", field_biomass = "Spatial field (biomass)"
 )
 
-pred_s7 <- predict(read_fit("main", "space_env"))
-dat_s7 <- dat_model
-dat_s7$field_presence <- pred_s7$est_rf1
-dat_s7$field_biomass <- pred_s7$est_rf2
+pred_s4 <- predict(read_fit("main", "space_env"))
+dat_s4 <- dat_model
+dat_s4$field_presence <- pred_s4$est_rf1
+dat_s4$field_biomass <- pred_s4$est_rf2
 
-cors_s7 <- cor(dat_s7[, names(s7_conn)], dat_s7[, names(s7_env)], method = "spearman", use = "pairwise.complete.obs") |>
+cors_s4 <- cor(dat_s4[, names(s4_conn)], dat_s4[, names(s4_env)], method = "spearman", use = "pairwise.complete.obs") |>
   as.data.frame() |>
   rownames_to_column("metric") |>
   pivot_longer(-metric, names_to = "covariate", values_to = "rho") |>
   mutate(
-    metric = factor(s7_conn[metric], levels = rev(unname(s7_conn))),
-    covariate = factor(s7_env[covariate], levels = unname(s7_env))
+    metric = factor(s4_conn[metric], levels = rev(unname(s4_conn))),
+    covariate = factor(s4_env[covariate], levels = unname(s4_env))
   )
 
-fig_s7 <- ggplot(cors_s7, aes(covariate, metric, fill = rho)) +
+fig_s4 <- ggplot(cors_s4, aes(covariate, metric, fill = rho)) +
   geom_tile(colour = "white", linewidth = 0.6) +
   geom_text(aes(label = sprintf("%.2f", rho)), size = 3.1) +
   geom_vline(xintercept = 5.5, colour = "grey30", linewidth = 0.5) +
@@ -422,10 +214,10 @@ fig_s7 <- ggplot(cors_s7, aes(covariate, metric, fill = rho)) +
     legend.position = "bottom",
     legend.key.height = unit(3, "mm"), legend.key.width = unit(14, "mm")
   )
-ggsave(here("output", "figs", "figS7_connectivity_environment.png"), fig_s7, width = 6.4, height = 5.6, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS4_connectivity_environment.png"), fig_s4, width = 6.4, height = 5.6, dpi = 600, bg = "white")
 
 
-# 09 Figure S8: barrier mesh ----
+# 06 Figure S5: barrier mesh ----
 # the mesh (03_build_mesh.R) as used in the fitted models: water triangles
 # carry the spatial field, land triangles are the barrier
 barrier_mesh <- read_fit("main", "space_env_conn")$spde
@@ -435,7 +227,7 @@ mesh_sf <- map(seq_len(nrow(triangles)), \(i) st_polygon(list(barrier_mesh$mesh$
   st_sf(geometry = _) |>
   mutate(barrier = seq_len(n()) %in% barrier_mesh$barrier_triangles)
 
-fig_s8 <- ggplot() +
+fig_s5 <- ggplot() +
   geom_sf(data = mesh_sf, aes(fill = barrier), colour = "grey45", linewidth = 0.1) +
   geom_sf(data = water, fill = NA, colour = "black", linewidth = 0.35) +
   geom_point(data = dat_model, aes(x_utm * 1000, y_utm * 1000, colour = "Survey station"), size = 0.12) +
@@ -449,4 +241,45 @@ fig_s8 <- ggplot() +
     legend.position = "bottom",
     plot.margin = margin(8, 8, 8, 8)
   )
-ggsave(here("output", "figs", "figS8_mesh.png"), fig_s8, width = 10, height = 8, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS5_mesh.png"), fig_s5, width = 10, height = 8, dpi = 600, bg = "white")
+
+# 07 Figure S6: survey stations by year ----
+# every station used in the models, one panel per year, coloured by survey
+survey_labs <- c(Stock = "Grab (2021-2025)", Stock2018 = "Suction dredge (2018)", KSKV = "KSKV dredge")
+stations_s6 <- dat_model |>
+  mutate(survey = factor(survey_labs[as.character(survey)], levels = survey_labs))
+
+fig_s6 <- ggplot() +
+  geom_sf(data = water, fill = NA, colour = "grey55", linewidth = 0.25) +
+  geom_point(data = stations_s6, aes(x_utm * 1000, y_utm * 1000, colour = survey), size = 0.5, alpha = 0.6) +
+  facet_wrap(~year, ncol = 4) +
+  scale_colour_manual(values = c("#1F4E79", "#E69F00", "#CC79A7"), name = NULL) +
+  coord_sf(crs = 32632, xlim = range(dat_model$x_utm * 1000) + c(-6000, 6000), ylim = range(dat_model$y_utm * 1000) + c(-6000, 6000), expand = FALSE) +
+  theme_void(base_size = 11) +
+  theme(
+    plot.background = element_rect(fill = "white", colour = NA),
+    strip.text = element_text(colour = "grey15", margin = margin(3, 0, 3, 0)),
+    legend.position = "bottom"
+  ) +
+  guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1)))
+ggsave(here("output", "figs", "supp", "figS6_survey_stations.png"), fig_s6, width = 11, height = 6.5, dpi = 600, bg = "white")
+
+# 08 Figure S7: cross-validation folds ----
+# the 2 x 2 km grid cells used as cross-validation blocks, coloured by the fold
+# they were assigned to, as saved by 08_cross_validation.R
+folds_s7 <- readRDS(here("data", "sdm", "cv", "cv_results.rds"))$cv[[1]]$data |>
+  mutate(
+    x = 450074 + floor((x_utm * 1000 - 450074) / 2000) * 2000 + 1000,
+    y = 6258093 + floor((y_utm * 1000 - 6258093) / 2000) * 2000 + 1000
+  ) |>
+  distinct(x, y, fold)
+
+fig_s7 <- ggplot() +
+  geom_tile(data = folds_s7, aes(x, y, fill = factor(fold)), width = 2000, height = 2000) +
+  geom_sf(data = water, fill = NA, colour = "grey40", linewidth = 0.25) +
+  scale_fill_brewer(palette = "Paired", name = "Fold") +
+  coord_sf(crs = 32632, xlim = range(folds_s7$x) + c(-6000, 6000), ylim = range(folds_s7$y) + c(-6000, 6000), expand = FALSE) +
+  theme_void(base_size = 11) +
+  theme(plot.background = element_rect(fill = "white", colour = NA), legend.position = "bottom") +
+  guides(fill = guide_legend(nrow = 1))
+ggsave(here("output", "figs", "supp", "figS7_cv_folds.png"), fig_s7, width = 9, height = 7, dpi = 600, bg = "white")

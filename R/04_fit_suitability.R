@@ -1,6 +1,6 @@
-# Fit a "suitability" surface for biomass and presence: intercept, survey,
-# year and spatial field only, no environmental covariates. Predict it onto the connectivity
-# grid; the predicted values become the weights used to collapse the raw MIKE
+# Fit a "suitability" surface for cockle presence: intercept, survey, year
+# and spatial field only, no environmental covariates. Predict it onto the
+# connectivity grid; the predicted presence probabilities become the weights used to collapse the raw MIKE
 # connectivity matrix into weighted connectivity metrics in
 # 05_weight_connectivity.R.
 #
@@ -41,15 +41,10 @@ land <- st_read(
 ) |>
   st_make_valid()
 
-# 03 Fit suitability models ----
+# 03 Fit suitability model ----
 # survey and year as factors: the surveys use different gear, so catchability
 # differs, and occurrence differs between years; predictions below are for
 # the Stock survey in the most recent year
-fit_biomass <- sdmTMB(
-  biomass ~ survey + year,
-  data = dat, mesh = barrier_mesh, spatial = "on", family = tweedie(link = "log")
-)
-
 fit_presence <- sdmTMB(
   present ~ survey + year,
   data = dat, mesh = barrier_mesh, spatial = "on", family = binomial(link = "logit")
@@ -75,7 +70,6 @@ grid_complete <- grid |>
     year = factor(last(levels(dat$year)), levels = levels(dat$year))
   )
 
-pred_biomass <- predict(fit_biomass, newdata = grid_complete, type = "response")
 pred_presence <- predict(fit_presence, newdata = grid_complete, type = "response")
 
 # every grid cell is kept (NA where there was no survey observation); only
@@ -83,24 +77,15 @@ pred_presence <- predict(fit_presence, newdata = grid_complete, type = "response
 # than another copy of the whole grid
 grid <- grid |>
   select(id, x, y) |>
-  left_join(select(pred_biomass, id, suit_biomass = est), by = "id") |>
   left_join(select(pred_presence, id, suit_presence = est), by = "id")
 
 # 05 Save ----
 dir.create(here("data", "sdm", "suitability"), showWarnings = FALSE, recursive = TRUE)
-saveRDS(fit_biomass, here("data", "sdm", "suitability", "biomass_space.rds"))
 saveRDS(fit_presence, here("data", "sdm", "suitability", "present_space.rds"))
 saveRDS(grid, here("data", "grid", "grid_suitability.rds"))
 
 # 06 Plot ----
-grid_sampled <- grid |> filter(!is.na(suit_biomass))
-
-ggplot() +
-  geom_sf(data = land, fill = "grey80", colour = NA) +
-  geom_tile(data = grid_sampled, aes(x, y, fill = suit_biomass), width = 2000, height = 2000) +
-  coord_sf(crs = 32632, xlim = range(grid$x), ylim = range(grid$y), expand = FALSE) +
-  scale_fill_viridis_c(na.value = NA, trans = "pseudo_log", name = "Suitability\n(biomass)") +
-  theme_light()
+grid_sampled <- grid |> filter(!is.na(suit_presence))
 
 ggplot() +
   geom_sf(data = land, fill = "grey80", colour = NA) +

@@ -1,6 +1,8 @@
-# Figure 1: (a) study area / survey biomass and (b) larval settlement footprints.
-# Panel a: biomass predicted by the full model (Stock survey) on the 2 x 2 km
-#   grid cells with survey stations, with a location inset top-left.
+# Figure 1: (a) study area and survey stations and (b) larval settlement
+# footprints.
+# Panel a: the survey data - cells covered by the grab survey and the dredge
+#   stations, with a location
+#   inset top-left.
 # Panel b: for four release cells spread over the basin, the full settlement
 #   probability field from the pooled flow matrix. Showing where larvae actually
 #   land makes the reach of dispersal visible directly, rather than asserting it
@@ -9,18 +11,11 @@
 library(tidyverse)
 library(here)
 library(sf)
-library(sdmTMB)
 library(rcartocolor)
 library(ggspatial)
 library(patchwork)
 
-biomass_lab <- expression(Predicted ~ biomass ~ (g / m^2))
-biomass_breaks <- c(1, 10, 100, 1000)
-# predictions below this (g/m2) are shown as 0
-biomass_zero <- 1
-# CARTO companion ramps (warm biomass, cool settlement), matched in lightness;
 # settlement starts from white so thin, low-probability spread fades out
-biomass_cols <- carto_pal(7, "BurgYl")
 settle_cols <- c("white", carto_pal(7, "TealGrn"))
 
 land_fill <- "#e6e6e6"
@@ -57,14 +52,30 @@ frame <- st_as_sfc(st_bbox(
 ))
 land_mask <- st_difference(frame, st_union(water))
 
-# 02 Panel A: predicted biomass ----
-# expected biomass (presence probability x biomass where present) from the
-# full delta-gamma model (Space + Environment + Connectivity), predicted at the
-# centre of every 2 km grid cell holding at least one survey station, for the
-# Stock survey in the most recent year (2025). Grid covariates are standardised with the model data's own
-# mean and SD, recovered from the raw and standardised columns of the fit
-fit <- readRDS(here("data", "sdm", "main", "space_env_conn.rds"))
+# 02 Panel A: survey stations ----
+# the grab stations are too dense to show as points (about 50 m apart in the
+# beds), so the grab survey is shown as the 2 x 2 km grid cells it covered;
+# the dredge stations are drawn as points on top
+dredge_labs <- c(KSKV = "KSKV dredge (2018-2023)", Stock2018 = "Suction dredge (2018)")
+dredge_cols <- c("#CC79A7", "#E69F00")
+grab_lab <- "Grab (2021-2025)"
 
+cell_centre <- function(x_utm, y_utm) {
+  tibble(
+    x = 450074 + floor((x_utm * 1000 - 450074) / 2000) * 2000 + 1000,
+    y = 6258093 + floor((y_utm * 1000 - 6258093) / 2000) * 2000 + 1000
+  )
+}
+grab_cells <- dat |>
+  filter(survey == "Stock") |>
+  with(cell_centre(x_utm, y_utm)) |>
+  distinct()
+dredge_stations <- dat |>
+  filter(survey != "Stock") |>
+  mutate(survey = factor(dredge_labs[as.character(survey)], levels = dredge_labs))
+
+# grid cells where cockles were found (mean survey biomass > 0): the pool the
+# release cells of panel b are chosen from
 cells <- dat |>
   mutate(
     col = floor((x_utm * 1000 - 450074) / 2000) + 1,
@@ -73,56 +84,22 @@ cells <- dat |>
   ) |>
   summarise(biomass = mean(biomass), .by = id)
 
-std_vars <- c("depth", "temp", "sal", "oxy", "shear_max", "conn_in_strength")
-newdata <- readRDS(here("data", "grid", "grid_env_conn.rds")) |>
-  filter(id %in% cells$id) |>
-  mutate(
-    conn_in_strength = conn_in_strength_presence,
-    x_utm = x / 1000, y_utm = y / 1000,
-    survey = factor("Stock", levels = levels(fit$data$survey)),
-    year = factor(last(levels(fit$data$year)), levels = levels(fit$data$year))
-  )
-for (v in std_vars) {
-  s <- sd(fit$data[[v]]) / sd(fit$data[[paste0(v, "_std")]])
-  m <- mean(fit$data[[v]]) - s * mean(fit$data[[paste0(v, "_std")]])
-  newdata[[paste0(v, "_std")]] <- (newdata[[v]] - m) / s
-}
-newdata <- filter(newdata, if_all(all_of(paste0(std_vars, "_std")), \(x) !is.na(x)))
-
-pred <- predict(fit, newdata = newdata, type = "response") |>
-  mutate(est = if_else(est < biomass_zero, 0, est))
-summary(pred$est)
-
 p_main <- ggplot() +
-  # zero cells get their own legend key through a dummy linetype mapping (the
-  # tile outline itself is not drawn, linewidth = 0)
-  geom_tile(data = filter(pred, est == 0), aes(x, y, linetype = "0"), fill = "grey85", linewidth = 0, width = 2000, height = 2000) +
-  geom_tile(data = filter(pred, est > 0), aes(x, y, fill = est), width = 2000, height = 2000) +
+  geom_sf(data = water, fill = "#f2f6f9", colour = NA) +
+  geom_tile(data = grab_cells, aes(x, y, fill = grab_lab), width = 2000, height = 2000, alpha = 0.45) +
   geom_sf(data = land_mask, fill = "white", colour = NA) +
   geom_sf(data = water, fill = NA, colour = "grey55", linewidth = 0.3) +
-  scale_fill_gradientn(
-    colours = biomass_cols, trans = "pseudo_log", name = biomass_lab,
-    breaks = biomass_breaks, labels = scales::comma(biomass_breaks),
-    limits = c(biomass_zero, NA) # bar starts at the zero cut-off, so its first label is 1
-  ) +
-  scale_linetype_manual(values = "solid", name = NULL) +
+  geom_point(data = dredge_stations, aes(x_utm * 1000, y_utm * 1000, colour = survey), size = 0.9, alpha = 0.8) +
+  scale_fill_manual(values = setNames("#1F4E79", grab_lab), name = NULL) +
+  scale_colour_manual(values = setNames(dredge_cols, dredge_labs), name = NULL) +
   annotation_scale(location = "bl", width_hint = 0.2, height = unit(0.15, "cm"), text_cex = 0.7, line_col = "grey40", text_col = "grey40") +
   annotation_north_arrow(location = "br", which_north = "true", height = unit(0.9, "cm"), width = unit(0.7, "cm"), style = north_arrow_minimal(line_col = "grey40", text_col = "grey40", fill = "grey40")) +
   coord_sf(xlim = xlim, ylim = ylim, crs = 32632, expand = FALSE) +
   theme_void(base_size = 11) +
   theme(plot.background = element_rect(fill = "white", colour = NA)) +
-  # the "0" key sits just left of the colour bar: same height as the bar, label
-  # underneath, so it reads as the bar's first step
   guides(
-    linetype = guide_legend(
-      order = 1, label.position = "bottom",
-      override.aes = list(fill = "grey85", linewidth = 0),
-      theme = theme(legend.key.height = unit(3.5, "mm"), legend.key.width = unit(6, "mm"))
-    ),
-    fill = guide_colourbar(
-      title.position = "top", title.hjust = 0.5, order = 2,
-      theme = theme(legend.key.height = unit(3.5, "mm"), legend.key.width = unit(55, "mm"))
-    )
+    fill = guide_legend(order = 1, override.aes = list(alpha = 0.45)),
+    colour = guide_legend(order = 2, nrow = 1, override.aes = list(size = 2.5, alpha = 1))
   )
 
 # location inset, top-left: where the basin sits in the North Sea transition
@@ -243,5 +220,5 @@ fig1 <- panel_a + panel_b +
     legend.text = element_text(size = 10, colour = "grey30")
   )
 
-dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "fig1_map.png"), fig1, width = 11, height = 7.6, dpi = 600, bg = "white")
+dir.create(here("output", "figs", "main"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "main", "fig1_map.png"), fig1, width = 11, height = 7.6, dpi = 600, bg = "white")

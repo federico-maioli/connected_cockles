@@ -1,6 +1,8 @@
-# Figure 2: the model predictors on the 2 km grid - the five environmental
-# covariates and presence-weighted in-strength (the connectivity metric used in
-# the models), so every input to Figure 3 is shown before the results. Same
+# Figure 2: the model predictors - the five environmental covariates at their
+# native raster resolution (DTU Aqua rasters, reprojected to UTM 32N at 100 m)
+# and presence-weighted in-strength on the 2 km connectivity grid (the
+# connectivity metric used in the models), so every input to Figure 3 is shown
+# before the results. Same
 # extent and coastline mask as Figure 1. Each environmental covariate has its
 # own muted ramp (dark = "more"); in-strength, the only non-environmental
 # predictor, uses the vivid multi-hue viridis palette.
@@ -9,6 +11,7 @@ library(tidyverse)
 library(here)
 library(sf)
 library(patchwork)
+library(terra)
 
 # 01 Data ----
 dat <- readRDS(here("data", "cockles", "derived", "cockles_env.rds")) |>
@@ -42,6 +45,27 @@ frame <- st_as_sfc(st_bbox(
 ))
 land_mask <- st_difference(frame, st_union(water))
 
+# the environmental rasters, as extracted in 02_clean_cockles.R, reprojected to
+# UTM 32N at 100 m with nearest neighbour (values stay raw; depth is 50 m and
+# shear stress 200 m natively) and cropped to the figure extent. Depth is
+# negative below sea level in the raster, flipped so larger means deeper
+env_files <- c(
+  depth = "depth.asc",
+  temp = "temp_bot_mean.asc",
+  sal = "salt_bot_mean.asc",
+  oxy = "do4mgl_bot_mean.asc",
+  shear_max = "tw_bot_mean_of_max.asc"
+)
+fig_extent <- ext(xlim[1], xlim[2], ylim[1], ylim[2])
+env_rasters <- imap(env_files, \(file, nm) {
+  r <- rast(here("data", "env", "Asc4dtuaqua", file)) |>
+    project("EPSG:32632", res = 100, method = "near") |>
+    crop(fig_extent)
+  if (nm == "depth") r <- -r
+  as.data.frame(r, xy = TRUE, na.rm = TRUE) |>
+    setNames(c("x", "y", "value"))
+})
+
 # 02 Panels ----
 titles <- list(
   depth = expression(Depth ~ (m)),
@@ -56,8 +80,17 @@ titles <- list(
 # connectivity metric stands apart from the environment at a glance
 scales <- list(
   depth = scale_fill_gradient(low = "#e6eaf0", high = "#34496a", na.value = NA, name = NULL),
-  temp = scale_fill_gradient(low = "#f4e6e2", high = "#7d3a31", na.value = NA, name = NULL),
-  sal = scale_fill_gradient(low = "#efecdf", high = "#6b6128", na.value = NA, name = NULL),
+  # temperature and salinity vary little across most of the fjord, so their
+  # ramps are capped at the 2nd and 98th percentiles (values beyond take the end
+  # colours)
+  temp = scale_fill_gradientn(
+    colours = c("#fff5f0", "#fb6a4a", "#67000d"), na.value = NA, name = NULL,
+    limits = quantile(env_rasters$temp$value, c(0.02, 0.98)), oob = scales::squish
+  ),
+  sal = scale_fill_gradientn(
+    colours = c("#f7f4e6", "#c2a83e", "#4a3f0f"), na.value = NA, name = NULL,
+    limits = quantile(env_rasters$sal$value, c(0.02, 0.98)), oob = scales::squish
+  ),
   oxy = scale_fill_gradient(low = "#efefef", high = "#303030", na.value = NA, name = NULL, transform = "pseudo_log"),
   shear_max = scale_fill_gradient(low = "#ede6f0", high = "#5a3f6e", na.value = NA, name = NULL),
   in_strength = scale_fill_viridis_c(
@@ -67,8 +100,13 @@ scales <- list(
 )
 
 panels <- map(names(titles), function(col) {
+  layer <- if (col == "in_strength") {
+    geom_tile(data = grid, aes(x, y, fill = in_strength), width = 2000, height = 2000)
+  } else {
+    geom_raster(data = env_rasters[[col]], aes(x, y, fill = value))
+  }
   ggplot() +
-    geom_tile(data = grid, aes(x, y, fill = .data[[col]]), width = 2000, height = 2000) +
+    layer +
     geom_sf(data = land_mask, fill = "white", colour = NA) +
     geom_sf(data = water, fill = NA, colour = "grey55", linewidth = 0.22) +
     scales[[col]] +
@@ -90,5 +128,5 @@ fig2 <- wrap_plots(panels, ncol = 3) +
   plot_annotation(tag_levels = "a", tag_suffix = ")") &
   theme(plot.tag = element_text(size = 12, face = "bold", colour = "grey20"))
 
-dir.create(here("output", "figs"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "fig2_predictors.png"), fig2, width = 12, height = 6.6, dpi = 600, bg = "white")
+dir.create(here("output", "figs", "main"), showWarnings = FALSE, recursive = TRUE)
+ggsave(here("output", "figs", "main", "fig2_predictors.png"), fig2, width = 12, height = 6.6, dpi = 600, bg = "white")

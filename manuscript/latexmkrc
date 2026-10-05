@@ -1,0 +1,8 @@
+# Overleaf / latexmk: build supp.tex first so main.tex can read its labels
+# (Fig. S1, Table S1, ...) through xr-hyper's \externaldocument{supp}
+add_cus_dep('tex', 'aux', 0, 'makeexternaldocument');
+sub makeexternaldocument {
+  if (!($root_filename eq $_[0])) {
+    system("xelatex -interaction=nonstopmode \"$_[0]\"");
+  }
+}

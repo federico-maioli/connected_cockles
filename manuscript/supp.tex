@@ -1,0 +1,127 @@
+%% ============================================================================
+%%  Supporting Information for main.tex
+%%  ---------------------------------------------------------------------------
+%%  Compile with XeLaTeX (same as main.tex). Tables and figures are written by
+%%  the R pipeline (R/tab1_model_selection.R, R/fig_supp.R,
+%%  R/figS8_predictions.R) and pulled in directly, so they never drift from the
+%%  fitted models. main.tex refers to the labels defined here through xr-hyper
+%%  (\externaldocument{supp}), so compile supp.tex before main.tex.
+%% ============================================================================
+
+\documentclass[11pt]{article}
+
+% ---- Encoding & page geometry ----------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1.25in]{geometry}
+
+% ---- Colour & links --------------------------------------------------------
+\usepackage[dvipsnames]{xcolor}
+\definecolor{niceblue}{HTML}{236899}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=niceblue,
+    citecolor=niceblue
+}
+
+% ---- Figures, floats, tables -----------------------------------------------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{placeins}     % \FloatBarrier
+\usepackage{booktabs}     % \toprule \midrule \bottomrule
+\usepackage{setspace}
+\graphicspath{{../output/figs/supp/}}
+
+% ---- Fonts (requires XeLaTeX/LuaLaTeX) -------------------------------------
+\usepackage{fontspec}
+\setmainfont{Libertinus Serif}
+
+% ---- Supplementary numbering: Table S1, Figure S1, ... ---------------------
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\theHtable}{S\arabic{table}}
+\renewcommand{\theHfigure}{S\arabic{figure}}
+
+\date{}
+
+% ============================================================================
+\begin{document}
+\onehalfspacing
+
+\begin{center}
+\textbf{\large Supporting Information}\\[0.5em]
+\textbf{Linking predicted seascape connectivity, environment and spatial structure to cockle distribution in a coastal fjord}\\[0.5em]
+Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle Johansson, Flemming Thorbjørn Hansen, Martin Lindegren
+\end{center}
+
+% ---- Tables ----------------------------------------------------------------
+\input{../output/tables/tabS1_connectivity_metrics.tex}
+\FloatBarrier
+\clearpage
+
+% ---- Figures ---------------------------------------------------------------
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS1_connectivity_metrics.png}
+    \caption{Presence-weighted connectivity metrics mapped on the 2~$\times$~2~km grid: (a) in-degree, (b) in-strength, (c) in-closeness, (d) eigenvector centrality and (e) transitivity.}
+    \label{fig:connectivity_maps}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figS2_correlation.png}
+    \caption{Pearson correlation, at the survey stations, among the five environmental predictors and the five connectivity metrics.}
+    \label{fig:correlation}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS3_connectivity_coefficients.png}
+    \caption{Standardized connectivity coefficient, with 95\% confidence interval, in the full Space + Environment + Connectivity model fitted with each of the five connectivity metrics in turn, for the presence and biomass-where-present components.}
+    \label{fig:connectivity_coefficients}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figS4_connectivity_environment.png}
+    \caption{Spearman correlation, at the survey stations, between each connectivity metric and the five environmental predictors and the spatial random fields of the Space + Environment model (presence and biomass-where-present components).}
+    \label{fig:connectivity_environment}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS5_mesh.png}
+    \caption{Variable-resolution barrier mesh used for the spatial random field. Triangles on land (grey) form the barrier, in which the correlation range is 10\% of that in water (blue); red points are survey stations.}
+    \label{fig:mesh}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS6_survey_stations.png}
+    \caption{Survey stations used in the models, by year and survey: the 2021--2025 grab surveys (including the high-resolution surveys of 2021--2022), the 2018 suction-dredge survey, and the 2018--2023 KSKV dredge surveys.}
+    \label{fig:survey_stations}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figS7_cv_folds.png}
+    \caption{Folds of the spatially blocked 10-fold cross-validation. Each 2~$\times$~2~km grid cell containing survey stations was a block, held out as a whole, and cells were randomly assigned to the ten folds.}
+    \label{fig:cv_folds}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS8_predictions.png}
+    \caption{(a) Cockle biomass density predicted by the selected Space + Environment model at the centre of each 2~$\times$~2~km grid cell containing at least one survey station, for the 2021--2025 grab survey in 2025; grey cells have a predicted biomass below 1~g~m$^{-2}$. (b) Uncertainty of the prediction: standard deviation, on the log scale, of 500 draws from the joint precision matrix of the fitted model.}
+    \label{fig:predictions}
+\end{figure}
+
+\end{document}
