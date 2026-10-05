@@ -1,0 +1,61 @@
+%% ============================================================================
+%%  Two alternative framings of the Results, to compare. Not \input anywhere;
+%%  copy the preferred one into main.tex. Numbers are from the current fits.
+%% ============================================================================
+
+
+%% ============================================================================
+%%  VERSION A - ecological framing: supply-limited vs habitat-limited
+%%  Story: larvae reach everywhere; habitat filters where cockles occur; local
+%%  (spatial) processes set how many; larval supply adds nothing and is, if
+%%  anything, highest where habitat is poor.
+%% ============================================================================
+
+\section{Results}
+
+\subsection{Cockles occur in a few dense beds, although larvae reach the whole fjord}
+
+Cockles were present at 1{,}527 of 8{,}137 stations (18.8\%), and biomass was concentrated in a few dense beds along the central channel and in the western and southern basins (Fig.~\ref{fig:predictions}). This patchiness was not matched by larval supply: simulated larvae dispersed widely from every release cell (Fig.~\ref{fig:study_area}b), and every survey station received some larval input (presence-weighted in-strength $>0$ at all stations). Larvae therefore reached areas both with and without established beds.
+
+\subsection{Habitat determines where cockles occur}
+
+Occurrence was strongly structured by the environment (Fig.~\ref{fig:coefficients}). The probability of presence peaked at intermediate depths, with a maximum at 7.1~m (95\% CI 5.9--8.0~m; depth$^2$: $\hat{\beta}=-0.30$, $-0.43$ to $-0.17$ per SD), increased with salinity ($0.82$, $0.43$ to $1.21$), and declined with temperature ($-0.51$, $-0.89$ to $-0.13$) and maximum shear stress ($-0.68$, $-0.99$ to $-0.36$). Adding the environment to a model containing only the spatial field improved both the fit ($\Delta$AIC $=-59$) and the prediction of held-out grid cells ($\Delta$ELPD $=86.2$, SE $16.4$; Table~\ref{tab:model-selection}).
+
+\subsection{Local processes determine how many}
+
+Where cockles were present, their biomass was largely unrelated to the environment: only shear stress ($-0.31$, $-0.61$ to $-0.01$) and the number of days of low oxygen ($-0.59$, $-1.14$ to $-0.05$) had CIs excluding zero (Fig.~\ref{fig:coefficients}). Instead, biomass and occurrence both showed strong residual spatial structure, decaying over a Mat\'ern range of 2.7~km (95\% CI 1.8--4.0~km) and 2.2~km (1.8--2.8~km), respectively, i.e.\ over about one 2~$\times$~2~km grid cell. Beds were thus patchier than the environmental gradients, at scales at or below the resolution of the connectivity model.
+
+\subsection{Larval supply does not explain cockle distribution}
+
+Larval connectivity added no explanatory or predictive power. Adding in-strength to the Space + Environment model did not improve the fit ($\Delta$AIC $=0.1$) and slightly reduced out-of-sample predictive performance ($\Delta$ELPD $=-20.7$, SE $12.6$); added to the spatial field alone, it reduced it further ($-36.0$, SE $10.9$; Table~\ref{tab:model-selection}). Its coefficient was negative in both components, with CIs including zero (presence: $-0.27$, $-0.55$ to $0.00$; biomass where present: $-0.04$, $-0.27$ to $0.20$), and predicted presence and biomass changed little across its observed range (Fig.~\ref{fig:coefficients}b). The negative tendency reflects where larvae accumulate: in-strength was highest in deeper ($\rho=0.50$), less saline ($\rho=-0.55$) and more often hypoxic ($\rho=0.37$) areas (Fig.~\ref{fig:connectivity_environment}), i.e.\ where habitat for cockles was poor. The same conclusions held for the four alternative connectivity metrics, none of which improved the fit ($\Delta$AIC $+1.7$ to $+3.6$ relative to in-strength; Table~\ref{tab:connectivity-metrics}) or had a coefficient with a CI excluding zero (Fig.~\ref{fig:connectivity_coefficients}).
+
+\input{../output/tables/tab1_model_selection.tex}
+
+
+
+%% ============================================================================
+%%  VERSION B - methodological framing: testing connectivity in SDMs
+%%  Story: a structured test - does connectivity add to an SDM with
+%%  environment and space? First the model comparison (the test), then the
+%%  effects that explain the outcome, then robustness.
+%% ============================================================================
+
+\section{Results}
+
+\subsection{Connectivity did not improve the species distribution models}
+
+Of the four model structures, Space + Environment was best supported, both in sample and out of sample (Table~\ref{tab:model-selection}). Adding presence-weighted in-strength to it did not improve the fit ($\Delta$AIC $=0.1$) and did not improve the prediction of held-out grid cells ($\Delta$ELPD $=-20.7$, SE $12.6$). In contrast, the environmental predictors improved both: removing them from the full model increased AIC by $\approx$62, and adding them to the spatial field increased ELPD by $86.2$ (SE $16.4$), and by $101.1$ (SE $17.7$) when in-strength was also included. A model with in-strength but no environment performed worst ($\Delta$AIC $=62.2$; $\Delta$ELPD $=-122.2$, SE $15.9$, relative to the best model).
+
+The result did not depend on how connectivity was summarised. Replacing in-strength by in-degree, in-closeness, eigenvector centrality or transitivity did not improve the fit of the full model ($\Delta$AIC $+1.7$ to $+3.6$; Table~\ref{tab:connectivity-metrics}), and none of the five metrics had a coefficient whose CI excluded zero in either component (Fig.~\ref{fig:connectivity_coefficients}).
+
+\input{../output/tables/tab1_model_selection.tex}
+
+\subsection{Environmental and connectivity effects}
+
+The environment acted mainly on occurrence (Fig.~\ref{fig:coefficients}). The probability of presence peaked at 7.1~m depth (95\% CI 5.9--8.0~m; depth$^2$: $\hat{\beta}=-0.30$, $-0.43$ to $-0.17$ per SD), increased with salinity ($0.82$, $0.43$ to $1.21$), and declined with temperature ($-0.51$, $-0.89$ to $-0.13$) and maximum shear stress ($-0.68$, $-0.99$ to $-0.36$). Biomass where present declined with shear stress ($-0.31$, $-0.61$ to $-0.01$) and the number of days of low oxygen ($-0.59$, $-1.14$ to $-0.05$), whereas the other environmental effects on biomass had CIs including zero.
+
+The in-strength coefficient was negative in both components, with CIs including zero (presence: $-0.27$, $-0.55$ to $0.00$; biomass where present: $-0.04$, $-0.27$ to $0.20$), and predicted presence and biomass changed little across its observed range (Fig.~\ref{fig:coefficients}b). In-strength was correlated with the environment: it was higher in deeper ($\rho=0.50$), less saline ($\rho=-0.55$), less exposed ($\rho=-0.52$ with shear stress) and more often hypoxic ($\rho=0.37$) areas (Fig.~\ref{fig:connectivity_environment}).
+
+\subsection{Spatial structure}
+
+Residual spatial autocorrelation decayed over a Mat\'ern range of 2.2~km (95\% CI 1.8--2.8~km) for presence and 2.7~km (1.8--4.0~km) for biomass where present, i.e.\ over about one grid cell of the connectivity model. Predicted biomass was concentrated in a few dense beds along the central channel and in the western and southern basins, with prediction uncertainty lowest in the densely surveyed beds and highest in the sparsely surveyed north-eastern basin and northern arm (Fig.~\ref{fig:predictions}).
