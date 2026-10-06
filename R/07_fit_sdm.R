@@ -26,7 +26,7 @@
 #
 # Saved: data/sdm/main/<model>.rds and data/sdm/sensitivity/<model>.rds (the
 # fitted sdmTMB objects), plus one model_comparison.rds per folder
-# (convergence and AIC).
+# (convergence, AIC of the delta model and of each part).
 
 library(tidyverse)
 library(here)
@@ -79,6 +79,20 @@ barrier_mesh <- sdmTMBextra::add_barrier_mesh(
   plot = FALSE
 )
 
+# data and mesh for fitting the two parts separately (see record() below):
+# presence is biomass > 0, as in the delta model (the `present` column, from
+# density, differs at two stations); biomass where present uses only the
+# stations with cockles, on the same mesh and barrier
+dat <- mutate(dat, present_biomass = as.integer(biomass > 0))
+dat_pos <- filter(dat, biomass > 0)
+barrier_mesh_pos <- sdmTMBextra::add_barrier_mesh(
+  make_mesh(dat_pos, c("x_utm", "y_utm"), mesh = mesh$mesh),
+  mesh$land_barrier,
+  range_fraction = 0.1,
+  proj_scaling = 1000,
+  plot = FALSE
+)
+
 # 05 Bookkeeping ----
 # not a model-fitting helper - just avoids retyping "check convergence, get
 # the AIC, save the fit" after every sdmTMB() call below. Every model's
@@ -86,10 +100,24 @@ barrier_mesh <- sdmTMBextra::add_barrier_mesh(
 dir.create(here("data", "sdm", "main"), showWarnings = FALSE, recursive = TRUE)
 dir.create(here("data", "sdm", "sensitivity"), showWarnings = FALSE, recursive = TRUE)
 
+# AIC is also reported for each part. The two parts of a delta-gamma model
+# share no parameters, so they are refitted separately with the same
+# predictors: presence (binomial, biomass > 0, all stations) and biomass where
+# present (gamma, stations with cockles). Their log-likelihoods sum exactly to
+# the delta model's, so the two AICs add up to its AIC
 record <- function(fit, model, folder) {
-  converged <- isTRUE(suppressMessages(sanity(fit, silent = TRUE))$all_ok)
+  rhs <- delete.response(terms(fit$formula[[1]]))
+  fit_presence <- sdmTMB(update(rhs, present_biomass ~ .), data = dat, mesh = barrier_mesh, spatial = "on", family = binomial())
+  fit_biomass <- sdmTMB(update(rhs, biomass ~ .), data = dat_pos, mesh = barrier_mesh_pos, spatial = "on", family = Gamma(link = "log"))
+  ok <- function(f) isTRUE(suppressMessages(sanity(f, silent = TRUE))$all_ok)
+  converged <- ok(fit) && ok(fit_presence) && ok(fit_biomass)
   saveRDS(fit, here("data", "sdm", folder, paste0(model, ".rds")))
-  tibble(model = model, converged = converged, aic = if (converged) AIC(fit) else NA_real_)
+  tibble(
+    model = model, converged = converged,
+    aic = if (converged) AIC(fit) else NA_real_,
+    aic_presence = if (converged) AIC(fit_presence) else NA_real_,
+    aic_biomass = if (converged) AIC(fit_biomass) else NA_real_
+  )
 }
 
 comparison_main <- tibble()

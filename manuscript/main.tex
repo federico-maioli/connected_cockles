@@ -316,9 +316,9 @@ Space  + Environment + Connectivity & $E + C + \omega$ \\
 \end{tabular}
 \end{table}
 
-The same set of predictors was included in both model components (occurrence and positive biomass). We first compared competing models using Akaike’s Information Criterion (AIC; \citet{akaike1974}), which evaluates relative in-sample model support while accounting for model complexity, with lower AIC values indicating greater support.
+The same set of predictors was included in both model components (occurrence and positive biomass). We first compared competing models using Akaike’s Information Criterion (AIC; \citet{akaike1974}), which evaluates relative in-sample model support while accounting for model complexity, with lower AIC values indicating greater support. Because the two components share no parameters, the delta model's likelihood is the sum of the likelihoods of a binomial model fitted to occurrence at all stations and a Gamma model fitted to biomass at the stations where cockles were present. We therefore also fitted the two components separately and compared models for occurrence and for positive biomass, as well as for both together (the total AIC, the sum of the two).
 
-To assess whether environmental conditions and connectivity improved predictions at locations not used for model fitting, we additionally compared the four model structures using spatially blocked 10-fold cross-validation \citep{roberts2017crossvalidation}. The spatial blocks were the 2~$\times$2km grid cells of the connectivity model, such that all stations within a cell were held out together, and cells were randomly assigned to ten folds, which were kept identical across models (Supplementary Fig. S3). Each model was fitted ten times, with one fold omitted in each iteration, and predictions were generated for the held-out observations. Prediction uncertainty was incorporated by sampling from the multivariate normal distribution defined by the maximum-likelihood estimates and their estimated covariance matrix. Models were compared using the expected log predictive density (ELPD) of the held-out observations \citep{vehtari2017practical}. For each predictor block (environment or connectivity), we calculated the difference in ELPD between models with and without that block, together with its standard error across observations. Positive ELPD differences indicate improved out-of-sample predictive performance.
+To assess whether environmental conditions and connectivity improved predictions at locations not used for model fitting, we additionally compared the four model structures using spatially blocked 10-fold cross-validation \citep{roberts2017crossvalidation}. The spatial blocks were the 2~$\times$2km grid cells of the connectivity model, such that all stations within a cell were held out together, and cells were randomly assigned to ten folds, which were kept identical across models (Supplementary Fig. S3). Each model was fitted ten times, with one fold omitted in each iteration, and predictions were generated for the held-out observations. Prediction uncertainty was incorporated by sampling 500 times from the multivariate normal distribution defined by the maximum-likelihood estimates and their estimated covariance matrix. Models were compared using the expected log predictive density (ELPD) of the held-out observations \citep{vehtari2017practical}. The two components were cross-validated separately, with the same folds, and the total ELPD of each station was the sum of its occurrence term and, for stations with cockles, its positive-biomass term. For each predictor block (environment or connectivity), we calculated the difference in ELPD between models with and without that block, together with its standard error across observations. Positive ELPD differences indicate improved out-of-sample predictive performance.
 
 As a sensitivity analysis, we refitted the full model (Space + Environment + Connectivity) separately with each of four alternative connectivity metrics, replacing in-strength with the corresponding metric while keeping the remaining model specification unchanged, and compared the resulting models using AIC.
 
@@ -328,24 +328,25 @@ We fit the spatial models with the R package \texttt{sdmTMB} \citep{andersonSdmT
 % ---- RESULTS ---------------------------------------------------------------
 \section{Results}
 
-\subsection{Model selection}
+\subsection{Cockles occur in a few dense beds, although larvae reach the whole fjord}
 
-Model comparison supported the environmental predictors but not connectivity (Table~\ref{tab:model-selection}). The Space + Environment model had the lowest AIC, and adding in-strength to it did not improve the fit ($\Delta$AIC $=0.1$). Removing the environmental predictors from the full model increased AIC by $\approx$62 (Space + Connectivity), and the Space-only model was $\approx$59 AIC units worse than Space + Environment.
+Cockles were present at 1{,}527 of 8{,}137 stations (18.8\%), and biomass was concentrated in a few dense beds along the central channel and in the western and southern basins (Supplementary Fig.~\ref{fig:predictions}). This patchiness was not matched by larval supply: simulated larvae dispersed widely from every release cell (Fig.~\ref{fig:study_area}b), and every survey station received some larval input (presence-weighted in-strength $>0$ at all stations). Larvae therefore reached areas both with and without established beds.
 
-Cross-validation gave the same ranking out of sample (Table~\ref{tab:model-selection}). Adding the environment improved prediction of held-out grid cells, both when added to the spatial field ($\Delta$ELPD $=86.2$, SE $16.4$) and when added to the spatial field and in-strength ($101.1$, SE $17.7$). Adding in-strength showed little evidence of improving predictive performance and, if anything, reduced it, both when added to the spatial field ($-36.0$, SE $10.9$) and when added to the spatial field and the environment ($-20.7$, SE $12.6$).
+\subsection{Habitat determines where cockles occur}
 
-Replacing in-strength with any of the four alternative metrics did not change these conclusions. None of them improved the fit of the full model ($\Delta$AIC relative to in-strength: $+1.7$ for eigenvector centrality, $+3.4$ for transitivity and $+3.6$ for in-degree and in-closeness; Supplementary~Table~S1, and none had a coefficient whose CI excluded zero in either component (Supplementary Fig.~S5).
+Occurrence was strongly structured by the environment (Table~\ref{tab:model-selection}; Fig.~\ref{fig:coefficients}). Adding the environmental predictors to the spatial field reduced the AIC of the occurrence model by $\approx$61 and improved the prediction of occurrence in held-out grid cells ($\Delta$ELPD $=79.8$, SE $10.9$). The probability of presence peaked at intermediate depths, with a maximum at 7.1~m (95\% CI 5.9--8.0~m; depth$^2$: $\hat{\beta}=-0.30$, $-0.43$ to $-0.17$ per SD), increased with salinity ($0.82$, $0.43$ to $1.21$), and declined with temperature ($-0.51$, $-0.89$ to $-0.13$) and maximum shear stress ($-0.68$, $-0.99$ to $-0.36$) (Fig.~\ref{fig:coefficients}b). Residual spatial autocorrelation in occurrence decayed over a Mat\'ern range of 2.2~km (95\% CI 1.8--2.8~km).
+
+\subsection{Larval supply adds little to occurrence, and is highest where habitat is poor}
+
+Adding in-strength to the occurrence model with environment and space improved its fit only marginally ($\Delta$AIC $=-1.8$), but improved the prediction of occurrence in held-out cells ($\Delta$ELPD $=20.8$, SE $5.0$), a gain about a quarter of that provided by the environment (Table~\ref{tab:model-selection}). The effect was opposite in sign to a larval-subsidy expectation: the probability of presence tended to decrease with in-strength ($-0.27$, 95\% CI $-0.55$ to $0.00$; Fig.~\ref{fig:coefficients}). This reflects where larvae accumulate: in-strength was highest in deeper ($\rho=0.50$), less saline ($\rho=-0.55$) and more often hypoxic ($\rho=0.37$) areas (Supplementary Fig.~\ref{fig:connectivity_environment}), i.e.\ where habitat for cockles was poor. In-strength was the best-supported of the five connectivity metrics for occurrence; the four alternatives fitted the occurrence data less well ($\Delta$AIC $+2.7$ to $+3.8$; Supplementary Table~\ref{tab:connectivity-metrics}), and none had a coefficient whose CI excluded zero (Supplementary Fig.~\ref{fig:connectivity_coefficients}).
+
+\subsection{Neither habitat nor larval supply explains biomass among beds}
+
+Where cockles were present, their biomass was not better explained or predicted by the environment or by connectivity than by the spatial field alone (Table~\ref{tab:model-selection}). The Space model had the lowest AIC for positive biomass; adding the environment did not improve it ($\Delta$AIC $=+1.6$; $\Delta$ELPD $=-3.2$, SE $6.2$), and adding in-strength reduced predictive performance, both to the spatial field ($-7.4$, SE $2.4$) and to the spatial field and environment ($-9.9$, SE $4.0$). Only maximum shear stress ($-0.31$, $-0.61$ to $-0.01$) and the number of days of low oxygen ($-0.59$, $-1.14$ to $-0.05$) had coefficients whose CIs excluded zero, and the in-strength coefficient was close to zero ($-0.04$, $-0.27$ to $0.20$; Fig.~\ref{fig:coefficients}). Instead, biomass showed strong residual spatial structure, decaying over a Mat\'ern range of 2.7~km (95\% CI 1.8--4.0~km), i.e.\ over about one grid cell of the connectivity model. None of the alternative connectivity metrics improved the fit for biomass either ($\Delta$AIC within 1 of each other; Supplementary Table~\ref{tab:connectivity-metrics}).
+
+Across both components together, Space + Environment and the full model fitted equally well in sample ($\Delta$AIC $=0.1$), and the full model predicted held-out cells slightly better ($\Delta$ELPD $=10.9$, SE $6.1$), a gain coming entirely from occurrence (Table~\ref{tab:model-selection}).
 
 \input{../output/tables/tab1_model_selection.tex}
-
-
-\subsection{Effects of habitat, connectivity and space}
-
-The environment mainly determined where cockles occurred rather than how much biomass they reached where present (Fig.~\ref{fig:coefficients}). In the full model, the probability of presence peaked at intermediate depths (depth$^2$: $\hat{\beta}=-0.30$, 95\% CI $-0.43$ to $-0.17$ per SD), with a maximum at 7.1~m (95\% CI 5.9--8.0~m) and declining towards both shallower and deeper water (Fig.~\ref{fig:coefficients}b); biomass where present showed no depth optimum. The probability of presence also increased with salinity ($0.82$, $0.43$ to $1.21$), and declined with temperature ($-0.51$, $-0.89$ to $-0.13$) and maximum shear stress ($-0.68$, $-0.99$ to $-0.36$); the CIs for linear depth and oxygen included zero. Biomass where present declined with maximum shear stress ($-0.31$, $-0.61$ to $-0.01$) and with the number of days of low oxygen ($-0.59$, $-1.14$ to $-0.05$); the other environmental CIs included zero. Beyond these environmental gradients, residual spatial autocorrelation decayed over a Mat\'ern range of 2.2~km (95\% CI 1.8--2.8~km) for presence and 2.7~km (1.8--4.0~km) for biomass where present, i.e.\ over about one grid cell.
-
-The survey effects were large, especially for biomass where present: relative to the 2021--2025 grab survey, biomass where present was lower by a factor of about 36 in the KSKV dredge survey ($-3.58$ on the log scale, $-3.88$ to $-3.28$) and about 78 in the 2018 suction-dredge survey ($-4.36$, $-5.01$ to $-3.71$), whereas cockles were more often recorded as present with the dredges (KSKV: $0.75$, $0.40$ to $1.10$; 2018: $2.45$, $1.74$ to $3.16$), consistent with the larger area sampled per station.
-
-Contrary to the expectation that greater larval supply should increase adult abundance, the in-strength coefficient was negative in both components, and its CI included zero (presence: $-0.27$, $-0.55$ to $0.00$; biomass where present: $-0.04$, $-0.27$ to $0.20$; Fig.~\ref{fig:coefficients}a); across the observed range of in-strength, predicted presence and biomass where present changed little relative to their uncertainty (Fig.~\ref{fig:coefficients}b).
 
 \begin{figure}[!htbp]
     \centering
@@ -353,16 +354,6 @@ Contrary to the expectation that greater larval supply should increase adult abu
     \caption{Full Space + Environment + Connectivity delta-gamma model, with presence-weighted in-strength as the connectivity metric. (a) Standardized coefficients with 95\% confidence intervals for the presence component (binomial, logit link) and the biomass-where-present component (gamma, log link); survey and year effects are not shown. (b) Partial effects: predicted probability of presence (purple, left axis) and log biomass where present (orange, right axis) along each predictor, with 95\% confidence intervals, all other predictors at their mean and the spatial field set to zero, for the grab survey in 2021.}
     \label{fig:coefficients}
 \end{figure}
-
-
-
-
-
-\newpage
-
-
-
-
 
 % ---- DISCUSSION ------------------------------------------------------------
 \section{Discussion}

@@ -1,16 +1,18 @@
 \begin{table}[ht]
 \centering
-\caption{AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, ordered by $\Delta$AIC (the best model is shown in bold). All metrics are presence-weighted; all models include survey, year, the environmental predictors and a spatial random field.}
+\caption{$\Delta$AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, for presence, biomass where present and in total (the best model in each column is shown in bold). All metrics are presence-weighted; all models include survey, year, the environmental predictors and a spatial random field.}
 \label{tab:connectivity-metrics}
-\begin{tabular}{lrr}
+\begin{tabular}{lrrr}
 \toprule
-Connectivity metric & AIC & $\Delta$AIC \\
+ & \multicolumn{3}{c}{$\Delta$AIC} \\
+\cmidrule(lr){2-4}
+Connectivity metric & Presence & Biomass & Total \\
 \midrule
-In-strength & \textbf{29634.6} & \textbf{0.0} \\
-Eigenvector centrality & 29636.3 & 1.7 \\
-Transitivity & 29638.0 & 3.4 \\
-In-degree & 29638.2 & 3.6 \\
-In-closeness & 29638.2 & 3.6 \\
+In-strength & \textbf{0.0} & 1.0 & \textbf{0.0} \\
+Eigenvector centrality & 2.7 & \textbf{0.0} & 1.7 \\
+Transitivity & 3.8 & 0.6 & 3.4 \\
+In-degree & 3.8 & 0.7 & 3.6 \\
+In-closeness & 3.7 & 0.9 & 3.6 \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -267,7 +267,7 @@ ggsave(here("output", "figs", "supp", "figS6_survey_stations.png"), fig_s6, widt
 # 08 Figure S7: cross-validation folds ----
 # the 2 x 2 km grid cells used as cross-validation blocks, coloured by the fold
 # they were assigned to, as saved by 08_cross_validation.R
-folds_s7 <- readRDS(here("data", "sdm", "cv", "cv_results.rds"))$cv[[1]]$data |>
+folds_s7 <- readRDS(here("data", "sdm", "cv", "cv_results.rds"))$cv_presence[[1]]$data |>
   mutate(
     x = 450074 + floor((x_utm * 1000 - 450074) / 2000) * 2000 + 1000,
     y = 6258093 + floor((y_utm * 1000 - 6258093) / 2000) * 2000 + 1000

@@ -1,10 +1,13 @@
 # Model-selection tables (LaTeX) for the paper.
 #
 # Table 1: the four main models (space, + environment, + in-strength, +
-# both), all delta-gamma with survey, year and a spatial field, ordered by
-# AIC, with the out-of-sample ELPD difference to the best model from the
-# spatially blocked cross-validation.
-# Table S1: the full model with each of the five connectivity metrics.
+# both), all with survey, year and a spatial field. For each part of the
+# delta-gamma model (presence; biomass where present) and in total: the AIC
+# difference to the best model and, from the spatially blocked
+# cross-validation, the difference in expected log predictive density (ELPD)
+# to the best model with its standard error.
+# Table S1: the full model with each of the five connectivity metrics, AIC
+# difference per part and in total.
 # Written to output/tables for \input into Overleaf.
 #
 # Reads data/sdm/main/model_comparison.rds and
@@ -28,43 +31,57 @@ metric_labels <- c(
   space_env_conn_transitivity = "Transitivity"
 )
 
-# AIC to one decimal place, the best model (delta = 0) in bold; a model that
-# did not converge is shown as a dash
-fmt <- function(x, best = FALSE) {
+# one decimal place, the best value (0) in bold; a model that did not converge
+# is shown as a dash
+fmt <- function(x) {
   s <- if_else(is.na(x), "---", formatC(x, format = "f", digits = 1))
-  if_else(rep_len(best, length(s)), paste0("\\textbf{", s, "}"), s)
+  if_else(!is.na(x) & x == 0, paste0("\\textbf{", s, "}"), s)
+}
+fmt_elpd <- function(diff, se) if_else(diff == 0, "\\textbf{0.0}", paste0(fmt(diff), " (", formatC(se, format = "f", digits = 1), ")"))
+
+delta_aic <- function(comp) {
+  mutate(
+    comp,
+    d_presence = aic_presence - min(aic_presence, na.rm = TRUE),
+    d_biomass = aic_biomass - min(aic_biomass, na.rm = TRUE),
+    d_total = aic - min(aic, na.rm = TRUE)
+  )
 }
 
 dir.create(here("output", "tables"), showWarnings = FALSE, recursive = TRUE)
 
 # 01 Table 1: main models ----
-comp <- readRDS(here("data", "sdm", "main", "model_comparison.rds"))
-elpd <- readRDS(here("data", "sdm", "cv", "elpd_compare.rds"))
+elpd <- readRDS(here("data", "sdm", "cv", "elpd_compare.rds")) |>
+  select(model, part, elpd_diff, se_diff) |>
+  pivot_wider(names_from = part, values_from = c(elpd_diff, se_diff))
 
-tab1 <- comp |>
-  left_join(select(elpd, model, elpd_diff, se_diff), by = "model") |>
-  mutate(
-    label = structure_labels[model],
-    delta_aic = aic - min(aic, na.rm = TRUE),
-    best = !is.na(delta_aic) & delta_aic == 0
-  ) |>
-  arrange(delta_aic)
+tab1 <- readRDS(here("data", "sdm", "main", "model_comparison.rds")) |>
+  delta_aic() |>
+  left_join(elpd, by = "model") |>
+  mutate(label = structure_labels[model]) |>
+  arrange(d_total)
 
 rows1 <- tab1 |>
   transmute(line = paste0(
-    label, " & ", fmt(aic, best), " & ", fmt(delta_aic, best), " & ",
-    fmt(elpd_diff, elpd_diff == 0), " (", fmt(se_diff), ") \\\\"
+    label, " & ",
+    fmt(d_presence), " & ", fmt(d_biomass), " & ", fmt(d_total), " & ",
+    fmt_elpd(elpd_diff_presence, se_diff_presence), " & ",
+    fmt_elpd(elpd_diff_biomass, se_diff_biomass), " & ",
+    fmt_elpd(elpd_diff_total, se_diff_total), " \\\\"
   )) |>
   pull(line)
 
 writeLines(c(
   "\\begin{table}[ht]",
   "\\centering",
-  "\\caption{Model selection for cockle biomass (delta-gamma hurdle models), ordered by $\\Delta$AIC (lower is better; the best model is shown in bold). $\\Delta$ELPD is the difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (higher is better), with its standard error in parentheses. All models include survey (gear) and year as factors and a spatial random field. Connectivity is presence-weighted in-strength; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress. A dash marks a model that did not converge.}",
+  "\\small",
+  "\\caption{Model selection for cockle presence, biomass where present and both together (the delta-gamma model). $\\Delta$AIC is the difference in AIC to the best model (lower AIC is better). $\\Delta$ELPD is the difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (higher ELPD is better), with its standard error in parentheses. The best model in each column is shown in bold. The total AIC and ELPD are the sums of the two parts. All models include survey (gear) and year as factors and a spatial random field. Connectivity is presence-weighted in-strength; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress. A dash marks a model that did not converge.}",
   "\\label{tab:model-selection}",
-  "\\begin{tabular}{lrrr}",
+  "\\begin{tabular}{lrrrrrr}",
   "\\toprule",
-  "Model & AIC & $\\Delta$AIC & $\\Delta$ELPD (SE) \\\\",
+  " & \\multicolumn{3}{c}{$\\Delta$AIC} & \\multicolumn{3}{c}{$\\Delta$ELPD (SE)} \\\\",
+  "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}",
+  "Model & Presence & Biomass & Total & Presence & Biomass & Total \\\\",
   "\\midrule",
   rows1,
   "\\bottomrule",
@@ -74,28 +91,27 @@ writeLines(c(
 
 # 02 Table S1: full model with each connectivity metric ----
 tab_s1 <- bind_rows(
-  filter(comp, model == "space_env_conn"),
+  filter(readRDS(here("data", "sdm", "main", "model_comparison.rds")), model == "space_env_conn"),
   readRDS(here("data", "sdm", "sensitivity", "model_comparison.rds"))
 ) |>
-  mutate(
-    label = metric_labels[model],
-    delta_aic = aic - min(aic, na.rm = TRUE),
-    best = !is.na(delta_aic) & delta_aic == 0
-  ) |>
-  arrange(delta_aic)
+  delta_aic() |>
+  mutate(label = metric_labels[model]) |>
+  arrange(d_total)
 
 rows_s1 <- tab_s1 |>
-  transmute(line = paste0(label, " & ", fmt(aic, best), " & ", fmt(delta_aic, best), " \\\\")) |>
+  transmute(line = paste0(label, " & ", fmt(d_presence), " & ", fmt(d_biomass), " & ", fmt(d_total), " \\\\")) |>
   pull(line)
 
 writeLines(c(
   "\\begin{table}[ht]",
   "\\centering",
-  "\\caption{AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, ordered by $\\Delta$AIC (the best model is shown in bold). All metrics are presence-weighted; all models include survey, year, the environmental predictors and a spatial random field.}",
+  "\\caption{$\\Delta$AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, for presence, biomass where present and in total (the best model in each column is shown in bold). All metrics are presence-weighted; all models include survey, year, the environmental predictors and a spatial random field.}",
   "\\label{tab:connectivity-metrics}",
-  "\\begin{tabular}{lrr}",
+  "\\begin{tabular}{lrrr}",
   "\\toprule",
-  "Connectivity metric & AIC & $\\Delta$AIC \\\\",
+  " & \\multicolumn{3}{c}{$\\Delta$AIC} \\\\",
+  "\\cmidrule(lr){2-4}",
+  "Connectivity metric & Presence & Biomass & Total \\\\",
   "\\midrule",
   rows_s1,
   "\\bottomrule",
