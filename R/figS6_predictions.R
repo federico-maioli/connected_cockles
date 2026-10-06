@@ -1,4 +1,4 @@
-# Figure S8: cockle biomass predicted by the selected model (Space +
+# Figure S6: cockle biomass predicted by the selected model (Space +
 # Environment), on the 2 x 2 km grid cells holding at least one survey
 # station: (a) expected biomass = presence probability x biomass where
 # present, for the grab survey (Stock) in the most recent year (2025),
@@ -136,4 +136,4 @@ fig_s8 <- p_est + p_sd +
   theme(plot.tag = element_text(size = 12, face = "bold", colour = "grey20"))
 
 dir.create(here("output", "figs", "supp"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "supp", "figS8_predictions.png"), fig_s8, width = 13, height = 6.5, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS6_predictions.png"), fig_s8, width = 13, height = 6.5, dpi = 600, bg = "white")

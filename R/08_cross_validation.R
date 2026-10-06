@@ -12,7 +12,8 @@
 #
 # Blocks are the 2 x 2 km connectivity grid cells: all stations in a cell are
 # held out together, and cells are randomly assigned to 10 folds, the same
-# folds for every model and both parts. Held-out predictions use
+# folds for every model. Presence uses all cells; biomass where present uses
+# its own folds, drawn over the cells holding stations with cockles. Held-out predictions use
 # predictive = "mle-mvn", which integrates over parameter uncertainty by
 # sampling from the multivariate normal of the MLE (sdmTMB >= 1.1.0.9024,
 # development version). Models are compared on the expected log predictive
@@ -53,10 +54,22 @@ dat$fold <- unname(cell_fold[as.character(cell)])
 count(dat, fold) |>
   print()
 
-# biomass where present: the stations with cockles, keeping their folds, on
-# the same mesh and barrier
+# biomass where present: the stations with cockles, on the same mesh and
+# barrier, with their own folds - the 2 x 2 km cells holding at least one
+# station with cockles, randomly assigned to the 10 folds, so every fold holds
+# out a similar number of occupied cells (the presence folds, drawn over all
+# cells, would leave some biomass folds with very few occupied cells)
 dat$row <- seq_len(nrow(dat))
+dat$cell <- cell
 dat_pos <- filter(dat, biomass > 0)
+set.seed(1)
+cells_pos <- unique(dat_pos$cell)
+cell_fold_pos <- setNames(sample(rep_len(1:k_folds, length(cells_pos))), cells_pos)
+dat_pos$fold <- unname(cell_fold_pos[as.character(dat_pos$cell)])
+dat_pos |>
+  summarise(stations = n(), cells = n_distinct(cell), .by = fold) |>
+  arrange(fold) |>
+  print()
 mesh_pos <- sdmTMBextra::add_barrier_mesh(
   make_mesh(dat_pos, c("x_utm", "y_utm"), mesh = mesh$mesh),
   readRDS(here("data", "mesh", "mesh.rds"))$land_barrier,
@@ -76,7 +89,7 @@ models <- tribble(
 )
 
 # the mle-mvn draws are random, so each cross-validation is seeded
-set.seed(42)
+set.seed(1)
 cv_results <- models |>
   mutate(
     cv_presence = map(rhs, \(rhs) {

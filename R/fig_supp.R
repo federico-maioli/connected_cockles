@@ -1,11 +1,13 @@
-# All supplementary figures, one section each:
-#   S1   connectivity metrics on the 2 km grid
-#   S2   correlation among all model predictors
-#   S3   connectivity coefficient of each metric in the full model
-#   S4   connectivity vs environment and the residual spatial field
-#   S5   the barrier mesh
-#   S6   survey stations by year and survey
-#   S7   cross-validation folds (2 km grid cells)
+# All supplementary figures except S6 (predictions, figS6_predictions.R), one
+# section each, numbered in the order they are cited in the manuscript:
+#   S1   survey stations by year and survey
+#   S2   the barrier mesh
+#   S3   cross-validation folds (2 km grid cells)
+#   S4   model residuals (not yet made)
+#   S5   connectivity coefficient of each metric in the full model
+#   S7   connectivity vs environment and the residual spatial field
+#   S8   connectivity metrics on the 2 km grid
+#   S9   correlation among all model predictors
 # (The covariate maps are in the main text, fig2_predictors.R.)
 #
 # Connectivity metrics are the presence-weighted ones used in 07_fit_sdm.R;
@@ -113,7 +115,7 @@ metric_panels <- map(names(metric_titles), function(col) {
 })
 
 fig_s1 <- wrap_plots(metric_panels, ncol = 3) + plot_annotation(tag_levels = "a", tag_suffix = ")")
-ggsave(here("output", "figs", "supp", "figS1_connectivity_metrics.png"), fig_s1, width = 13, height = 5.6, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS8_connectivity_metrics.png"), fig_s1, width = 13, height = 5.6, dpi = 600, bg = "white")
 
 # 03 Figure S2: correlation among all model predictors ----
 # environment and connectivity together, so cross-block collinearity is visible
@@ -141,7 +143,7 @@ fig_s2 <- ggplot(cor_s2, aes(var1, var2, fill = r)) +
   labs(x = NULL, y = NULL) +
   theme_light(base_size = 11) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.grid = element_blank())
-ggsave(here("output", "figs", "supp", "figS2_correlation.png"), fig_s2, width = 7, height = 6, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS9_correlation.png"), fig_s2, width = 7, height = 6, dpi = 600, bg = "white")
 
 # 04 Figure S3: connectivity coefficient of each metric ----
 # the full model (space + environment + connectivity) refitted with each of
@@ -172,7 +174,7 @@ fig_s3 <- ggplot(coefs_s3, aes(estimate, metric)) +
   theme_light(base_size = 11) +
   theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank()) +
   facet_theme
-ggsave(here("output", "figs", "supp", "figS3_connectivity_coefficients.png"), fig_s3, width = 9, height = 4, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS5_connectivity_coefficients.png"), fig_s3, width = 9, height = 4, dpi = 600, bg = "white")
 
 # 05 Figure S4: connectivity vs environment and the spatial field ----
 # are the connectivity metrics collinear with the environment, or standing in
@@ -214,7 +216,7 @@ fig_s4 <- ggplot(cors_s4, aes(covariate, metric, fill = rho)) +
     legend.position = "bottom",
     legend.key.height = unit(3, "mm"), legend.key.width = unit(14, "mm")
   )
-ggsave(here("output", "figs", "supp", "figS4_connectivity_environment.png"), fig_s4, width = 6.4, height = 5.6, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS7_connectivity_environment.png"), fig_s4, width = 6.4, height = 5.6, dpi = 600, bg = "white")
 
 
 # 06 Figure S5: barrier mesh ----
@@ -241,7 +243,7 @@ fig_s5 <- ggplot() +
     legend.position = "bottom",
     plot.margin = margin(8, 8, 8, 8)
   )
-ggsave(here("output", "figs", "supp", "figS5_mesh.png"), fig_s5, width = 10, height = 8, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS2_mesh.png"), fig_s5, width = 10, height = 8, dpi = 600, bg = "white")
 
 # 07 Figure S6: survey stations by year ----
 # every station used in the models, one panel per year, coloured by survey
@@ -262,7 +264,7 @@ fig_s6 <- ggplot() +
     legend.position = "bottom"
   ) +
   guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1)))
-ggsave(here("output", "figs", "supp", "figS6_survey_stations.png"), fig_s6, width = 11, height = 6.5, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS1_survey_stations.png"), fig_s6, width = 11, height = 6.5, dpi = 600, bg = "white")
 
 # 08 Figure S7: cross-validation folds ----
 # the 2 x 2 km grid cells used as cross-validation blocks, coloured by the fold
@@ -282,4 +284,4 @@ fig_s7 <- ggplot() +
   theme_void(base_size = 11) +
   theme(plot.background = element_rect(fill = "white", colour = NA), legend.position = "bottom") +
   guides(fill = guide_legend(nrow = 1))
-ggsave(here("output", "figs", "supp", "figS7_cv_folds.png"), fig_s7, width = 9, height = 7, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS3_cv_folds.png"), fig_s7, width = 9, height = 7, dpi = 600, bg = "white")
