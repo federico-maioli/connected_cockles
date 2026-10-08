@@ -1,11 +1,11 @@
-# Figure S6: cockle biomass predicted by the selected model (Space +
-# Environment), on the 2 x 2 km grid cells holding at least one survey
+# Figure S7: cockle biomass predicted by the full model (Space + Environment
+# + Connectivity, presence-weighted in-strength), on the 2 x 2 km grid cells holding at least one survey
 # station: (a) expected biomass = presence probability x biomass where
 # present, for the grab survey (Stock) in the most recent year (2025),
 # predictions below 1 g/m2 shown as 0; (b) its uncertainty, the SD of 500
 # draws from the joint precision matrix, on the log scale.
 #
-# Reads data/sdm/main/space_env.rds (07_fit_sdm.R) and
+# Reads data/sdm/main/space_env_conn.rds (07_fit_sdm.R) and
 # data/grid/grid_env_conn.rds (06_match_connectivity.R).
 
 library(tidyverse)
@@ -13,7 +13,6 @@ library(here)
 library(sf)
 library(sdmTMB)
 library(rcartocolor)
-library(ggspatial)
 library(patchwork)
 
 biomass_lab <- expression(Predicted ~ biomass ~ (g / m^2))
@@ -23,7 +22,7 @@ biomass_zero <- 1
 biomass_cols <- carto_pal(7, "BurgYl")
 
 # 01 Data ----
-fit <- readRDS(here("data", "sdm", "main", "space_env.rds"))
+fit <- readRDS(here("data", "sdm", "main", "space_env_conn.rds"))
 water <- st_read(here("data", "boundaries", "limfjorden", "Limfjorden.shp"), quiet = TRUE) |>
   st_make_valid() |>
   st_transform(32632)
@@ -48,10 +47,11 @@ sampled_ids <- fit$data |>
   distinct(id) |>
   pull(id)
 
-std_vars <- c("depth", "temp", "sal", "oxy", "shear_max")
+std_vars <- c("depth", "temp", "sal", "oxy", "shear_max", "conn_in_strength")
 newdata <- readRDS(here("data", "grid", "grid_env_conn.rds")) |>
   filter(id %in% sampled_ids) |>
   mutate(
+    conn_in_strength = conn_in_strength_presence,
     x_utm = x / 1000, y_utm = y / 1000,
     survey = factor("Stock", levels = levels(fit$data$survey)),
     year = factor(last(levels(fit$data$year)), levels = levels(fit$data$year))
@@ -104,7 +104,6 @@ p_est <- ggplot() +
     limits = c(biomass_zero, NA) # bar starts at the zero cut-off, so its first label is 1
   ) +
   scale_linetype_manual(values = "solid", name = NULL) +
-  annotation_scale(location = "bl", width_hint = 0.2, height = unit(0.15, "cm"), text_cex = 0.7, line_col = "grey40", text_col = "grey40") +
   # the "0" key sits just left of the colour bar: same height as the bar, label
   # underneath, so it reads as the bar's first step
   guides(
@@ -125,7 +124,6 @@ p_sd <- ggplot() +
   scale_fill_gradientn(
     colours = carto_pal(7, "Purp"), name = "SD (log scale)"
   ) +
-  annotation_north_arrow(location = "br", which_north = "true", height = unit(0.9, "cm"), width = unit(0.7, "cm"), style = north_arrow_minimal(line_col = "grey40", text_col = "grey40", fill = "grey40")) +
   guides(fill = guide_colourbar(
     title.position = "top", title.hjust = 0.5,
     theme = theme(legend.key.height = unit(3.5, "mm"), legend.key.width = unit(45, "mm"))
@@ -136,4 +134,4 @@ fig_s8 <- p_est + p_sd +
   theme(plot.tag = element_text(size = 12, face = "bold", colour = "grey20"))
 
 dir.create(here("output", "figs", "supp"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "supp", "figS6_predictions.png"), fig_s8, width = 13, height = 6.5, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS7_predictions.png"), fig_s8, width = 13, height = 6.5, dpi = 600, bg = "white")

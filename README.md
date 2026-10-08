@@ -42,9 +42,9 @@ manuscript/    main.tex, supp.tex (Supporting Information), bibliography, and st
 |--------|--------|
 | `fig1_map.R` | `figs/main/fig1_map.png` - survey stations and settlement footprints |
 | `fig2_predictors.R` | `figs/main/fig2_predictors.png` - environmental predictors and in-strength |
-| `fig3_coeff.R` | `figs/main/fig3_coeff.png` - coefficients and cross-validation |
-| `fig_supp.R` | `figs/supp/figS1..figS9` (all but S4 and S6) |
-| `figS6_predictions.R` | `figs/supp/figS6_predictions.png` - biomass predicted by the selected model (Space + Environment) and its uncertainty |
+| `fig3_coeff.R` | `figs/main/fig3_coeff.png` - coefficients and partial effects |
+| `fig_supp.R` | `figs/supp/figS1..figS8` (all but S7), numbered in order of citation in main.tex |
+| `figS7_predictions.R` | `figs/supp/figS7_predictions.png` - biomass predicted by the full model (Space + Environment + Connectivity) and its uncertainty |
 | `tab1_model_selection.R` | `tables/tab1_model_selection.tex`, `tables/tabS1_connectivity_metrics.tex` |
 
 ## Manuscript
