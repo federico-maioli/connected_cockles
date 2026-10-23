@@ -128,7 +128,7 @@
 \textbf{Research Article}   % e.g. Research Article
 
 \noindent
-\textbf{Linking predicted seascape connectivity, environment and spatial structure to cockle distribution in a coastal fjord}
+\textbf{Linking predicted seascape connectivity, environment and spatial structure to cockle distribution in a coastal ecosystem}
 
 \noindent
 \textbf{Authors}: Federico Maioli$^{1,\dagger,*}$, Ane Pastor Rollan$^{2,\dagger}$, Pedro S. Freitas$^{2}$, Camille Saurel$^{2}$, Isabelle Johansson$^{2}$, Martin Lindegren$^{1}$, Flemming Thorbjørn Hansen$^{3}$
@@ -205,7 +205,7 @@ Here we combine survey data for \textit{Cerastoderma} spp. in the Limfjorden (8{
 
 \subsection{Study system}
 
-The Limfjorden is a relatively large, shallow, semi-enclosed estuarine system crossing the Jutland Peninsula in northern Denmark, connecting the North Sea to the west with the Kattegat to the east (Fig.~\ref{fig:study_area}). It comprises a series of shallow basins linked by narrow straits and channels, a configuration that produces substantial spatial variation in water exchange and circulation \citep{hofmeisterThreedimensionalModelStudy2009}. Mean depth is approximately 4.5~m and the tidal range is small, around 0.2~m \citep{wilesStratificationMixingLimfjorden2006, dolmerEvaluationDanishMussel2002}. The Limfjorden is an eutrophic system, with high nutrient loading from an agricultural catchment, and summer oxygen depletion events occur regularly with variable extent across the system \citep{schourup-kristensenDriversHypoxiaVariability2023}. 
+Limfjorden is a relatively large, shallow, semi-enclosed estuarine system crossing the Jutland Peninsula in northern Denmark, connecting the North Sea to the west with the Kattegat to the east (Fig.~\ref{fig:study_area}). It comprises a series of shallow basins linked by narrow straits and channels, a configuration that produces substantial spatial variation in water exchange and circulation \citep{hofmeisterThreedimensionalModelStudy2009}. Mean depth is approximately 4.5~m and the tidal range is small, around 0.2~m \citep{wilesStratificationMixingLimfjorden2006, dolmerEvaluationDanishMussel2002}. Limfjorden is an eutrophic system, with high nutrient loading from an agricultural catchment, and summer oxygen depletion events occur regularly with variable extent across the system \citep{schourup-kristensenDriversHypoxiaVariability2023}. 
 
 Until recently, large populations of blue mussel \textit{Mytilus edulis}, European flat oyster \textit{Ostrea edulis} and cockles (\textit{Cerastoderma} spp.) supported significant commercial fisheries in the Limfjorden \citep[e.g.][]{nielsenFlatOysterFishery2019, nielsenManagementBivalveFisheries2021,
 Freitas2024}. The cockle fishery was the most valuable bivalve
@@ -313,7 +313,7 @@ Predictions of expected cockle biomass were obtained by multiplying the predicte
 
 \subsubsection{Spatial mesh}
 
-Survey effort was uneven, with a few cockle beds sampled densely by grab in most years, while the rest of the fjord was covered more sparsely by dredge surveys (2018 suction dredge and KSKV). We therefore built a non-uniform mesh, with smaller triangles where sampling was dense and larger triangles where it was sparse. This keeps the SPDE approximation accurate where the data can resolve fine-scale variation, without wasting vertices elsewhere \citep{lindgren2018}. Because the Limfjorden is a narrow, branching fjord we used a barrier model \citep{bakkaNonstationaryGaussianModels2019}, setting the correlation range in mesh triangles over land to 10\% of the range in water. This forces spatial correlation to follow the water and decay rapidly across land (Supplementary Fig.~S4).
+Survey effort was uneven, with a few cockle beds sampled densely by grab in most years, while the rest of the fjord was covered more sparsely by dredge surveys (2018 suction dredge and KSKV). We therefore built a non-uniform mesh, with smaller triangles where sampling was dense and larger triangles where it was sparse. This keeps the SPDE approximation accurate where the data can resolve fine-scale variation, without wasting vertices elsewhere \citep{lindgren2018}. Given the complex, branching coastline of the Limfjord we used a barrier model \citep{bakkaNonstationaryGaussianModels2019}, setting the correlation range in mesh triangles over land to 10\% of the range in water. This forces spatial correlation to follow the water and decay rapidly across land (Supplementary Fig.~S4).
 
 
 \subsubsection{Model comparison}
