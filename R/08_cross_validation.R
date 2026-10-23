@@ -1,25 +1,25 @@
 # Spatially blocked 10-fold cross-validation of the four main models from
 # 07_fit_sdm.R (space, space_env, space_conn, space_env_conn): does adding the
-# environment or in-strength improve out-of-sample prediction of presence, of
-# biomass where present, or of both?
+# environment or in-strength improve out-of-sample prediction of occurrence,
+# of biomass where present, or of both?
 #
-# The two parts of the delta-gamma model share no parameters, so each is
-# cross-validated separately with the same predictors as in 07_fit_sdm.R:
-# presence (binomial, biomass > 0, all stations) and biomass where present
-# (gamma, stations with cockles). The total is their sum for each station
-# (the log predictive density of a delta model is the presence term plus, for
-# stations with cockles, the biomass term).
+# Each part is cross-validated with the same data and predictors as in
+# 07_fit_sdm.R: occurrence (binomial cloglog, every station, survey + year,
+# log dredged area offset on KSKV) and biomass where present (generalised
+# gamma, grab stations with cockles, year + previous-season fishing). The
+# total is their sum for each station (the log predictive density of the two-part model is
+# the occurrence term plus, for grab stations with cockles, the biomass term).
 #
 # Blocks are the 2 x 2 km connectivity grid cells: all stations in a cell are
 # held out together, and cells are randomly assigned to 10 folds, the same
-# folds for every model. Presence uses all cells; biomass where present uses
-# its own folds, drawn over the cells holding stations with cockles. Held-out predictions use
-# predictive = "mle-mvn", which integrates over parameter uncertainty by
-# sampling from the multivariate normal of the MLE (sdmTMB >= 1.1.0.9024,
-# development version). Models are compared on the expected log predictive
-# density (ELPD) with loo::loo_compare(), and pairwise for each added block
-# (ELPD difference and its standard error across observations), as in the
-# sdmTMB cross-validation vignette.
+# folds for every model. Occurrence uses all cells; biomass where present uses
+# its own folds, drawn over the cells holding grab stations with cockles.
+# Held-out predictions use predictive = "mle-mvn", which integrates over
+# parameter uncertainty by sampling from the multivariate normal of the MLE
+# (sdmTMB >= 1.1.0.9024, development version). Models are compared on the
+# expected log predictive density (ELPD) with loo::loo_compare(), and pairwise
+# for each added block (ELPD difference and its standard error across
+# observations), as in the sdmTMB cross-validation vignette.
 #
 # Saved in data/sdm/cv/: cv_results.rds (per-model sdmTMB_cv output of each
 # part, models not kept), elpd_compare.rds and elpd_pairwise.rds (one block
@@ -39,29 +39,31 @@ y_min <- 6258093
 cell_size <- 2000
 
 # 01 Data, meshes and folds ----
-# the model dataset and barrier mesh of the fitted full model, so the
-# cross-validation uses exactly the data and mesh of 07_fit_sdm.R
+# the model datasets and barrier meshes of the fitted full model, so the
+# cross-validation uses exactly the data and meshes of 07_fit_sdm.R
 fit_full <- readRDS(here("data", "sdm", "main", "space_env_conn.rds"))
-dat <- fit_full$data |>
-  mutate(present_biomass = as.integer(biomass > 0))
-mesh <- fit_full$spde
+dat <- fit_full$occurrence$data |>
+  mutate(row = row_number())
+mesh <- fit_full$occurrence$spde
+mesh_pos <- fit_full$biomass$spde
 
 cell <- (floor((dat$x_utm * 1000 - x_min) / cell_size) + 1) + floor((dat$y_utm * 1000 - y_min) / cell_size) * n_col
 set.seed(1)
 cells <- unique(cell)
 cell_fold <- setNames(sample(rep_len(1:k_folds, length(cells))), cells)
 dat$fold <- unname(cell_fold[as.character(cell)])
+dat$cell <- cell
 count(dat, fold) |>
   print()
 
-# biomass where present: the stations with cockles, on the same mesh and
-# barrier, with their own folds - the 2 x 2 km cells holding at least one
-# station with cockles, randomly assigned to the 10 folds, so every fold holds
-# out a similar number of occupied cells (the presence folds, drawn over all
-# cells, would leave some biomass folds with very few occupied cells)
-dat$row <- seq_len(nrow(dat))
-dat$cell <- cell
-dat_pos <- filter(dat, biomass > 0)
+# biomass where present: grab stations with cockles (the rows of dat in the
+# same order as 07_fit_sdm.R), with their own folds - the 2 x 2 km cells
+# holding at least one of them, randomly assigned to the 10 folds, so every
+# fold holds out a similar number of occupied cells
+dat_pos <- dat |>
+  filter(present == 1, survey == "Stock") |>
+  mutate(year = droplevels(year))
+stopifnot(nrow(dat_pos) == nrow(fit_full$biomass$data))
 set.seed(1)
 cells_pos <- unique(dat_pos$cell)
 cell_fold_pos <- setNames(sample(rep_len(1:k_folds, length(cells_pos))), cells_pos)
@@ -70,39 +72,32 @@ dat_pos |>
   summarise(stations = n(), cells = n_distinct(cell), .by = fold) |>
   arrange(fold) |>
   print()
-mesh_pos <- sdmTMBextra::add_barrier_mesh(
-  make_mesh(dat_pos, c("x_utm", "y_utm"), mesh = mesh$mesh),
-  readRDS(here("data", "mesh", "mesh.rds"))$land_barrier,
-  range_fraction = 0.1,
-  proj_scaling = 1000,
-  plot = FALSE
-)
 
 # 02 Cross-validate ----
 env <- "depth_std + I(depth_std^2) + temp_std + sal_std + oxy_std + shear_max_std"
 models <- tribble(
-  ~model, ~rhs,
-  "space", "survey + year",
-  "space_env", paste("survey + year +", env),
-  "space_conn", "survey + year + conn_in_strength_std",
-  "space_env_conn", paste("survey + year +", env, "+ conn_in_strength_std")
+  ~model, ~rhs_occurrence, ~rhs_biomass,
+  "space", "survey + year", "year + sar_prev_std",
+  "space_env", paste("survey + year + sediment +", env), paste("year + sar_prev_std +", env),
+  "space_conn", "survey + year + conn_in_strength_std", "year + sar_prev_std + conn_in_strength_std",
+  "space_env_conn", paste("survey + year + sediment +", env, "+ conn_in_strength_std"), paste("year + sar_prev_std +", env, "+ conn_in_strength_std")
 )
 
 # the mle-mvn draws are random, so each cross-validation is seeded
 set.seed(1)
 cv_results <- models |>
   mutate(
-    cv_presence = map(rhs, \(rhs) {
+    cv_presence = map(rhs_occurrence, \(rhs) {
       sdmTMB_cv(
-        as.formula(paste("present_biomass ~", rhs)),
-        data = dat, mesh = mesh, spatial = "on", family = binomial(),
+        as.formula(paste("present ~", rhs)),
+        data = dat, mesh = mesh, spatial = "on", family = binomial(link = "cloglog"), offset = "offset_area",
         fold_ids = dat$fold, k_folds = k_folds, save_models = FALSE, predictive = "mle-mvn", nsim = n_draws
       )
     }),
-    cv_biomass = map(rhs, \(rhs) {
+    cv_biomass = map(rhs_biomass, \(rhs) {
       sdmTMB_cv(
         as.formula(paste("biomass ~", rhs)),
-        data = dat_pos, mesh = mesh_pos, spatial = "on", family = Gamma(link = "log"),
+        data = dat_pos, mesh = mesh_pos, spatial = "on", family = gengamma(link = "log"),
         fold_ids = dat_pos$fold, k_folds = k_folds, save_models = FALSE, predictive = "mle-mvn", nsim = n_draws
       )
     })
@@ -110,7 +105,7 @@ cv_results <- models |>
 
 # 03 Compare ----
 # pointwise ELPD of each part; the total adds the biomass term to the
-# presence term of the stations with cockles
+# occurrence term of the grab stations with cockles
 elpd_presence <- set_names(map(cv_results$cv_presence, loo::elpd), cv_results$model)
 elpd_biomass <- set_names(map(cv_results$cv_biomass, loo::elpd), cv_results$model)
 elpd_total <- map2(elpd_presence, elpd_biomass, \(p, b) {

@@ -21,8 +21,13 @@ source(here("R", "helpers.R")) # fmesher compatibility shim, needed by add_barri
 dat <- readRDS(here("data", "cockles", "derived", "cockles_env.rds"))
 grid <- readRDS(here("data", "grid", "grid_env.rds"))
 
+# as the occurrence part of 07_fit_sdm.R: KSKV detection scales with the
+# dredged area (log tow area offset), other surveys have a fixed sample size,
+# absorbed by their survey term
 dat <- dat |>
-  filter(!is.na(biomass), !is.na(present), !is.na(x_utm), !is.na(y_utm))
+  filter(!is.na(biomass), !is.na(present), !is.na(x_utm), !is.na(y_utm)) |>
+  mutate(offset_area = if_else(survey == "KSKV", log(tow_area), 0))
+stopifnot(!anyNA(dat$offset_area))
 
 # 02 Barrier mesh ----
 # variable-resolution mesh with the coastline built in, from 03_build_mesh.R
@@ -42,13 +47,17 @@ land <- st_read(
   st_make_valid()
 
 # 03 Fit suitability model ----
-# survey and year as factors: the surveys use different gear, so catchability
-# differs, and occurrence differs between years; predictions below are for
-# the Stock survey in the most recent year
+# same structure as the occurrence part of 07_fit_sdm.R without covariates:
+# binomial with cloglog link, survey (each gear's detection, grab =
+# reference) and year as factors, log tow area offset on KSKV, spatial field.
+# Predictions below are for one grab sample (offset 0) in the most recent
+# year
 fit_presence <- sdmTMB(
   present ~ survey + year,
-  data = dat, mesh = barrier_mesh, spatial = "on", family = binomial(link = "logit")
+  data = dat, mesh = barrier_mesh, spatial = "on",
+  family = binomial(link = "cloglog"), offset = dat$offset_area
 )
+sanity(fit_presence)
 
 # 04 Predict onto grid cells with at least one survey observation ----
 # predict only where the grid has direct support from the data, not
@@ -70,7 +79,7 @@ grid_complete <- grid |>
     year = factor(last(levels(dat$year)), levels = levels(dat$year))
   )
 
-pred_presence <- predict(fit_presence, newdata = grid_complete, type = "response")
+pred_presence <- predict(fit_presence, newdata = grid_complete, type = "response", offset = rep(0, nrow(grid_complete)))
 
 # every grid cell is kept (NA where there was no survey observation); only
 # the columns later scripts need, so this stays a small lookup table rather

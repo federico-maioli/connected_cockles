@@ -1,18 +1,18 @@
 \begin{table}[ht]
 \centering
-\caption{$\Delta$AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, for presence, biomass where present and in total (the best model in each column is shown in bold). All metrics are presence-weighted; all models include survey, year, the environmental predictors and a spatial random field.}
+\caption{$\Delta$AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, for occurrence, biomass where present and in total (the best model in each column is shown in bold). All metrics are presence-weighted; all models include the environmental predictors and a spatial random field, with survey and year (occurrence) or year and previous-season fishing effort (biomass, grab survey only).}
 \label{tab:connectivity-metrics}
 \begin{tabular}{lrrr}
 \toprule
  & \multicolumn{3}{c}{$\Delta$AIC} \\
 \cmidrule(lr){2-4}
-Connectivity metric & Presence & Biomass & Total \\
+Connectivity metric & Occurrence & Biomass & Total \\
 \midrule
-In-strength & \textbf{0.0} & 1.0 & \textbf{0.0} \\
-Eigenvector centrality & 2.7 & \textbf{0.0} & 1.7 \\
-Transitivity & 3.8 & 0.6 & 3.4 \\
-In-degree & 3.8 & 0.7 & 3.6 \\
-In-closeness & 3.7 & 0.9 & 3.6 \\
+In-strength & \textbf{0.0} & 0.0 & \textbf{0.0} \\
+Eigenvector centrality & 2.4 & 0.0 & 2.4 \\
+Transitivity & 4.7 & \textbf{0.0} & 4.7 \\
+In-closeness & 4.7 & 1.1 & 5.8 \\
+In-degree & 4.9 & 3.2 & 8.1 \\
 \bottomrule
 \end{tabular}
 \end{table}

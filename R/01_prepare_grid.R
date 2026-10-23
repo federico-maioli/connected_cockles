@@ -18,6 +18,8 @@ library(here)
 library(terra)
 library(sf)
 
+source(here("R", "helpers.R")) # sediment_folk7()
+
 # 01 Grid definition ----
 n_col <- 65
 n_row <- 36
@@ -70,6 +72,9 @@ for (nm in names(env_files)) {
 # depth.asc is negative below sea level; flip so larger values mean deeper
 grid$depth <- -grid$depth
 
+# sediment codes to Folk 7 classes (helpers.R)
+grid$sediment <- sediment_folk7(grid$sediment)
+
 # 04 Checks ----
 glimpse(grid)
 
@@ -84,12 +89,14 @@ land <- st_read(
 ) |>
   st_make_valid()
 
-# standardized (z-score) so all nine covariates, on very different units,
-# can share one fill scale; every facet keeps the same map extent, so
-# facet_wrap() doesn't need (and can't combine with coord_sf() and) free scales
+# the continuous covariates (sediment is categorical), standardized
+# (z-score) so all eight, on very different units, can share one fill scale;
+# every facet keeps the same map extent, so facet_wrap() doesn't need (and
+# can't combine with coord_sf() and) free scales
+continuous <- setdiff(names(env_files), "sediment")
 grid_long <- grid |>
-  mutate(across(all_of(names(env_files)), ~ as.numeric(scale(.x)))) |>
-  pivot_longer(all_of(names(env_files)), names_to = "covariate", values_to = "value")
+  mutate(across(all_of(continuous), ~ as.numeric(scale(.x)))) |>
+  pivot_longer(all_of(continuous), names_to = "covariate", values_to = "value")
 
 ggplot() +
   geom_sf(data = land, fill = "grey80", colour = NA) +

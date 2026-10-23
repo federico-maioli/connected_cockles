@@ -1,8 +1,8 @@
 # Model-selection tables (LaTeX) for the paper.
 #
 # Table 1: the four main models (space, + environment, + in-strength, +
-# both), all with survey, year and a spatial field. For each part of the
-# delta-gamma model (presence; biomass where present) and in total: the AIC
+# both), all with a spatial field. For each part of the two-part model
+# (occurrence; biomass where present) and in total: the AIC
 # difference to the best model and, from the spatially blocked
 # cross-validation, the difference in expected log predictive density (ELPD)
 # to the best model with its standard error.
@@ -75,13 +75,13 @@ writeLines(c(
   "\\begin{table}[ht]",
   "\\centering",
   "\\small",
-  "\\caption{Model selection for cockle presence, biomass where present and both together (the delta-gamma model). $\\Delta$AIC is the difference in AIC to the best model (lower AIC is better). $\\Delta$ELPD is the difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (higher ELPD is better), with its standard error in parentheses. The best model in each column is shown in bold. The total AIC and ELPD are the sums of the two parts. All models include survey (gear) and year as factors and a spatial random field. Connectivity is presence-weighted in-strength; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress. A dash marks a model that did not converge.}",
+  "\\caption{Model selection for cockle occurrence, biomass where present and both together (the two-part model). $\\Delta$AIC is the difference in AIC to the best model (lower AIC is better). $\\Delta$ELPD is the difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (higher ELPD is better), with its standard error in parentheses. The best model in each column is shown in bold. The total AIC and ELPD are the sums of the two parts. Occurrence is fitted to all surveys, with survey (gear) and year as factors; biomass where present to the grab survey only, with year as a factor and previous-season fishing effort (swept-area ratio of the cockle fishery). Both parts include a spatial random field. Connectivity is presence-weighted in-strength; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress, plus sediment type in the occurrence part. A dash marks a model that did not converge.}",
   "\\label{tab:model-selection}",
   "\\begin{tabular}{lrrrrrr}",
   "\\toprule",
   " & \\multicolumn{3}{c}{$\\Delta$AIC} & \\multicolumn{3}{c}{$\\Delta$ELPD (SE)} \\\\",
   "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}",
-  "Model & Presence & Biomass & Total & Presence & Biomass & Total \\\\",
+  "Model & Occurrence & Biomass & Total & Occurrence & Biomass & Total \\\\",
   "\\midrule",
   rows1,
   "\\bottomrule",
@@ -105,13 +105,13 @@ rows_s1 <- tab_s1 |>
 writeLines(c(
   "\\begin{table}[ht]",
   "\\centering",
-  "\\caption{$\\Delta$AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, for presence, biomass where present and in total (the best model in each column is shown in bold). All metrics are presence-weighted; all models include survey, year, the environmental predictors and a spatial random field.}",
+  "\\caption{$\\Delta$AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, for occurrence, biomass where present and in total (the best model in each column is shown in bold). All metrics are presence-weighted; all models include the environmental predictors and a spatial random field, with survey and year (occurrence) or year and previous-season fishing effort (biomass, grab survey only).}",
   "\\label{tab:connectivity-metrics}",
   "\\begin{tabular}{lrrr}",
   "\\toprule",
   " & \\multicolumn{3}{c}{$\\Delta$AIC} \\\\",
   "\\cmidrule(lr){2-4}",
-  "Connectivity metric & Presence & Biomass & Total \\\\",
+  "Connectivity metric & Occurrence & Biomass & Total \\\\",
   "\\midrule",
   rows_s1,
   "\\bottomrule",

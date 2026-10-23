@@ -4,11 +4,13 @@ library(sf)
 library(terra)
 library(janitor)
 
+source(here("R", "helpers.R")) # sediment_folk7(), sar_seasons()
+
 # KSKV years added to the Stock / HighRes survey data, and the maximum
 # distance (m) from a Stock / HighRes station for a KSKV station to be kept,
 # so the spatial domain stays that of the cockle surveys (drops the
 # south-eastern basins, which only KSKV covers)
-kskv_years <- 2018:2023
+kskv_years <- 2018:2025
 kskv_max_dist <- 4000
 
 # 01 Load data ----
@@ -26,7 +28,9 @@ cockles <- st_read(
 # KSKV blue mussel and oyster dredge surveys: one row per station and species
 # caught; a row with another species code has zero cockle weight. Collapsed to
 # one row per station: cockle (HMS) biomass and density summed (zero if none),
-# biomass from kg/m2 to g/m2, position = midpoint of the dredge track
+# biomass from kg/m2 to g/m2, position = midpoint of the dredge track. The
+# dredged area (BEFISKM2, m2: 0.965 m wide oyster dredge, tracks of ca. 100 or
+# 400 m) is the same on every row of a station
 kskv <- read_csv(here("data", "cockles", "raw", "KSKV_HMS_2010-2026.csv"), show_col_types = FALSE) |>
   filter(year %in% kskv_years) |>
   summarise(
@@ -34,11 +38,12 @@ kskv <- read_csv(here("data", "cockles", "raw", "KSKV_HMS_2010-2026.csv"), show_
     lon = mean((lonPosStartDec + lonPosEndDec) / 2),
     biomass = sum(`Biomass kgm2`[speciesCode == "HMS"]) * 1000,
     density = sum(`Density #m2`[speciesCode == "HMS"]),
+    tow_area = first(BEFISKM2),
     .by = c(year, cruise, station)
   ) |>
   st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
   st_transform(32632) |>
-  transmute(survey = "KSKV", year, density, biomass)
+  transmute(survey = "KSKV", year, density, biomass, tow_area)
 
 near_cockle_station <- apply(st_distance(kskv, cockles), 1, min) <= kskv_max_dist
 kskv <- kskv[near_cockle_station, ]
@@ -72,7 +77,18 @@ for (nm in names(env_files)) {
 # depth.asc is negative below sea level; flip so larger values mean deeper
 dat_raw$depth <- -dat_raw$depth
 
-# 03 Clean and recode ----
+# 03 Fishing effort ----
+# swept-area ratio of the cockle fishery on a 250 m grid, per season
+# (helpers.R sar_seasons()); each station gets the SAR of the season leading
+# into its survey year (season (Y-1)-(Y) for a survey in year Y): sar_prev
+sar_stack <- sar_seasons()
+
+sar_at <- extract(sar_stack, pts, ID = FALSE)
+survey_yy <- dat_raw$year %% 100
+prev_season <- sprintf("%02d-%02d", survey_yy - 1, survey_yy)
+dat_raw$sar_prev <- as.matrix(sar_at)[cbind(seq_len(nrow(dat_raw)), match(prev_season, names(sar_stack)))]
+
+# 04 Clean and recode ----
 dat <- dat_raw |>
   mutate(
     # utm coordinates in km
@@ -91,21 +107,25 @@ dat <- dat_raw |>
       .default = survey
     ),
     survey = factor(survey, levels = c("Stock", "Stock2018", "KSKV")),
-    # presence / absence from density
-    present = if_else(density > 0, 1, 0),
-    year = as.factor(year)
+    # presence / absence from biomass, the modelled response (density is
+    # missing at 8 KSKV stations and disagrees with biomass at 2 others)
+    present = if_else(biomass > 0, 1, 0),
+    year = as.factor(year),
+    # sediment codes to Folk 7 classes (helpers.R)
+    sediment = sediment_folk7(sediment)
   ) |>
   # connectivity metrics are matched on separately, in 06_match_connectivity.R
   select(
     survey, year, x_utm, y_utm,
-    density, biomass, present,
-    depth, temp, sal, oxy, chla, shear_max, shear_mean, phyto, sediment
+    density, biomass, present, tow_area,
+    depth, temp, sal, oxy, chla, shear_max, shear_mean, phyto, sediment,
+    sar_prev
   )
 
-# 04 Checks ----
+# 05 Checks ----
 glimpse(dat)
 count(dat, survey, year)
 
-# 05 Save ----
+# 06 Save ----
 dir.create(here("data", "cockles", "derived"), showWarnings = FALSE)
 saveRDS(dat, here("data", "cockles", "derived", "cockles_env.rds"))
