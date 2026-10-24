@@ -104,7 +104,7 @@ Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle J
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{figS6_residuals.png}
-    \caption{Simulation-based residuals of the full Space + Environment + Connectivity model. For each station, 500 biomass values were simulated from the fitted delta-gamma model, drawing parameters from the multivariate normal distribution of the maximum-likelihood estimates, and the residual is the quantile of the observation among them (ties at zero randomised); residuals are uniform between 0 and 1 if the model is correct. (a) Q--Q plot against the uniform distribution (red line: 1:1); (b) residual at each station. The model reproduced the proportion of zeros (observed 0.812, simulated 0.798).}
+    \caption{Simulation-based residuals of the two parts of the full Space + Environment + Connectivity model: occurrence (binomial, logit link; all stations) and biomass where present (generalized gamma, log link; grab stations with cockles). For each observation, 500 values were simulated from the fitted part, drawing parameters from the multivariate normal distribution of the maximum-likelihood estimates, and the residual is the quantile of the observation among them (ties randomised for the presence--absence data); residuals are uniform between 0 and 1 if the model is correct. (a) Q--Q plots against the uniform distribution (red line: 1:1); (b) residual at each station.}
     \label{fig:residuals}
 \end{figure}
 \clearpage
@@ -112,7 +112,7 @@ Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle J
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figS7_predictions.png}
-    \caption{Predictions of the full Space + Environment + Connectivity model at the centre of each 2~$\times$~2~km grid cell containing at least one survey station, for one grab sample (0.1~m$^{2}$) in 2025. (a) Occurrence probability and (b) its uncertainty, the standard deviation of the probability across 500 draws from the joint precision matrix of the occurrence part (both on a square-root colour scale). (c) Expected biomass (occurrence probability $\times$ biomass where present), only in cells containing grab stations, since the biomass part is fitted to the grab survey, for beds not fished in the previous season; grey cells have a predicted biomass below 1~g~m$^{-2}$. (d) Uncertainty of the expected biomass: standard deviation, on the log scale, of 500 draws from the joint precision matrices of the two model parts.}
+    \caption{Predictions of the full Space + Environment + Connectivity model at the centre of each 2~$\times$~2~km grid cell containing at least one survey station, for the grab survey (0.1~m$^{2}$ samples) in 2025. (a) Occurrence probability and (b) its uncertainty, the standard deviation of the probability across 500 draws from the joint precision matrix of the occurrence part (both on a square-root colour scale). (c) Expected biomass (occurrence probability $\times$ biomass where present), only in cells containing grab stations, since the biomass part is fitted to the grab survey, for beds not fished in the previous season; grey cells have a predicted biomass below 1~g~m$^{-2}$. (d) Uncertainty of the expected biomass: standard deviation, on the log scale, of 500 draws from the joint precision matrices of the two model parts.}
     \label{fig:predictions}
 \end{figure}
 \clearpage

@@ -1,6 +1,6 @@
 # Figure 3: the full two-part model (space + environment + in-strength
 # connectivity), its two parts side by side:
-#   occurrence                binomial (cloglog) - where cockles occur
+#   occurrence                binomial (logit)   - where cockles occur
 #   biomass where present     generalised gamma (log) - how much, where they
 #                                                       occur
 # Panel a: standardized coefficient of every predictor in each part.
@@ -18,7 +18,7 @@ library(sdmTMB)
 library(ggstats)
 library(patchwork)
 
-part_labs <- c(presence = "Occurrence (cloglog link)", biomass = "Biomass where present (log link)")
+part_labs <- c(presence = "Occurrence (logit link)", biomass = "Biomass where present (log link)")
 part_point_cols <- set_names(c("#5D3A9B", "#E66100"), part_labs)
 
 term_labs <- c(
@@ -95,19 +95,17 @@ pe_newdata <- function(var, data) {
   )
 }
 
-inv_cloglog <- function(x) 1 - exp(-exp(x))
 
 partial_effect <- function(var) {
   nd_occ <- mutate(pe_newdata(var, dat_occ), year = factor(pe_year, levels = levels(dat_occ$year)))
   nd_bio <- mutate(pe_newdata(var, dat_bio), year = factor(pe_year, levels = levels(dat_bio$year)))
-  # a grab sample: offset 0, as for every grab station in the fit
-  presence <- predict(fits$occurrence, newdata = nd_occ, re_form = NA, se_fit = TRUE, offset = rep(0, nrow(nd_occ)))
+  presence <- predict(fits$occurrence, newdata = nd_occ, re_form = NA, se_fit = TRUE)
   biomass <- predict(fits$biomass, newdata = nd_bio, re_form = NA, se_fit = TRUE)
   bind_rows(
     tibble(
       part = "presence", value = nd_occ$value,
-      est = inv_cloglog(presence$est), low = inv_cloglog(presence$est - 1.96 * presence$est_se),
-      high = inv_cloglog(presence$est + 1.96 * presence$est_se)
+      est = plogis(presence$est), low = plogis(presence$est - 1.96 * presence$est_se),
+      high = plogis(presence$est + 1.96 * presence$est_se)
     ),
     tibble(
       part = "biomass", value = nd_bio$value,
@@ -194,12 +192,12 @@ pe_sediment <- function() {
     year = factor(pe_year, levels = levels(dat_occ$year)),
     x_utm = mean(dat_occ$x_utm), y_utm = mean(dat_occ$y_utm)
   )
-  presence <- predict(fits$occurrence, newdata = nd, re_form = NA, se_fit = TRUE, offset = rep(0, nrow(nd)))
+  presence <- predict(fits$occurrence, newdata = nd, re_form = NA, se_fit = TRUE)
   d <- tibble(
     sediment = factor(sed_labs[as.character(nd$sediment)], levels = sed_labs),
-    est = inv_cloglog(presence$est),
-    low = inv_cloglog(presence$est - 1.96 * presence$est_se),
-    high = inv_cloglog(presence$est + 1.96 * presence$est_se)
+    est = plogis(presence$est),
+    low = plogis(presence$est - 1.96 * presence$est_se),
+    high = plogis(presence$est + 1.96 * presence$est_se)
   )
   ggplot(d, aes(sediment, est)) +
     geom_errorbar(aes(ymin = low, ymax = high), width = 0, linewidth = 0.8, colour = part_point_cols[[1]]) +

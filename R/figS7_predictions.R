@@ -79,15 +79,13 @@ newdata_grab <- newdata |>
     sar_prev_std = (0 - m_sar) / s_sar
   )
 
-# occurrence probability of one grab sample (offset 0, as for grab stations
-# in the fit): inverse cloglog of the prediction
-inv_cloglog <- function(x) 1 - exp(-exp(x))
-pred_occ <- predict(fits$occurrence, newdata = newdata, offset = rep(0, nrow(newdata))) |>
-  mutate(p = inv_cloglog(est))
+# occurrence probability for the grab survey: inverse logit of the prediction
+pred_occ <- predict(fits$occurrence, newdata = newdata) |>
+  mutate(p = plogis(est))
 # its uncertainty: SD of the occurrence probability across 500 draws
 set.seed(1)
-sims_occ_all <- predict(fits$occurrence, newdata = newdata, offset = rep(0, nrow(newdata)), nsim = 500)
-pred_occ$sd <- apply(inv_cloglog(sims_occ_all), 1, sd)
+sims_occ_all <- predict(fits$occurrence, newdata = newdata, nsim = 500)
+pred_occ$sd <- apply(plogis(sims_occ_all), 1, sd)
 
 # expected biomass in the grab cells: occurrence probability x biomass where
 # present. Uncertainty from 500 draws of each part (the parts share no
@@ -95,15 +93,15 @@ pred_occ$sd <- apply(inv_cloglog(sims_occ_all), 1, sd)
 # log(p) + log(mu); the SD is taken on that scale, as back-transformed draws
 # are heavy-tailed
 set.seed(1)
-occ_grab <- predict(fits$occurrence, newdata = newdata_grab, offset = rep(0, nrow(newdata_grab)))
+occ_grab <- predict(fits$occurrence, newdata = newdata_grab)
 bio_grab <- predict(fits$biomass, newdata = newdata_grab)
-sims_occ <- predict(fits$occurrence, newdata = newdata_grab, offset = rep(0, nrow(newdata_grab)), nsim = 500)
+sims_occ <- predict(fits$occurrence, newdata = newdata_grab, nsim = 500)
 sims_bio <- predict(fits$biomass, newdata = newdata_grab, nsim = 500)
 pred <- newdata_grab |>
   select(x, y) |>
   mutate(
-    est = inv_cloglog(occ_grab$est) * exp(bio_grab$est),
-    sd = apply(log(inv_cloglog(sims_occ)) + sims_bio, 1, sd),
+    est = plogis(occ_grab$est) * exp(bio_grab$est),
+    sd = apply(log(plogis(sims_occ)) + sims_bio, 1, sd),
     est = if_else(est < biomass_zero, 0, est)
   )
 summary(pred_occ$p)

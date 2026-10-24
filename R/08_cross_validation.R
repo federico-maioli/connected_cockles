@@ -4,8 +4,8 @@
 # of biomass where present, or of both?
 #
 # Each part is cross-validated with the same data and predictors as in
-# 07_fit_sdm.R: occurrence (binomial cloglog, every station, survey + year,
-# log dredged area offset on KSKV) and biomass where present (generalised
+# 07_fit_sdm.R: occurrence (binomial logit, every station, survey + year)
+# and biomass where present (generalised
 # gamma, grab stations with cockles, year + previous-season fishing). The
 # total is their sum for each station (the log predictive density of the two-part model is
 # the occurrence term plus, for grab stations with cockles, the biomass term).
@@ -90,7 +90,7 @@ cv_results <- models |>
     cv_presence = map(rhs_occurrence, \(rhs) {
       sdmTMB_cv(
         as.formula(paste("present ~", rhs)),
-        data = dat, mesh = mesh, spatial = "on", family = binomial(link = "cloglog"), offset = "offset_area",
+        data = dat, mesh = mesh, spatial = "on", family = binomial(link = "logit"),
         fold_ids = dat$fold, k_folds = k_folds, save_models = FALSE, predictive = "mle-mvn", nsim = n_draws
       )
     }),

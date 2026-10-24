@@ -36,7 +36,7 @@ read_fit <- function(folder, model) {
 }
 
 # the two parts of each model, in order (component 1, component 2)
-part_labs <- c(presence = "Occurrence (cloglog link)", biomass = "Biomass where present (log link)")
+part_labs <- c(presence = "Occurrence (logit link)", biomass = "Biomass where present (log link)")
 facet_theme <- theme(
   strip.background = element_blank(),
   strip.text = element_text(colour = "black", size = 11)

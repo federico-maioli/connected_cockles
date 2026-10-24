@@ -1,10 +1,10 @@
 # Fit the cockle SDMs as two-part (hurdle) models, each part its own sdmTMB
 # fit with its own coefficients and spatial field:
-#   occurrence   binomial (cloglog)       - where cockles occur; every station
+#   occurrence   binomial (logit)         - where cockles occur; every station
 #   biomass      generalised gamma (log)  - how much biomass where they occur;
 #                                           grab stations with cockles only
-# The two parts share no parameters, so this is a standard delta model
-# (cloglog presence link) in which some surveys inform occurrence only. The
+# The two parts share no parameters, so this is a standard delta model in
+# which some surveys inform occurrence only. The
 # generalised gamma (Gamma and lognormal as special cases) fits the grab
 # biomass better than the Gamma (AIC -15, cleaner DHARMa residuals;
 # R/exploration/check_biomass_family.R).
@@ -18,10 +18,13 @@
 #     cockle in a grab is already 10 ind/m2): occurrence only
 #   KSKV (oyster dredge, 0.965 m wide, tracks of ~100 or 400 m) - presences
 #     true, absences possibly false (variable, unknown efficiency): occurrence
-#     only, with log(dredged area) as an offset so short and long tows differ
-# Occurrence includes survey (grab = reference) and year as factors: on the
-# cloglog scale the survey terms are each gear's detection relative to one
-# grab sample (P(detect) = 1 - exp(-q a d)). Biomass where present has year
+#     only
+# Occurrence includes survey (grab = reference) and year as factors; the
+# survey terms absorb differences in detection among gears. No sample-area
+# offset: detection does not scale with the area sampled (cockles are
+# aggregated), and area offsets (cloglog link) fitted worse than a logit
+# model without them (R/exploration/check_occurrence_link.R,
+# check_suction_offset.R). Biomass where present has year
 # but no survey term (grab only), and previous-season fishing effort in every
 # model: the swept-area ratio of the cockle fishery in the season leading into
 # the survey year (02_clean_cockles.R), as log(1 + SAR), a control for
@@ -90,11 +93,7 @@ dat <- dat |>
   filter(
     !is.na(biomass), !is.na(present), !is.na(x_utm), !is.na(y_utm),
     if_all(all_of(used_vars), ~ !is.na(.x))
-  ) |>
-  # KSKV detection scales with the dredged area; other surveys have a fixed
-  # sample size, absorbed by their survey term
-  mutate(offset_area = if_else(survey == "KSKV", log(tow_area), 0))
-stopifnot(!anyNA(dat$offset_area))
+  )
 
 # biomass where present: grab stations with cockles (year levels without grab
 # data dropped)
@@ -135,7 +134,7 @@ fit_occurrence <- function(formula) {
   sdmTMB(
     formula,
     data = dat, mesh = barrier_mesh, spatial = "on",
-    family = binomial(link = "cloglog"), offset = dat$offset_area
+    family = binomial(link = "logit")
   )
 }
 fit_biomass <- function(formula) {
