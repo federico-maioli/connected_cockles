@@ -159,8 +159,8 @@ $^{*}$Corresponding author: \href{mailto:fedma@aqua.dtu.dk}{fedma@aqua.dtu.dk}
 
 % ---- ABSTRACT --------------------------------------------------------------
 \section*{Abstract}
-Correlative species distribution models (SDMs) for marine invertebrates with pelagic larvae typically rely on environmental predictors, implicitly assuming that larvae reach all suitable habitat. Yet larval supply varies spatially, and whether it adds to habitat in explaining occurrence and abundance has rarely been tested. We quantified the contributions of habitat, larval supply and spatial structure to cockle (\textit{Cerastoderma} spp.) occurrence and biomass
-in the Limfjord, Denmark. We combined 8{,}378 stations from three surveys (2018--2025) with environmental predictors from a coupled hydrodynamic and biogeochemical model and connectivity metrics from a biophysical larval dispersal model. We fitted two-part spatial SDMs, each containing environmental covariates, connectivity and a spatial random field, accounting for gear differences in detection, and assessed fit and predictive performance by spatially blocked cross-validation. Simulated larvae reached nearly every surveyed station, yet cockles occurred at only 18\% of them. Occurrence was associated with habitat, peaking at about 7~m depth, increasing with salinity, declining with temperature and bottom shear stress, and being lower on muddy sand. Predicted larval supply modestly improved occurrence predictions, but cockles were less likely to occur where predicted supply was highest. Among occupied beds, biomass varied among years and was lower in beds fished in the preceding season and where low oxygen was frequent, with only a weak association with predicted supply. Overall, habitat was more informative than predicted larval supply for explaining cockle occurrence, whereas biomass within occupied beds was associated with recent fishing and oxygen conditions. Whether larval supply contributes more strongly at finer spatial and temporal scales remains to be tested.
+Correlative species distribution models (SDMs) for marine invertebrates with pelagic larvae typically rely on environmental predictors, implicitly assuming that larvae reach all suitable habitat. Yet larval supply varies in space, and whether it adds to habitat in explaining occurrence and abundance has rarely been tested. We quantified the contributions of habitat, larval supply and spatial structure to the occurrence and biomass of cockles (\textit{Cerastoderma} spp.) in the Limfjorden, Denmark. We combined 8{,}378 stations from three surveys (2018--2025) with environmental predictors from a coupled hydrodynamic--biogeochemical model and connectivity metrics from a biophysical larval dispersal model. We compared two-part spatial SDMs with and without environmental and connectivity predictors, accounting for differences in detection among survey gears, using AIC and spatially blocked cross-validation. Simulated larvae reached nearly every surveyed station, yet cockles occurred at only 18\% of them. Occurrence was structured by habitat: it peaked at about 7~m depth, followed the salinity--temperature gradient along the fjord, and declined with bottom shear stress. Predicted larval supply modestly improved predictions of occurrence, but cockles were less likely to occur where supply was highest, which was largely in poorer habitat. Among occupied beds, biomass varied among years and was lower after fishing in the preceding season and where low oxygen was frequent, with only a weak association with larval supply. At the scale of the fjord, larval supply therefore did not limit cockle distribution, and habitat-based SDMs captured most of the explainable variation. Whether larval supply matters at finer spatial and temporal scales remains to be tested.
+
 
 
 \vspace*{\fill}
@@ -257,7 +257,7 @@ All predictors were extracted at the position of each station from their native 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{fig2_predictors.png}
-    \caption{Model predictors: (a) depth, (b) bottom temperature, (c) bottom salinity, (d) oxygen (days per year with bottom dissolved oxygen below 4~mg~l$^{-1}$), (e) maximum bottom shear stress and (f) sediment type (Folk classes), (g) fishing intensity (the mean swept-area ratio over the 2016--17 to 2024--25 seasons; and (h) presence-weighted in-strength, the connectivity metric used in the models.}
+    \caption{Model predictors: (a) depth, (b) bottom temperature, (c) bottom salinity, (d) oxygen (days per year with bottom dissolved oxygen below 4~mg~l$^{-1}$), (e) maximum bottom shear stress, (f) sediment type (Folk classes), (g) fishing intensity and (h) presence-weighted in-strength, the connectivity metric used in the models. Fishing intensity is shown as the mean swept-area ratio over the 2016--17 to 2024--25 fishing seasons; the models instead used the swept-area ratio of the season preceding each survey.}
      \label{fig:predictors}
 \end{figure}
 
@@ -358,7 +358,7 @@ We fit the spatial models with the R package \texttt{sdmTMB} \citep{andersonSdmT
 
 \subsection{Cockles occur in a few dense beds, although larvae reach the whole fjord}
 
-Cockles were present at \rev{1{,}537 of 8{,}378 stations (18.3\%; 23\% of grab and suction-dredge stations, 9\% of KSKV stations)}, and biomass was concentrated in a few dense beds along the central channel and in the western and southern basins (Supplementary Fig.~S7). This patchiness was not matched by larval supply: simulated larvae dispersed widely from every release cell (Fig.~\ref{fig:study_area}b), and \rev{all but four stations} received some larval input (presence-weighted in-strength $>0$). Larvae therefore reached areas both with and without established beds. \rev{Relative to a grab sample, the odds of recording cockles were 10.6 times higher in a suction-dredge tow (95\% CI 5.3--21.3) and 2.3 times higher in a KSKV tow (1.6--3.2), although these tows covered about 1{,}000 and 4{,}000 times the area of a grab.}
+Cockles were present at 1{,}537 of 8{,}378 stations (18.3\%; 23\% of grab and suction-dredge stations, 9\% of KSKV stations), and biomass was concentrated in a few dense beds along the central channel and in the western and southern basins (Supplementary Fig.~S7). This patchiness was not matched by larval supply: simulated larvae dispersed widely from every release cell (Fig.~\ref{fig:study_area}b), and all but four stations received some larval input (presence-weighted in-strength $>0$). Larvae therefore reached areas both with and without established beds. Relative to a grab sample, the odds of recording cockles were 10.6 times higher in a suction-dredge tow (95\% CI 5.3--21.3) and 2.3 times higher in a KSKV tow (1.6--3.2), although these tows covered about 1{,}000 and 4{,}000 times the area of a grab.
 
 \subsection{Habitat determines where cockles occur}
 
@@ -383,7 +383,7 @@ Combining the two parts, the full model had the lowest total AIC ($\Delta$AIC $=
 \begin{table}[ht]
 \centering
 \small
-\caption{\rev{Model comparison for occurrence, biomass where present and the two parts combined. $\Delta$AIC: difference to the lowest AIC. $\Delta$ELPD: difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (SE in parentheses). Best values in bold. Connectivity is presence-weighted in-strength.}}
+\caption{Model comparison for occurrence, biomass where present and the two parts combined. $\Delta$AIC: difference to the lowest AIC. $\Delta$ELPD: difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (SE in parentheses). Best values in bold. Connectivity is presence-weighted in-strength.}
 \label{tab:model-selection}
 \input{../output/tables/tab1_model_selection.tex}
 \end{table}
@@ -391,7 +391,7 @@ Combining the two parts, the full model had the lowest total AIC ($\Delta$AIC $=
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{fig3_coeff.png}
-    \caption{\rev{Full Space + Environment + Connectivity model. (a) Standardized coefficients (95\% CI) for the occurrence part (binomial, logit link) and the biomass part (generalized gamma, log link); intercepts, survey and year effects not shown. (b) Partial effects on occurrence probability (purple, left axis) and log biomass where present (orange, right axis), other predictors at their mean, sediment at mud, spatial field at zero, grab survey in 2021.}}
+    \caption{Full Space + Environment + Connectivity model. (a) Standardized coefficients (95\% CI) for the occurrence part (binomial, logit link) and the biomass part (generalized gamma, log link); intercepts, survey and year effects not shown. (b) Partial effects on occurrence probability (purple, left axis) and log biomass where present (orange, right axis), other predictors at their mean, sediment at mud, spatial field at zero, grab survey in 2021.}
     \label{fig:coefficients}
 \end{figure}
 
