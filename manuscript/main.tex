@@ -226,7 +226,7 @@ morphologically \citep{Parada2018}.
 
 \subsection{Cockle surveys}\label{sec:surveys}
 
-We combined cockle data from three surveys that differ in gear, sampled area and spatial coverage (Fig.~\ref{fig:study_area}a). The 2018 cockle stock survey used a hydraulic suction dredge, 0.75 m wide, towed over 44--392 m (swept area 33--294 m$^2$, median 115 m$^2$), and covered the fjord on a sparse grid of stations \citep{Freitas2023a} ($n = 283$; Supplementary Fig.~S1). The 2021--2025 cockle stock surveys used a 0.1~m$^2$ Day grab, digging about 15 cm into the sediment, to sample selected beds and fishing areas at high resolution, and therefore covered variable and limited parts of the Limfjord \citep{Freitas2021, Freitas2022, Freitas2023a, Freitas2023b,
+We combined cockle data from three surveys that differ in gear, sampled area and spatial coverage (Fig.~\ref{fig:study_area}a). The 2018 cockle stock survey used a hydraulic suction dredge, 0.75 m wide, towed over 44--392 m (swept area 33--294 m$^2$, median 115 m$^2$), and covered the fjord on a sparse grid of stations \citep{freitasSustainableCockleFishery2023} ($n = 283$; Supplementary Fig.~S1). The 2021--2025 cockle stock surveys used a 0.1~m$^2$ Day grab, digging about 15 cm into the sediment, to sample selected beds and fishing areas at high resolution, and therefore covered variable and limited parts of the Limfjord \citep{Freitas2021, Freitas2022, freitasSustainableCockleFishery2023, Freitas2023b,
 Freitas2024b, Freitas2025} (n = 5{,}305). We further added cockle catches from the 2018--2025 blue mussel and oyster surveys (Konsekvensvurdering, KSKV;
 \citealp{nielsenFlatOysterFishery2019}), which use a 0.965 m wide oyster dredge towed over roughly 100 or 400 m (dredged area 81--670~m$^2$, median 375~m$^2$), retaining only stations within 4~km of a
 cockle survey station so that the spatial domain remained that of the cockle surveys (n = 2{,}790). In total the data comprised 8{,}378 stations, of which 1{,}537 (18.3\%) held cockles (biomass > 0).
@@ -358,7 +358,7 @@ We fit the spatial models with the R package \texttt{sdmTMB} \citep{andersonSdmT
 
 \subsection{Cockles occur in a few dense beds, although larvae reach the whole fjord}
 
-Cockles were present at 1{,}527 of 8{,}137 stations (18.8\%), and biomass was concentrated in a few dense beds along the central channel and in the western and southern basins (Supplementary Fig.~S7). This patchiness was not matched by larval supply: simulated larvae dispersed widely from every release cell (Fig.~\ref{fig:study_area}b), and every survey station received some larval input (presence-weighted in-strength $>0$ at all stations). Larvae therefore reached areas both with and without established beds.
+Cockles were present at \rev{1{,}537 of 8{,}378 stations (18.3\%; 23\% of grab and suction-dredge stations, 9\% of KSKV stations)}, and biomass was concentrated in a few dense beds along the central channel and in the western and southern basins (Supplementary Fig.~S7). This patchiness was not matched by larval supply: simulated larvae dispersed widely from every release cell (Fig.~\ref{fig:study_area}b), and \rev{all but four stations} received some larval input (presence-weighted in-strength $>0$). Larvae therefore reached areas both with and without established beds. \rev{Relative to a grab sample, the odds of recording cockles were 10.6 times higher in a suction-dredge tow (95\% CI 5.3--21.3) and 2.3 times higher in a KSKV tow (1.6--3.2), although these tows covered about 1{,}000 and 4{,}000 times the area of a grab.}
 
 \subsection{Habitat determines where cockles occur}
 
@@ -380,12 +380,18 @@ In cross-validation, however, neither block clearly improved prediction of bioma
 
 Combining the two parts, the full model had the lowest total AIC ($\Delta$AIC $=5.3$ for Space + Environment) and the best total predictive performance (in-strength added to Space + Environment: $\Delta$ELPD $=27.1$, SE $8.6$; Table~\ref{tab:model-selection}).
 
+\begin{table}[ht]
+\centering
+\small
+\caption{\rev{Model comparison for occurrence, biomass where present and the two parts combined. $\Delta$AIC: difference to the lowest AIC. $\Delta$ELPD: difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (SE in parentheses). Best values in bold. Connectivity is presence-weighted in-strength.}}
+\label{tab:model-selection}
 \input{../output/tables/tab1_model_selection.tex}
+\end{table}
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{fig3_coeff.png}
-    \caption{Full Space + Environment + Connectivity delta-gamma model, with presence-weighted in-strength as the connectivity metric. (a) Standardized coefficients with 95\% confidence intervals for the presence component (binomial, logit link) and the biomass-where-present component (gamma, log link); survey and year effects are not shown. (b) Partial effects: predicted probability of presence (purple, left axis) and log biomass where present (orange, right axis) along each predictor, with 95\% confidence intervals, all other predictors at their mean and the spatial field set to zero, for the grab survey in 2021.}
+    \caption{\rev{Full Space + Environment + Connectivity model. (a) Standardized coefficients (95\% CI) for the occurrence part (binomial, logit link) and the biomass part (generalized gamma, log link); intercepts, survey and year effects not shown. (b) Partial effects on occurrence probability (purple, left axis) and log biomass where present (orange, right axis), other predictors at their mean, sediment at mud, spatial field at zero, grab survey in 2021.}}
     \label{fig:coefficients}
 \end{figure}
 

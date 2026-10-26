@@ -8,7 +8,8 @@
 # to the best model with its standard error.
 # Table S1: the full model with each of the five connectivity metrics, AIC
 # difference per part and in total.
-# Written to output/tables for \input into Overleaf.
+# Written to output/tables as bare tabulars for \input into Overleaf; the
+# table environment, caption and label are in main.tex and supp.tex.
 #
 # Reads data/sdm/main/model_comparison.rds and
 # data/sdm/sensitivity/model_comparison.rds (07_fit_sdm.R) and
@@ -72,11 +73,6 @@ rows1 <- tab1 |>
   pull(line)
 
 writeLines(c(
-  "\\begin{table}[ht]",
-  "\\centering",
-  "\\small",
-  "\\caption{Model selection for cockle occurrence, biomass where present and both together (the two-part model). $\\Delta$AIC is the difference in AIC to the best model (lower AIC is better). $\\Delta$ELPD is the difference in expected log predictive density to the best model in spatially blocked 10-fold cross-validation (higher ELPD is better), with its standard error in parentheses. The best model in each column is shown in bold. The total AIC and ELPD are the sums of the two parts. Occurrence is fitted to all surveys, with survey (gear) and year as factors; biomass where present to the grab survey only, with year as a factor and previous-season fishing effort (swept-area ratio of the cockle fishery). Both parts include a spatial random field. Connectivity is presence-weighted in-strength; environment comprises depth (linear and quadratic), temperature, oxygen, salinity, and maximum shear stress, plus sediment type in the occurrence part. A dash marks a model that did not converge.}",
-  "\\label{tab:model-selection}",
   "\\begin{tabular}{lrrrrrr}",
   "\\toprule",
   " & \\multicolumn{3}{c}{$\\Delta$AIC} & \\multicolumn{3}{c}{$\\Delta$ELPD (SE)} \\\\",
@@ -85,8 +81,7 @@ writeLines(c(
   "\\midrule",
   rows1,
   "\\bottomrule",
-  "\\end{tabular}",
-  "\\end{table}"
+  "\\end{tabular}"
 ), here("output", "tables", "tab1_model_selection.tex"))
 
 # 02 Table S1: full model with each connectivity metric ----
@@ -103,10 +98,6 @@ rows_s1 <- tab_s1 |>
   pull(line)
 
 writeLines(c(
-  "\\begin{table}[ht]",
-  "\\centering",
-  "\\caption{$\\Delta$AIC of the full Space + Environment + Connectivity model with each of the five connectivity metrics, for occurrence, biomass where present and in total (the best model in each column is shown in bold). All metrics are presence-weighted; all models include the environmental predictors and a spatial random field, with survey and year (occurrence) or year and previous-season fishing effort (biomass, grab survey only).}",
-  "\\label{tab:connectivity-metrics}",
   "\\begin{tabular}{lrrr}",
   "\\toprule",
   " & \\multicolumn{3}{c}{$\\Delta$AIC} \\\\",
@@ -115,6 +106,5 @@ writeLines(c(
   "\\midrule",
   rows_s1,
   "\\bottomrule",
-  "\\end{tabular}",
-  "\\end{table}"
+  "\\end{tabular}"
 ), here("output", "tables", "tabS1_connectivity_metrics.tex"))

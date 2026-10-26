@@ -17,6 +17,7 @@
 % ---- Colour & links --------------------------------------------------------
 \usepackage[dvipsnames]{xcolor}
 \definecolor{niceblue}{HTML}{236899}
+\newcommand{\rev}[1]{{\color{niceblue} #1}}
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
@@ -56,7 +57,12 @@ Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle J
 \end{center}
 
 % ---- Tables ----------------------------------------------------------------
+\begin{table}[ht]
+\centering
+\caption{\rev{$\Delta$AIC of the full model with each presence-weighted connectivity metric, for occurrence, biomass where present and in total. Best values in bold.}}
+\label{tab:connectivity-metrics}
 \input{../output/tables/tabS1_connectivity_metrics.tex}
+\end{table}
 \FloatBarrier
 \clearpage
 

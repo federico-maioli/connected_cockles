@@ -73,6 +73,7 @@ ENTRY
     publisher
     school
     series
+    sortkey
     title
     type
     volume
@@ -1512,15 +1513,19 @@ FUNCTION {presort}
   label sortify
   "    "
   *
-  type$ "book" =
-  type$ "inbook" =
-  or
-    'author.editor.sort
-    { type$ "proceedings" =
-        'editor.sort
-        'author.sort
+  sortkey empty$
+    { type$ "book" =
+      type$ "inbook" =
+      or
+        'author.editor.sort
+        { type$ "proceedings" =
+            'editor.sort
+            'author.sort
+          if$
+        }
       if$
     }
+    { sortkey sortify }
   if$
   #1 entry.max$ substring$
   'sort.label :=
