@@ -1,4 +1,4 @@
-# Figure S7: predictions of the full two-part model (Space + Environment +
+# Figure S4: predictions of the full two-part model (Space + Environment +
 # Connectivity, presence-weighted in-strength) for one grab sample (Stock) in
 # the most recent year (2025), at the centre of the 2 x 2 km grid cells:
 # (a) occurrence probability, every cell holding a survey station, and (b)
@@ -180,10 +180,10 @@ p_occ_sd <- ggplot() +
   labs(title = "SD of occurrence probability")
 
 # occurrence and its uncertainty on top, biomass and its uncertainty below
-fig_s7 <- p_occ + p_occ_sd + p_est + p_sd +
+fig_s4 <- p_occ + p_occ_sd + p_est + p_sd +
   plot_layout(ncol = 2) +
   plot_annotation(tag_levels = "a", tag_suffix = ")") &
   theme(plot.tag = element_text(size = 7.5, face = "bold", colour = "grey20"))
 
 dir.create(here("output", "figs", "supp"), showWarnings = FALSE, recursive = TRUE)
-ggsave(here("output", "figs", "supp", "figS7_predictions.png"), fig_s7, width = 4.9, height = 4.6, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS4_predictions.png"), fig_s4, width = 4.9, height = 4.6, dpi = 600, bg = "white")

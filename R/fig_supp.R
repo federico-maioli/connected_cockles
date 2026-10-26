@@ -1,12 +1,12 @@
-# All supplementary figures except S7 (predictions, figS7_predictions.R), one
+# All supplementary figures except S4 (predictions, figS4_predictions.R) and S8 (accessibility, figS8_accessibility.R), one
 # section each, numbered in the order they are cited in main.tex:
 #   S1   survey stations by year and survey, presence and absence
-#   S2   correlation among all covariates (environment and connectivity)
-#   S3   connectivity metrics on the 2 km grid cells with stations
-#   S4   the barrier mesh
-#   S5   cross-validation folds, occurrence and positive biomass
-#   S6   simulation-based residuals of the full model
-#   S8   connectivity coefficient of each metric in the full model
+#   S2   connectivity metrics on the 2 km grid cells with stations
+#   S3   correlation among all covariates (environment and connectivity)
+#   S5   the barrier mesh
+#   S6   cross-validation folds, occurrence and positive biomass
+#   S7   simulation-based residuals of the full model
+#   S9   connectivity coefficient of each metric in the full model
 # (The covariate maps are in the main text, fig2_predictors.R.)
 #
 # Connectivity metrics are the presence-weighted ones used in 07_fit_sdm.R;
@@ -140,7 +140,7 @@ fig_s1 <- ggplot() +
   )
 ggsave(here("output", "figs", "supp", "figS1_survey_stations.png"), fig_s1, width = 7, height = 7.8, dpi = 600, bg = "white")
 
-# 03 Figure S2: correlation among all covariates ----
+# 03 Figure S3: correlation among all covariates ----
 # the five environmental predictors and the five connectivity metrics, at the
 # survey stations; Spearman, since the connectivity metrics are skewed
 s2_vars <- c(
@@ -170,9 +170,9 @@ fig_s2 <- ggplot(cor_s2, aes(var1, var2, fill = rho)) +
   labs(x = NULL, y = NULL) +
   theme_light(base_size = 11) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.grid = element_blank())
-ggsave(here("output", "figs", "supp", "figS2_correlation.png"), fig_s2, width = 8, height = 6.8, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS3_correlation.png"), fig_s2, width = 8, height = 6.8, dpi = 600, bg = "white")
 
-# 04 Figure S3: connectivity metrics on the grid ----
+# 04 Figure S2: connectivity metrics on the grid ----
 # the grid cells holding survey stations only; each metric keeps its own
 # single-hue ramp (light = low, dark = high); skewed ones use a square-root
 # scale, which keeps the zeros that a log scale would drop
@@ -211,9 +211,9 @@ metric_panels <- map(names(metric_titles), function(col) {
 fig_s3 <- wrap_plots(metric_panels, ncol = 3) +
   plot_annotation(tag_levels = "a", tag_suffix = ")") &
   tag_theme
-ggsave(here("output", "figs", "supp", "figS3_connectivity_metrics.png"), fig_s3, width = 13, height = 7, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS2_connectivity_metrics.png"), fig_s3, width = 13, height = 7, dpi = 600, bg = "white")
 
-# 05 Figure S4: barrier mesh ----
+# 05 Figure S5: barrier mesh ----
 # the mesh (03_build_mesh.R) as used in the fitted models: water triangles
 # carry the spatial field, land triangles are the barrier
 barrier_mesh <- fit_full$occurrence$spde
@@ -237,9 +237,9 @@ fig_s4 <- ggplot() +
     legend.position = "bottom",
     plot.margin = margin(8, 8, 8, 8)
   )
-ggsave(here("output", "figs", "supp", "figS4_mesh.png"), fig_s4, width = 10, height = 8, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS5_mesh.png"), fig_s4, width = 10, height = 8, dpi = 600, bg = "white")
 
-# 06 Figure S5: cross-validation folds ----
+# 06 Figure S6: cross-validation folds ----
 # the 2 x 2 km grid cells used as cross-validation blocks, coloured by fold, as
 # saved by 08_cross_validation.R: (a) occurrence, all cells; (b) positive
 # biomass, its own folds over the cells holding stations with cockles
@@ -271,9 +271,9 @@ fig_s5 <- (fold_panel(fold_cells(cv_results$cv_presence[[1]]$data), "Occurrence"
   plot_annotation(tag_levels = "a", tag_suffix = ")") &
   theme(legend.position = "bottom") &
   tag_theme
-ggsave(here("output", "figs", "supp", "figS5_cv_folds.png"), fig_s5, width = 13, height = 6.5, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS6_cv_folds.png"), fig_s5, width = 13, height = 6.5, dpi = 600, bg = "white")
 
-# 07 Figure S6: residuals of the full model ----
+# 07 Figure S7: residuals of the full model ----
 # simulation-based (DHARMa) residuals of each part: 500 draws per station from
 # the fitted part with parameter uncertainty (type = "mle-mvn"), and each
 # observation's quantile among its draws. integerResponse = TRUE randomises
@@ -347,9 +347,9 @@ fig_s6 <- qq_s6 + map_s6 +
   plot_layout(widths = c(1, 1.25)) +
   plot_annotation(tag_levels = "a", tag_suffix = ")") &
   theme(plot.tag = element_text(size = 9, face = "bold", colour = "grey20"))
-ggsave(here("output", "figs", "supp", "figS6_residuals.png"), fig_s6, width = 7, height = 6.4, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS7_residuals.png"), fig_s6, width = 7, height = 6.4, dpi = 600, bg = "white")
 
-# 08 Figure S8: connectivity coefficient of each metric ----
+# 08 Figure S9: connectivity coefficient of each metric ----
 # the full model (space + environment + connectivity) refitted with each of
 # the five connectivity metrics in turn, per component
 coefs_s8 <- expand_grid(metric = names(conn_labs), component = 1:2) |>
@@ -378,4 +378,4 @@ fig_s8 <- ggplot(coefs_s8, aes(estimate, metric)) +
   theme_light(base_size = 11) +
   theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank()) +
   facet_theme
-ggsave(here("output", "figs", "supp", "figS8_connectivity_coefficients.png"), fig_s8, width = 9, height = 4, dpi = 600, bg = "white")
+ggsave(here("output", "figs", "supp", "figS9_connectivity_coefficients.png"), fig_s8, width = 9, height = 4, dpi = 600, bg = "white")

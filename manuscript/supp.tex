@@ -3,7 +3,7 @@
 %%  ---------------------------------------------------------------------------
 %%  Compile with XeLaTeX (same as main.tex). Tables and figures are written by
 %%  the R pipeline (R/tab1_model_selection.R, R/fig_supp.R,
-%%  R/figS7_predictions.R) and pulled in directly, so they never drift from the
+%%  R/figS4_predictions.R, R/figS8_accessibility.R) and pulled in directly, so they never drift from the
 %%  fitted models. main.tex refers to them by number (Supplementary Fig. S1,
 %%  ...), so keep the order here matched to the order of citation there.
 %% ============================================================================
@@ -53,7 +53,7 @@
 \begin{center}
 \textbf{\large Supporting Information}\\[0.5em]
 \textbf{Linking predicted seascape connectivity, environment and spatial structure to cockle distribution in a coastal fjord}\\[0.5em]
-Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle Johansson, Flemming Thorbjørn Hansen, Martin Lindegren
+\rev{Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle Johansson, Martin Lindegren, Flemming Thorbjørn Hansen}
 \end{center}
 
 % ---- Tables ----------------------------------------------------------------
@@ -77,15 +77,7 @@ Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle J
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{figS2_correlation.png}
-    \caption{Spearman correlation, at the survey stations, among the five environmental predictors and the five presence-weighted connectivity metrics. Lines separate environmental predictors from connectivity metrics.}
-    \label{fig:correlation}
-\end{figure}
-\clearpage
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figS3_connectivity_metrics.png}
+    \includegraphics[width=0.95\textwidth]{figS2_connectivity_metrics.png}
     \caption{Presence-weighted connectivity metrics at the 2~$\times$~2~km grid cells containing at least one survey station: (a) in-degree, (b) in-strength, (c) in-closeness, (d) eigenvector centrality and (e) transitivity.}
     \label{fig:connectivity_maps}
 \end{figure}
@@ -93,31 +85,15 @@ Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle J
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figS4_mesh.png}
-    \caption{Variable-resolution barrier mesh used for the spatial random field. Triangles on land (grey) form the barrier, in which the correlation range is 10\% of that in water (blue); red points are survey stations.}
-    \label{fig:mesh}
+    \includegraphics[width=0.8\textwidth]{figS3_correlation.png}
+    \caption{Spearman correlation, at the survey stations, among the five environmental predictors and the five presence-weighted connectivity metrics. Lines separate environmental predictors from connectivity metrics.}
+    \label{fig:correlation}
 \end{figure}
 \clearpage
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figS5_cv_folds.png}
-    \caption{Folds of the spatially blocked 10-fold cross-validation. Each 2~$\times$~2~km grid cell was a block, held out as a whole, and cells were randomly assigned to ten folds: (a) for the occurrence component, all cells containing survey stations; (b) for the positive-biomass component, the cells containing stations with cockles.}
-    \label{fig:cv_folds}
-\end{figure}
-\clearpage
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figS6_residuals.png}
-    \caption{Simulation-based residuals of the two parts of the full Space + Environment + Connectivity model: occurrence (binomial, logit link; all stations) and biomass where present (generalized gamma, log link; grab stations with cockles). For each observation, 500 values were simulated from the fitted part, drawing parameters from the multivariate normal distribution of the maximum-likelihood estimates, and the residual is the quantile of the observation among them (ties randomised for the presence--absence data); residuals are uniform between 0 and 1 if the model is correct. (a) Q--Q plots against the uniform distribution (red line: 1:1); (b) residual at each station.}
-    \label{fig:residuals}
-\end{figure}
-\clearpage
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{figS7_predictions.png}
+    \includegraphics[width=\textwidth]{figS4_predictions.png}
     \caption{Predictions of the full Space + Environment + Connectivity model at the centre of each 2~$\times$~2~km grid cell containing at least one survey station, for the grab survey (0.1~m$^{2}$ samples) in 2025. (a) Occurrence probability and (b) its uncertainty, the standard deviation of the probability across 500 draws from the joint precision matrix of the occurrence part (both on a square-root colour scale). (c) Expected biomass (occurrence probability $\times$ biomass where present), only in cells containing grab stations, since the biomass part is fitted to the grab survey, for beds not fished in the previous season; grey cells have a predicted biomass below 1~g~m$^{-2}$. (d) Uncertainty of the expected biomass: standard deviation, on the log scale, of 500 draws from the joint precision matrices of the two model parts.}
     \label{fig:predictions}
 \end{figure}
@@ -125,7 +101,39 @@ Federico Maioli, Ane Pastor Rollan, Pedro S. Freitas, Camille Saurel, Isabelle J
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figS8_connectivity_coefficients.png}
+    \includegraphics[width=0.95\textwidth]{figS5_mesh.png}
+    \caption{Variable-resolution barrier mesh used for the spatial random field. Triangles on land (grey) form the barrier, in which the correlation range is 10\% of that in water (blue); red points are survey stations.}
+    \label{fig:mesh}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS6_cv_folds.png}
+    \caption{Folds of the spatially blocked 10-fold cross-validation. Each 2~$\times$~2~km grid cell was a block, held out as a whole, and cells were randomly assigned to ten folds: (a) for the occurrence component, all cells containing survey stations; (b) for the positive-biomass component, the cells containing stations with cockles.}
+    \label{fig:cv_folds}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS7_residuals.png}
+    \caption{Simulation-based residuals of the two parts of the full Space + Environment + Connectivity model: occurrence (binomial, logit link; all stations) and biomass where present (generalized gamma, log link; grab stations with cockles). For each observation, 500 values were simulated from the fitted part, drawing parameters from the multivariate normal distribution of the maximum-likelihood estimates, and the residual is the quantile of the observation among them (ties randomised for the presence--absence data); residuals are uniform between 0 and 1 if the model is correct. (a) Q--Q plots against the uniform distribution (red line: 1:1); (b) residual at each station.}
+    \label{fig:residuals}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figS8_accessibility.png}
+    \caption{\rev{Larval supply to occupied and unoccupied habitat. (a) Sampled 2~$\times$~2~km cells classed as occupied (predicted present by the Space + Environment occurrence model), suitable but empty (predicted absent, but environmentally suitable according to the same model refitted without the spatial field) or unsuitable and empty. Each prediction was cut at the value maximising the true skill statistic against observed cell occupancy (AUC 0.92 for occupancy, 0.68 for suitability). (b) Presence-weighted larval supply (in-strength) to the cells of each class, each cell shown as a tick; the dashed line is the 10th percentile of supply among occupied cells.}}
+    \label{fig:accessibility}
+\end{figure}
+\clearpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figS9_connectivity_coefficients.png}
     \caption{Standardized connectivity coefficient, with 95\% confidence interval, in the full Space + Environment + Connectivity model fitted with each of the five connectivity metrics in turn, for the presence and biomass-where-present components.}
     \label{fig:connectivity_coefficients}
 \end{figure}
