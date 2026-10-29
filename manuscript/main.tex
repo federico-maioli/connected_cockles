@@ -95,7 +95,7 @@
 
 % ---- Fonts (requires XeLaTeX/LuaLaTeX) -------------------------------------
 \usepackage{fontspec}
-\setmainfont{Libertinus Serif}   % or: \setmainfont{Times New Roman}
+\setmainfont{Libertinus Serif}
 
 % ---- Custom column types for nicely wrapped table cells --------------------
 \newcolumntype{^}{>{\currentrowstyle}}
@@ -122,7 +122,6 @@
 
 % ---- TITLE / AUTHOR BLOCK --------------------------------------------------
 \noindent
-%\textbf{Journal Name}
 
 \noindent
 \textbf{Research Article}   % e.g. Research Article
@@ -146,11 +145,9 @@ $^{*}$Corresponding author: \href{mailto:fedma@aqua.dtu.dk}{fedma@aqua.dtu.dk}
 
 \noindent 
 
-% tentative order check everyone is fine
-
 
 %\noindent
-%\textbf{ORCID:} First A. Author (0000-0000-0000-0000), Second B. Author (0000-0000-0000-0000).
+%\textbf{ORCID:}(0000-0002-8305-1609)
 
 % Turn line numbers on for review copies; comment out for clean copies.
 \linenumbers
@@ -171,7 +168,7 @@ Species distribution model,
 Biophysical dispersal model,
 \textit{Cerastoderma} spp.\\
 \clearpage
-% ---- INTRODUCTION ----------------------------------------------------------
+% ---- INTRO ----------------------------------------------------------
 \section{Introduction}
 
 Cockles (\textit{Cerastoderma} spp.) are among the most abundant and heavily exploited bivalves of European estuaries and coastal lagoons
@@ -272,8 +269,6 @@ The agent-based model of cockle larval dispersal is described in detail by \cite
 Connectivity matrices were derived from the start and end positions of all simulated agents across the seven years (2010--2016), after dividing the Limfjord into 2~$\times$~2~km grid cells. Each element of the raw matrix is the number of agents released in one cell (rows) whose end position fell in another cell, or in the same cell (columns). We converted this to a probability matrix by dividing each row by the total number of agents released from that source cell, including agents lost across the model boundaries, so that each element gives the probability that an agent released in one cell ends its pelagic phase in another. Further detail is given in \citet{hansenAssessingDemographicConnectivity2024}.
 
 \subsection{Connectivity metrics}
-
-\textcolor{red}{@ Ane check if you like it}
     
 We used presence-weighted in-strength as our primary connectivity metric (Fig.~\ref{fig:predictors}f). In-strength sums the weights of incoming edges to a cell \citep{squartiniReciprocityWeightedNetworks2013}, representing the potential larval supply received by that cell. Without weighting, all source cells contribute to this measure regardless of their likelihood of being occupied by cockles. We therefore weighted the outgoing edges of each source cell by its predicted probability of cockle presence, so that cells with a higher probability of occurrence contributed more strongly to potential larval supply. The resulting metric represents potential settlement supplied by likely occupied cells while accounting for spatial variation in predicted cockle occurrence.
 
